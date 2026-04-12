@@ -24,7 +24,7 @@ export default function HarvardTemplate({ data }: Props) {
       style={{
         width: '210mm',
         minHeight: '297mm',
-        padding: '25.4mm 25.4mm 25.4mm 25.4mm',
+        padding: '18mm 20mm 20mm 20mm',
         fontSize: '10pt',
         lineHeight: '1.4',
         fontFamily: '"Times New Roman", Times, serif',

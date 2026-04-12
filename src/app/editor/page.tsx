@@ -259,31 +259,69 @@ export default function EditorPage() {
       if (imgH <= pdfH) {
         pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdfW, imgH)
       } else {
-        // Multi-page: slice canvas into A4 chunks with vertical breathing room at breaks
-        // breakMarginMm adds whitespace at top/bottom of each page break so text never hits the edge
-        const breakMarginMm = 10
+        // Multi-page: smart slicing that never cuts mid-line
+        // Page 1 gets no extra top pad (template HTML already has its own top margin).
+        // Pages 2+ get topBreakMm of white so text doesn't start at the very edge.
+        // All pages get bottomBreakMm so text never reaches the bottom edge.
+        const topBreakMm = 14
+        const bottomBreakMm = 18
         const fullPageHpx = Math.round((pdfH * canvas.width) / pdfW)
-        const marginPx = Math.round((breakMarginMm / pdfH) * fullPageHpx)
-        const usableHpx = fullPageHpx - 2 * marginPx // content area per page
+        const topBreakPx = Math.round((topBreakMm / pdfH) * fullPageHpx)
+        const bottomBreakPx = Math.round((bottomBreakMm / pdfH) * fullPageHpx)
+        // Search ±gapSearchPx rows near the ideal break for a white gap between lines
+        const gapSearchPx = Math.round(fullPageHpx * 0.04)
+
+        // Scan canvas rows near idealRow and return the nearest all-white row (upward first).
+        // An all-white row = gap between text lines → safe page-break point.
+        const snapToGap = (idealRow: number): number => {
+          const ctx2d = canvas.getContext('2d')
+          if (!ctx2d) return idealRow
+          const startRow = Math.max(0, idealRow - gapSearchPx)
+          const endRow = Math.min(canvas.height - 1, idealRow + Math.round(gapSearchPx * 0.25))
+          const bandH = endRow - startRow + 1
+          const imgData = ctx2d.getImageData(0, startRow, canvas.width, bandH)
+          // Prefer snapping upward (earlier break) so bottom margin is preserved
+          for (let d = 0; d <= gapSearchPx; d++) {
+            const row = (idealRow - startRow) - d
+            if (row < 0 || row >= bandH) continue
+            let whites = 0
+            for (let x = 0; x < canvas.width; x++) {
+              const idx = (row * canvas.width + x) * 4
+              if (imgData.data[idx] > 240 && imgData.data[idx + 1] > 240 && imgData.data[idx + 2] > 240) whites++
+            }
+            if (whites / canvas.width >= 0.97) return startRow + row
+          }
+          return idealRow
+        }
 
         let y = 0
         let pageNum = 0
         while (y < canvas.height) {
-          const sliceH = Math.min(usableHpx, canvas.height - y)
+          const isFirstPage = pageNum === 0
+          // Page 1: template HTML already has its own top margin → topPad = 0
+          const topPad = isFirstPage ? 0 : topBreakPx
+          const availableHpx = fullPageHpx - topPad - bottomBreakPx
+          const idealBreak = y + availableHpx
+          const isLastPage = idealBreak >= canvas.height
 
-          // Create a full A4-height canvas, draw content starting at marginPx from top
+          // For last page take whatever remains; otherwise snap to nearest white gap
+          let breakAt = isLastPage ? canvas.height : snapToGap(idealBreak)
+          // Safety: always advance by at least 1 pixel to prevent infinite loop
+          if (breakAt <= y) breakAt = Math.min(y + availableHpx, canvas.height)
+
+          const sliceH = breakAt - y
           const pg = document.createElement('canvas')
           pg.width = canvas.width
           pg.height = fullPageHpx
-          const ctx = pg.getContext('2d')!
-          ctx.fillStyle = '#ffffff'
-          ctx.fillRect(0, 0, pg.width, pg.height)
-          ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, marginPx, canvas.width, sliceH)
+          const pgCtx = pg.getContext('2d')!
+          pgCtx.fillStyle = '#ffffff'
+          pgCtx.fillRect(0, 0, pg.width, pg.height)
+          pgCtx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, topPad, canvas.width, sliceH)
 
           if (pageNum > 0) pdf.addPage()
           pdf.addImage(pg.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdfW, pdfH)
 
-          y += usableHpx
+          y = breakAt
           pageNum++
         }
       }
