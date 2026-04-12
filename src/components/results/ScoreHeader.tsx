@@ -37,11 +37,44 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 export default function ScoreHeader({
   score, saludo, saludoTerminos, skillsDetectadas, metricas,
 }: ScoreHeaderProps) {
-  const [animated, setAnimated] = useState(false)
+  const [animated, setAnimated]       = useState(false)
+  const [displayScore, setDisplayScore] = useState(0)
+
+  // Arc animation
   useEffect(() => {
     const t = setTimeout(() => setAnimated(true), 150)
     return () => clearTimeout(t)
   }, [])
+
+  // Count-up animation
+  useEffect(() => {
+    const duration = 1200
+    const start    = performance.now()
+    const frame    = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1)
+      const eased    = 1 - Math.pow(1 - progress, 3) // ease-out cubic
+      setDisplayScore(Math.round(eased * score))
+      if (progress < 1) requestAnimationFrame(frame)
+    }
+    const raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [score])
+
+  // Confetti when score > 80
+  useEffect(() => {
+    if (score <= 80) return
+    const t = setTimeout(() => {
+      import('canvas-confetti').then(({ default: confetti }) => {
+        confetti({
+          particleCount: 120,
+          spread: 75,
+          origin: { y: 0.55 },
+          colors: ['#0DA1A4', '#01FFC6', '#092c64', '#ffffff', '#f59e0b'],
+        })
+      })
+    }, 800)
+    return () => clearTimeout(t)
+  }, [score])
 
   const dashOffset = animated ? CIRCUMFERENCE * (1 - score / 100) : CIRCUMFERENCE
   const arcColor = getArcColor(score)
@@ -82,7 +115,7 @@ export default function ScoreHeader({
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="font-sans font-[900] leading-none" style={{ fontSize: '2.5rem', color: arcColor }}>
-                {score}
+                {displayScore}
               </span>
               <span className="font-sans text-gray-400 text-xs mt-0.5">/ 100</span>
             </div>

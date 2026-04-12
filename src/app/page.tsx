@@ -35,6 +35,28 @@ const LOADING_MESSAGES = [
   'Dándote más puntuación por el nombre chulo...',
 ]
 
+const ERROR_MESSAGES = [
+  'Gemini se ha tomado un café. Inténtalo de nuevo.',
+  'La IA está en modo siesta. Vuelve a intentarlo.',
+  'Algo ha fallado, pero no es culpa de tu CV. Inténtalo de nuevo.',
+  'El robot reclutador ha petado. Un momento.',
+  'Error inesperado. El equipo ya está en ello (o debería).',
+  'Houston, tenemos un problema. Inténtalo de nuevo.',
+]
+
+function timeAgo(dateStr: string): string {
+  const diff  = Date.now() - new Date(dateStr).getTime()
+  const mins  = Math.floor(diff / 60_000)
+  const hours = Math.floor(mins / 60)
+  const days  = Math.floor(hours / 24)
+  if (mins  <  1) return 'ahora mismo'
+  if (mins  < 60) return `hace ${mins} min`
+  if (hours < 24) return `hace ${hours}h`
+  if (days  ===1) return 'ayer'
+  if (days  <  7) return `hace ${days} días`
+  return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+}
+
 const FEATURES = [
   {
     title: 'Análisis instantáneo',
@@ -160,7 +182,8 @@ export default function UploadPage() {
       router.push('/results')
     } catch (error) {
       setState('error')
-      setErrorMsg(error instanceof Error ? error.message : 'Error inesperado. Por favor, inténtalo de nuevo.')
+      const generic = ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)]
+      setErrorMsg(error instanceof Error && error.message !== 'Failed to fetch' ? error.message : generic)
     }
   }
 
@@ -299,9 +322,7 @@ export default function UploadPage() {
               {history.map(entry => {
                 const scoreColor = entry.score >= 75 ? '#0DA1A4' : entry.score >= 50 ? '#f59e0b' : '#ef4444'
                 const scoreBg    = entry.score >= 75 ? '#e6f7f7' : entry.score >= 50 ? '#fffbeb' : '#fff1f2'
-                const date = new Date(entry.analyzedAt).toLocaleDateString('es-ES', {
-                  day: 'numeric', month: 'short', year: 'numeric',
-                })
+                const date = timeAgo(entry.analyzedAt)
                 return (
                   <button
                     key={entry.id}

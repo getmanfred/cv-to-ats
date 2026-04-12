@@ -71,11 +71,24 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 // ─── Main editor ────────────────────────────────────────────────────────────
 
+const DRAFT_KEY = 'cv-editor-draft'
+
+function wordCount(cv: CVData): number {
+  return [
+    cv.resumen,
+    ...cv.experiencia.map(e => `${e.cargo} ${e.empresa} ${e.bullets.join(' ')}`),
+    ...cv.educacion.map(e => `${e.titulo} ${e.institucion} ${e.logros.join(' ')}`),
+    cv.habilidades,
+    ...cv.idiomas.map(l => l.idioma),
+  ].join(' ').split(/\s+/).filter(Boolean).length
+}
+
 export default function EditorPage() {
   const [cv, setCv] = useState<CVData>(EMPTY_CV)
   const [showPreview, setShowPreview] = useState(false)
   const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [savedAt, setSavedAt] = useState<Date | null>(null)
 
   // ─ Detected CV from previous analysis ─
   const [detectedCvText, setDetectedCvText] = useState<string | null>(null)
@@ -93,8 +106,23 @@ export default function EditorPage() {
       if (resultRaw) {
         try { setDetectedResult(JSON.parse(resultRaw) as ATSAnalysisResult) } catch { /* ignore */ }
       }
+    } else {
+      // Load autosaved draft if no CV from analysis
+      const draft = localStorage.getItem(DRAFT_KEY)
+      if (draft) {
+        try { setCv(JSON.parse(draft)) } catch { /* ignore */ }
+      }
     }
   }, [])
+
+  // Autosave draft on every change (debounced 800ms)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(cv))
+      setSavedAt(new Date())
+    }, 800)
+    return () => clearTimeout(t)
+  }, [cv])
 
   const allSuggestions: Suggestion[] = detectedResult
     ? detectedResult.categories.flatMap(c => c.suggestions ?? [])
@@ -407,6 +435,24 @@ export default function EditorPage() {
               <p className="font-sans text-sm text-red-700">{loadError}</p>
             </div>
           )}
+
+          {/* Word count + autosave indicator */}
+          <div className="flex items-center justify-between text-xs font-sans text-gray-400">
+            <span>
+              <span className="font-[700]" style={{ color: '#1a2744' }}>{wordCount(cv).toLocaleString('es-ES')}</span> palabras
+              {' · '}
+              <span className="font-[700]" style={{ color: '#1a2744' }}>~{Math.max(1, Math.ceil(wordCount(cv) / 350))}</span>{' '}
+              {Math.max(1, Math.ceil(wordCount(cv) / 350)) === 1 ? 'página' : 'páginas'}
+            </span>
+            {savedAt && (
+              <span className="flex items-center gap-1" style={{ color: '#10b981' }}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Guardado
+              </span>
+            )}
+          </div>
 
           {/* Export buttons */}
           <div className="flex gap-2 flex-wrap">
