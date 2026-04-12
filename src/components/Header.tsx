@@ -25,20 +25,23 @@ export default function Header({ noPrint = false }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <header className={`bg-white border-b sticky top-0 z-10${noPrint ? ' no-print' : ''}`}
-      style={{ borderColor: '#e5e0d8' }}>
+    <header className={`bg-navy sticky top-0 z-10${noPrint ? ' no-print' : ''}`}>
       <div className="max-w-container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
 
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity duration-200 flex-shrink-0">
+        <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200 flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-manfred.svg" alt="Manfred" className="h-6 sm:h-7 w-auto block" />
-          <span className="w-px h-5 bg-gray-light mx-1 sm:mx-2 self-center" />
-          <span className="font-sans font-[900] text-navy text-sm sm:text-base uppercase tracking-widest self-center leading-none">
+          <img
+            src="/logo-manfred.svg"
+            alt="Manfred"
+            className="h-6 sm:h-7 w-auto block"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
+          <span className="w-px h-5 self-center mx-1 sm:mx-2" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+          <span className="font-display font-[900] text-white text-sm sm:text-base uppercase tracking-[0.12em] self-center leading-none">
             ATS Killer
           </span>
-          <span className="font-sans font-[700] text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full self-center ml-1"
-            style={{ backgroundColor: '#01FFC6', color: '#092c64' }}>
+          <span className="font-sans font-[700] text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full self-center ml-1 bg-neon text-navy">
             Beta
           </span>
         </a>
@@ -47,10 +50,11 @@ export default function Header({ noPrint = false }: HeaderProps) {
         <nav className="hidden sm:flex items-center gap-1">
           {NAV_LINKS.map(link => (
             <a key={link.href} href={link.href}
-              className="font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
-              style={isActive(link.href, pathname)
-                ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
-                : { color: '#9ca3af' }}
+              className={`font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200 ${
+                isActive(link.href, pathname)
+                  ? 'text-neon'
+                  : 'text-white/60 hover:text-white'
+              }`}
             >
               {link.label}
             </a>
@@ -58,8 +62,7 @@ export default function Header({ noPrint = false }: HeaderProps) {
           <LanguageSelector />
           <button
             onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login' }}
-            className="font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
-            style={{ color: '#9ca3af' }}
+            className="font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200 text-white/40 hover:text-white/70"
             title="Cerrar sesión"
           >
             Salir
@@ -71,8 +74,7 @@ export default function Header({ noPrint = false }: HeaderProps) {
           <LanguageSelector />
           <button
             onClick={() => setMenuOpen(v => !v)}
-            className="p-2 rounded-lg transition-colors duration-200"
-            style={{ color: menuOpen ? '#0DA1A4' : '#9ca3af' }}
+            className={`p-2 rounded-lg transition-colors duration-200 ${menuOpen ? 'text-neon' : 'text-white/60'}`}
             aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
           >
             {menuOpen ? (
@@ -90,24 +92,24 @@ export default function Header({ noPrint = false }: HeaderProps) {
 
       {/* Mobile dropdown */}
       {menuOpen && (
-        <div className="sm:hidden bg-white border-t px-4 py-2 space-y-1" style={{ borderColor: '#f3f4f6' }}>
+        <div className="sm:hidden bg-navy border-t border-white/10 px-4 py-2 space-y-1">
           {NAV_LINKS.map(link => (
             <a
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="flex items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"
-              style={isActive(link.href, pathname)
-                ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
-                : { color: '#374151' }}
+              className={`flex items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200 ${
+                isActive(link.href, pathname)
+                  ? 'text-neon'
+                  : 'text-white/70 hover:text-white'
+              }`}
             >
               {link.label}
             </a>
           ))}
           <button
             onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login' }}
-            className="flex w-full items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"
-            style={{ color: '#9ca3af' }}
+            className="flex w-full items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200 text-white/40 hover:text-white/60"
           >
             Salir
           </button>
