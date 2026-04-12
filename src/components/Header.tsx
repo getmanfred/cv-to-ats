@@ -56,6 +56,14 @@ export default function Header({ noPrint = false }: HeaderProps) {
             </a>
           ))}
           <LanguageSelector />
+          <button
+            onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login' }}
+            className="font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
+            style={{ color: '#9ca3af' }}
+            title="Cerrar sesión"
+          >
+            Salir
+          </button>
         </nav>
 
         {/* Mobile: lang + hamburger */}
@@ -96,6 +104,13 @@ export default function Header({ noPrint = false }: HeaderProps) {
               {link.label}
             </a>
           ))}
+          <button
+            onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login' }}
+            className="flex w-full items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"
+            style={{ color: '#9ca3af' }}
+          >
+            Salir
+          </button>
         </div>
       )}
     </header>
