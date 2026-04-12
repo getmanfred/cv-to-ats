@@ -44,4 +44,7 @@ export function saveToHistory(result: ATSAnalysisResult): void {
 export function clearHistory(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem('cv-editor-draft')
+  sessionStorage.removeItem('atsCvText')
+  sessionStorage.removeItem('atsResult')
 }

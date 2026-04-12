@@ -99,18 +99,22 @@ export default function EditorPage() {
   const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
+    // Always restore the persisted draft first so the editor is never empty on return
+    const draft = localStorage.getItem(DRAFT_KEY)
+    if (draft) {
+      try {
+        setCv(JSON.parse(draft))
+        setSavedAt(new Date())
+      } catch { /* ignore */ }
+    }
+
+    // If there's fresh analysis data, show the import banner on top of whatever is loaded
     const cvText = sessionStorage.getItem('atsCvText')
     const resultRaw = sessionStorage.getItem('atsResult')
     if (cvText && cvText.length > 100) {
       setDetectedCvText(cvText)
       if (resultRaw) {
         try { setDetectedResult(JSON.parse(resultRaw) as ATSAnalysisResult) } catch { /* ignore */ }
-      }
-    } else {
-      // Load autosaved draft if no CV from analysis
-      const draft = localStorage.getItem(DRAFT_KEY)
-      if (draft) {
-        try { setCv(JSON.parse(draft)) } catch { /* ignore */ }
       }
     }
   }, [])
@@ -142,7 +146,9 @@ export default function EditorPage() {
       if (!res.ok) throw new Error(data.error || 'Error al cargar el CV.')
       setCv(data as CVData)
       setCvLoaded(true)
-      setDetectedCvText(null) // dismiss banner
+      setDetectedCvText(null)
+      // Clear sessionStorage so the import banner doesn't reappear on next visit
+      sessionStorage.removeItem('atsCvText')
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Error inesperado.')
     } finally {
@@ -503,7 +509,7 @@ export default function EditorPage() {
                   ) : 'Cargar en el editor'}
                 </button>
                 <button
-                  onClick={() => setDetectedCvText(null)}
+                  onClick={() => { setDetectedCvText(null); sessionStorage.removeItem('atsCvText') }}
                   className="p-1.5 rounded-lg transition-colors"
                   style={{ color: '#0DA1A4' }}
                   aria-label="Descartar"
