@@ -61,20 +61,32 @@ export default function ScoreHeader({
     return () => cancelAnimationFrame(raf)
   }, [score])
 
-  // Confetti when score > 80 — fires just after count-up finishes (1200ms)
-  // so the number reaching its peak is the visual cue for the celebration.
-  // Two simultaneous bursts from left + right make it hard to miss.
+  // Confetti when score > 80 — fires just after count-up finishes (1200ms).
+  // Uses confetti.create() with a custom canvas at z-index 9999 so it is
+  // never hidden behind fixed headers or other stacking-context elements.
   useEffect(() => {
     if (score <= 80) return
-    const base = {
-      particleCount: 90,
-      spread: 65,
-      startVelocity: 45,
-      colors: ['#0DA1A4', '#01FFC6', '#092c64', '#ffffff', '#f59e0b'],
-    }
     const t = setTimeout(() => {
-      confetti({ ...base, origin: { x: 0.25, y: 0.65 } })
-      confetti({ ...base, origin: { x: 0.75, y: 0.65 } })
+      try {
+        const canvas = document.createElement('canvas')
+        Object.assign(canvas.style, {
+          position: 'fixed', top: '0', left: '0',
+          width: '100%', height: '100%',
+          pointerEvents: 'none', zIndex: '9999',
+        })
+        document.body.appendChild(canvas)
+        const fire = confetti.create(canvas, { resize: true, useWorker: false })
+        const base = {
+          particleCount: 100,
+          spread: 70,
+          startVelocity: 50,
+          colors: ['#0DA1A4', '#01FFC6', '#092c64', '#ffffff', '#f59e0b'],
+        }
+        fire({ ...base, origin: { x: 0.25, y: 0.65 } })
+        fire({ ...base, origin: { x: 0.75, y: 0.65 } })
+        // Clean up canvas after animation ends (~4 s)
+        setTimeout(() => { document.body.removeChild(canvas) }, 4000)
+      } catch { /* fail silently */ }
     }, 1300)
     return () => clearTimeout(t)
   }, [score])
