@@ -144,7 +144,7 @@ export default function ScoreHeader({
           >
             {label}
           </span>
-          <p className="font-sans text-sm leading-relaxed" style={{ color: '#1a2744' }}>
+          <p className="font-sans text-sm leading-relaxed text-purple-dark">
             {renderWithTerminos(saludo, saludoTerminos)}
           </p>
         </div>
@@ -154,13 +154,13 @@ export default function ScoreHeader({
       {hasMetrics && (
         <div className="mt-5 pt-5 border-t border-gray-100 grid grid-cols-3 gap-4">
           <div className="text-center">
-            <p className="font-sans font-[700] text-lg" style={{ color: '#1a2744' }}>
+            <p className="font-sans font-[700] text-lg text-purple-dark">
               {metricas!.palabras.toLocaleString('es-ES')}
             </p>
             <p className="font-sans text-xs text-gray-400 mt-0.5">palabras</p>
           </div>
           <div className="text-center border-x border-gray-100">
-            <p className="font-sans font-[700] text-lg" style={{ color: '#1a2744' }}>
+            <p className="font-sans font-[700] text-lg text-purple-dark">
               ~{metricas!.paginasEstimadas}
             </p>
             <p className="font-sans text-xs text-gray-400 mt-0.5">
@@ -186,8 +186,8 @@ export default function ScoreHeader({
             {skillsDetectadas!.map(skill => (
               <span
                 key={skill}
-                className="font-sans text-xs px-2.5 py-1 rounded-full"
-                style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4', border: '1px solid #b2e8e8' }}
+                className="font-sans text-xs px-2.5 py-1 rounded-full text-teal"
+                style={{ backgroundColor: '#e6f7f7', border: '1px solid #b2e8e8' }}
               >
                 {skill}
               </span>

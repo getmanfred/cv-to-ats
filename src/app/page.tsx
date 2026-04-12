@@ -200,7 +200,7 @@ export default function UploadPage() {
   const isUploading = state === 'uploading'
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f0ede8' }}>
+    <div className="min-h-screen bg-bg-light">
 
       <Header />
 
@@ -213,7 +213,7 @@ export default function UploadPage() {
           <h1 className="font-heading font-[900] text-4xl md:text-5xl leading-tight mb-4">
             Analiza tu CV en segundos,
             <br />
-            <span className="italic" style={{ color: '#01FFC6' }}>descubre tus puntos débiles</span>
+            <span className="italic text-neon">descubre tus puntos débiles</span>
           </h1>
           <p className="font-sans text-base text-white/70 max-w-xl mx-auto">
             Sube un CV, detecta con IA si está optimizado para los ATS y revisa los puntos de mejora.
@@ -222,7 +222,7 @@ export default function UploadPage() {
       </section>
 
       {/* ── Upload area ────────────────────────────────────────────────────── */}
-      <section id="upload" style={{ backgroundColor: '#f0ede8' }} className="px-6 py-12">
+      <section id="upload" className="bg-bg-light px-6 py-12">
         <main className="max-w-2xl mx-auto">
 
           <DropZone onFileSelect={handleFileSelect} disabled={isUploading} />
@@ -256,8 +256,8 @@ export default function UploadPage() {
                 </div>
                 <p
                   key={loadingMsg}
-                  className="font-sans font-[800] text-center text-base"
-                  style={{ color: '#1a2744', animation: 'fadeIn 0.4s ease-in' }}
+                  className="font-sans font-[800] text-center text-base text-purple-dark"
+                  style={{ animation: 'fadeIn 0.4s ease-in' }}
                 >
                   {loadingMsg}
                 </p>
@@ -299,11 +299,11 @@ export default function UploadPage() {
 
       {/* ── Recent history ─────────────────────────────────────────────────── */}
       {history.length > 0 && (
-        <section style={{ backgroundColor: '#f0ede8' }} className="px-6 pb-10">
+        <section className="bg-bg-light px-6 pb-10">
           <div className="max-w-2xl mx-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="font-sans font-[800] text-sm uppercase tracking-widest" style={{ color: '#1a2744' }}>
+                <h2 className="font-sans font-[800] text-sm uppercase tracking-widest text-purple-dark">
                   Tus análisis recientes
                 </h2>
                 <p className="font-sans text-xs text-gray-400 mt-0.5">
@@ -340,7 +340,7 @@ export default function UploadPage() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-sans font-[700] text-sm" style={{ color: '#1a2744' }}>
+                      <p className="font-sans font-[700] text-sm text-purple-dark">
                         {entry.nombre || 'CV sin nombre'}
                       </p>
                       <p className="font-sans text-xs text-gray-400 truncate">{entry.headline}</p>
@@ -362,7 +362,7 @@ export default function UploadPage() {
       )}
 
       {/* ── Features 01/02/03 ──────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#f0ede8' }} className="px-6 pb-16">
+      <section className="bg-bg-light px-6 pb-16">
         <div className="max-w-4xl mx-auto border-t border-gray-300/60">
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-300/60">
             {FEATURES.map((f, i) => (
@@ -377,7 +377,7 @@ export default function UploadPage() {
       </section>
 
       {/* ── Tres pasos (navy) ──────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#092c64' }} className="py-16 px-6">
+      <section className="bg-navy py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="mb-12">
             <p className="font-sans font-[600] text-xs uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -386,7 +386,7 @@ export default function UploadPage() {
             <h2 className="font-heading font-[900] text-white leading-tight" style={{ fontSize: '2.8rem' }}>
               Tres pasos,
               <br />
-              <span className="italic" style={{ color: '#01FFC6' }}>un informe completo</span>
+              <span className="italic text-neon">un informe completo</span>
             </h2>
           </div>
 
@@ -408,15 +408,15 @@ export default function UploadPage() {
       </section>
 
       {/* ── Qué analiza la IA ──────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#f0ede8' }} className="py-16 px-6">
+      <section className="bg-bg-light py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
               <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-3">Análisis</p>
-              <h2 className="font-heading font-[900] leading-tight" style={{ fontSize: '2.8rem', color: '#092c64' }}>
+              <h2 className="font-heading font-[900] leading-tight text-navy" style={{ fontSize: '2.8rem' }}>
                 Qué analiza
                 <br />
-                <span className="italic" style={{ color: '#0DA1A4' }}>la IA</span>
+                <span className="italic text-teal">la IA</span>
               </h2>
             </div>
             <p className="font-sans text-sm text-gray-500 md:text-right leading-relaxed md:max-w-xs">
@@ -437,7 +437,7 @@ export default function UploadPage() {
                 }}
               >
                 <p className="font-sans text-xs text-gray-400 mb-2">0{i + 1}</p>
-                <h3 className="font-heading font-[700] text-base mb-2" style={{ color: '#0DA1A4' }}>{area.title}</h3>
+                <h3 className="font-heading font-[700] text-base mb-2 text-teal">{area.title}</h3>
                 <p className="font-sans text-sm leading-relaxed" style={{ color: '#6b7280' }}>{area.desc}</p>
               </div>
             ))}
@@ -446,15 +446,15 @@ export default function UploadPage() {
       </section>
 
       {/* ── Así es tu informe (mockup) ─────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#f0ede8' }} className="pb-20 px-6">
+      <section className="bg-bg-light pb-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
             <div>
               <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-3">Ejemplo real</p>
-              <h2 className="font-heading font-[900] leading-tight" style={{ fontSize: '2.8rem', color: '#092c64' }}>
+              <h2 className="font-heading font-[900] leading-tight text-navy" style={{ fontSize: '2.8rem' }}>
                 Así es
                 <br />
-                <span className="italic" style={{ color: '#0DA1A4' }}>tu informe</span>
+                <span className="italic text-teal">tu informe</span>
               </h2>
             </div>
             <p className="font-sans text-sm text-gray-500 md:text-right leading-relaxed md:max-w-xs">
@@ -465,7 +465,7 @@ export default function UploadPage() {
           {/* Mock report card */}
           <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
             {/* Card header */}
-            <div className="flex items-center justify-between px-6 py-4" style={{ backgroundColor: '#092c64' }}>
+            <div className="flex items-center justify-between px-6 py-4 bg-navy">
               <div className="flex items-center gap-3">
                 <div
                   className="w-10 h-10 rounded-lg flex items-center justify-center font-sans font-[900] text-white text-sm"
@@ -565,8 +565,7 @@ export default function UploadPage() {
               </p>
               <a
                 href="#upload"
-                className="font-sans font-[700] text-xs whitespace-nowrap hover:opacity-70 transition-opacity"
-                style={{ color: '#0DA1A4' }}
+                className="font-sans font-[700] text-xs whitespace-nowrap hover:opacity-70 transition-opacity text-teal"
               >
                 Sube tu CV arriba para empezar ↑
               </a>

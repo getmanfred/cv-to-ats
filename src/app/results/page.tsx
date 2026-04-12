@@ -31,7 +31,7 @@ export default function ResultsPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0ede8' }}>
+      <div className="min-h-screen flex items-center justify-center bg-bg-light">
         <div className="flex flex-col items-center gap-3">
           <svg className="animate-spin h-7 w-7 text-teal" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
@@ -48,18 +48,18 @@ export default function ResultsPage() {
     .sort((a, b) => (PRIORITY_ORDER[a.prioridad] ?? 1) - (PRIORITY_ORDER[b.prioridad] ?? 1))
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f0ede8' }}>
+    <div className="min-h-screen bg-bg-light">
       <ScrollToTop />
       {/* Header — hidden on print */}
       <Header noPrint />
 
       {/* Printable content */}
-      <div id="results-content" style={{ backgroundColor: '#f0ede8' }}>
+      <div id="results-content" className="bg-bg-light">
 
         {/* Print-only header — hidden on screen, visible in PDF */}
         <div
-          className="print-only items-center justify-between px-8 py-5 border-b"
-          style={{ backgroundColor: '#092c64', borderColor: 'rgba(255,255,255,0.1)' }}
+          className="print-only items-center justify-between px-8 py-5 border-b bg-navy"
+          style={{ borderColor: 'rgba(255,255,255,0.1)' }}
         >
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -95,7 +95,7 @@ export default function ResultsPage() {
 
           {/* Section title */}
           <div className="pt-3 pb-1">
-            <h2 className="font-sans font-[900] text-xl" style={{ color: '#1a2744' }}>
+            <h2 className="font-sans font-[900] text-xl text-purple-dark">
               Mejoras recomendadas
             </h2>
           </div>
@@ -111,8 +111,7 @@ export default function ResultsPage() {
           <div className="no-print flex items-center justify-center">
             <button
               onClick={() => router.push('/results/compare')}
-              className="inline-flex items-center gap-2 font-sans font-[700] text-sm px-5 py-2.5 rounded-xl border-2 transition-colors duration-200"
-              style={{ borderColor: '#0DA1A4', color: '#0DA1A4' }}
+              className="inline-flex items-center gap-2 font-sans font-[700] text-sm px-5 py-2.5 rounded-xl border-2 transition-colors duration-200 border-teal text-teal"
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#e6f7f7' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
             >
@@ -124,9 +123,9 @@ export default function ResultsPage() {
           </div>
 
           {/* Bottom CTA — hidden on print */}
-          <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-2xl mt-2" style={{ backgroundColor: '#092c64' }}>
+          <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-2xl mt-2 bg-navy">
             <div>
-              <p className="font-sans font-[900] uppercase tracking-widest text-xs mb-1" style={{ color: '#01FFC6' }}>
+              <p className="font-sans font-[900] uppercase tracking-widest text-xs mb-1 text-neon">
                 ¿Empezamos a mejorar tu CV?
               </p>
               <p className="font-sans font-[800] text-base leading-snug text-white">

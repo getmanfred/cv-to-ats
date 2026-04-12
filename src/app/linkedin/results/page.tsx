@@ -56,7 +56,7 @@ export default function LinkedInResultsPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0ede8' }}>
+      <div className="min-h-screen flex items-center justify-center bg-bg-light">
         <div className="flex flex-col items-center gap-3">
           <svg className="animate-spin h-7 w-7 text-teal" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
@@ -79,14 +79,14 @@ export default function LinkedInResultsPage() {
   const hasSkills = result.skillsDetectadas && result.skillsDetectadas.length > 0
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f0ede8' }}>
+    <div className="min-h-screen bg-bg-light">
 
       <Header noPrint />
 
       {/* Print header */}
       <div
-        className="print-only items-center justify-between px-8 py-5 border-b"
-        style={{ backgroundColor: '#092c64', borderColor: 'rgba(255,255,255,0.1)' }}
+        className="print-only items-center justify-between px-8 py-5 border-b bg-navy"
+        style={{ borderColor: 'rgba(255,255,255,0.1)' }}
       >
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -101,7 +101,7 @@ export default function LinkedInResultsPage() {
         </p>
       </div>
 
-      <div style={{ backgroundColor: '#f0ede8' }}>
+      <div className="bg-bg-light">
         <main className="max-w-3xl mx-auto px-6 py-8 space-y-4">
 
           {/* Score card */}
@@ -141,7 +141,7 @@ export default function LinkedInResultsPage() {
                   style={{ backgroundColor: bg, color: text }}>
                   {label}
                 </span>
-                <p className="font-sans text-sm leading-relaxed" style={{ color: '#1a2744' }}>
+                <p className="font-sans text-sm leading-relaxed text-purple-dark">
                   {renderWithTerminos(result.saludo, result.saludoTerminos)}
                 </p>
               </div>
@@ -178,8 +178,9 @@ export default function LinkedInResultsPage() {
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {result.skillsDetectadas!.map(skill => (
-                      <span key={skill} className="font-sans text-xs px-2.5 py-1 rounded-full"
-                        style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4', border: '1px solid #b2e8e8' }}>
+                      <span key={skill}
+                          className="font-sans text-xs px-2.5 py-1 rounded-full text-teal"
+                        style={{ backgroundColor: '#e6f7f7', border: '1px solid #b2e8e8' }}>
                         {skill}
                       </span>
                     ))}
@@ -192,7 +193,7 @@ export default function LinkedInResultsPage() {
 
           {/* Section title */}
           <div className="pt-3 pb-1">
-            <h2 className="font-sans font-[900] text-xl" style={{ color: '#1a2744' }}>
+            <h2 className="font-sans font-[900] text-xl text-purple-dark">
               Mejoras recomendadas
             </h2>
           </div>
@@ -205,9 +206,9 @@ export default function LinkedInResultsPage() {
           ))}
 
           {/* Bottom actions */}
-          <div className="no-print flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-2xl mt-2" style={{ backgroundColor: '#092c64' }}>
+          <div className="no-print flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-2xl mt-2 bg-navy">
             <div>
-              <p className="font-sans font-[900] uppercase tracking-widest text-xs mb-1" style={{ color: '#01FFC6' }}>
+              <p className="font-sans font-[900] uppercase tracking-widest text-xs mb-1 text-neon">
                 ¿También quieres mejorar tu CV?
               </p>
               <p className="font-sans font-[800] text-base leading-snug text-white">

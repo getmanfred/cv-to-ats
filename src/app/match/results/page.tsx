@@ -91,7 +91,7 @@ export default function MatchResultsPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0ede8' }}>
+      <div className="min-h-screen flex items-center justify-center bg-bg-light">
         <div className="flex flex-col items-center gap-3">
           <svg className="animate-spin h-7 w-7 text-teal" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
@@ -110,11 +110,11 @@ export default function MatchResultsPage() {
   )
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f0ede8' }}>
+    <div className="min-h-screen bg-bg-light">
 
       <Header noPrint />
 
-      <div style={{ backgroundColor: '#f0ede8' }}>
+      <div className="bg-bg-light">
         <main className="max-w-3xl mx-auto px-6 py-8 space-y-4">
 
           {/* Score card */}
@@ -126,7 +126,7 @@ export default function MatchResultsPage() {
                   Match con oferta
                 </span>
                 {result.puestoBuscado && (
-                  <p className="font-sans font-[700] text-sm mt-0.5" style={{ color: '#1a2744' }}>
+                  <p className="font-sans font-[700] text-sm mt-0.5 text-purple-dark">
                     {result.puestoBuscado}
                     {result.empresa && <span className="font-[400] text-gray-400"> · {result.empresa}</span>}
                   </p>
@@ -168,7 +168,7 @@ export default function MatchResultsPage() {
                   style={{ backgroundColor: colors.bg, color: colors.text }}>
                   {colors.label}
                 </span>
-                <p className="font-sans text-sm leading-relaxed" style={{ color: '#1a2744' }}>
+                <p className="font-sans text-sm leading-relaxed text-purple-dark">
                   {renderWithTerminos(result.resumenMatch, result.resumenMatchTerminos)}
                 </p>
               </div>
@@ -215,7 +215,7 @@ export default function MatchResultsPage() {
           {sorted.length > 0 && (
             <>
               <div className="pt-3 pb-1">
-                <h2 className="font-sans font-[900] text-xl" style={{ color: '#1a2744' }}>
+                <h2 className="font-sans font-[900] text-xl text-purple-dark">
                   Cómo mejorar tu match
                 </h2>
               </div>
@@ -240,15 +240,15 @@ export default function MatchResultsPage() {
                 placeholder="Pega el texto de la nueva oferta o una URL (https://...)"
                 rows={newJdIsUrl ? 2 : 4}
                 disabled={analyzing}
-                className="w-full font-sans text-sm rounded-xl border px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-teal/30 transition-all disabled:opacity-50"
-                style={{ borderColor: newJdIsUrl ? '#0DA1A4' : '#e5e7eb', color: '#1a2744' }}
+                className="w-full font-sans text-sm rounded-xl border px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-teal/30 transition-all disabled:opacity-50 text-purple-dark"
+                style={{ borderColor: newJdIsUrl ? '#0DA1A4' : '#e5e7eb' }}
               />
               {newJdIsUrl && (
                 <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ backgroundColor: '#e6f7f7' }}>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#0DA1A4' }}>
+                  <svg className="w-3 h-3 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
-                  <span className="font-sans font-[700] text-xs" style={{ color: '#0DA1A4' }}>URL detectada</span>
+                  <span className="font-sans font-[700] text-xs text-teal">URL detectada</span>
                 </div>
               )}
             </div>
@@ -288,8 +288,7 @@ export default function MatchResultsPage() {
               <button
                 onClick={handleNewOffer}
                 disabled={analyzing || (!newJd.trim() && !newJdFile)}
-                className="flex-1 py-3 rounded-xl font-sans font-[900] text-sm uppercase tracking-wider transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#092c64', color: '#ffffff' }}
+                className="flex-1 py-3 rounded-xl font-sans font-[900] text-sm uppercase tracking-wider transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-navy text-white"
               >
                 {analyzing ? (
                   <span className="flex items-center justify-center gap-2">
