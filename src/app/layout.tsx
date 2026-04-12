@@ -27,8 +27,30 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: 'ATS Killer — Manfred',
-  description: 'Analiza tu CV y descubre si está optimizado para los sistemas ATS de selección de personal.',
+  title: 'ATSKiller — Manfred',
+  description: 'Analiza tu CV y descubre si está optimizado para los sistemas ATS de selección de personal. Feedback concreto, puntuación por categorías y recomendaciones accionables.',
+  openGraph: {
+    title: 'ATSKiller — Manfred',
+    description: 'Analiza tu CV. Prepáralo para los ATS. Descubre qué ven los reclutadores antes de que llegues a la primera entrevista.',
+    url: 'https://cv-to-ats-production.up.railway.app',
+    siteName: 'ATSKiller by Manfred',
+    images: [
+      {
+        url: 'https://cv-to-ats-production.up.railway.app/api/og',
+        width: 1200,
+        height: 630,
+        alt: 'ATSKiller — Analiza tu CV y prepáralo para los ATS',
+      },
+    ],
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ATSKiller — Manfred',
+    description: 'Analiza tu CV. Prepáralo para los ATS.',
+    images: ['https://cv-to-ats-production.up.railway.app/api/og'],
+  },
 }
 
 export default function RootLayout({
