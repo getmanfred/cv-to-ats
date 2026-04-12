@@ -3,7 +3,6 @@
 import { useState, FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import Image from 'next/image'
 
 function LoginForm() {
   const router       = useRouter()
@@ -96,13 +95,8 @@ export default function LoginPage() {
         {/* Logo / título */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <Image
-              src="/logo-manfred.svg"
-              alt="Manfred"
-              width={140}
-              height={40}
-              priority
-            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-manfred.svg" alt="Manfred" className="h-8 w-auto" />
           </div>
           <p className="font-display text-4xl font-black text-navy tracking-tight leading-none">
             ATS<span className="text-teal">Killer</span>
