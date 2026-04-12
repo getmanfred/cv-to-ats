@@ -43,6 +43,18 @@ export default function MatchResultsPage() {
     }
   }, [router])
 
+  useEffect(() => {
+    if (!result || result.matchScore <= 80) return
+    const t = setTimeout(async () => {
+      const { default: confetti } = await import('canvas-confetti')
+      const base = { particleCount: 90, spread: 65, startVelocity: 45,
+        colors: ['#0DA1A4', '#01FFC6', '#092c64', '#ffffff', '#f59e0b'] }
+      confetti({ ...base, origin: { x: 0.25, y: 0.65 } })
+      confetti({ ...base, origin: { x: 0.75, y: 0.65 } })
+    }, 1300)
+    return () => clearTimeout(t)
+  }, [result])
+
   const handleNewOffer = async () => {
     const hasJd = newJd.trim().length > 10 || !!newJdFile
     if (!hasJd) { setNewJdError('Introduce la nueva oferta para continuar.'); return }

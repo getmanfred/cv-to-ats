@@ -42,6 +42,18 @@ export default function LinkedInResultsPage() {
     }
   }, [router])
 
+  useEffect(() => {
+    if (!result || result.overallScore <= 80) return
+    const t = setTimeout(async () => {
+      const { default: confetti } = await import('canvas-confetti')
+      const base = { particleCount: 90, spread: 65, startVelocity: 45,
+        colors: ['#0DA1A4', '#01FFC6', '#092c64', '#ffffff', '#f59e0b'] }
+      confetti({ ...base, origin: { x: 0.25, y: 0.65 } })
+      confetti({ ...base, origin: { x: 0.75, y: 0.65 } })
+    }, 1300)
+    return () => clearTimeout(t)
+  }, [result])
+
   if (!result) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0ede8' }}>
