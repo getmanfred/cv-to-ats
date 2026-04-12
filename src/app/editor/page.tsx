@@ -224,116 +224,172 @@ export default function EditorPage() {
   const removeIdioma = (id: string) => setCv(prev => ({ ...prev, idiomas: prev.idiomas.filter(l => l.id !== id) }))
 
   // ─ Exports ─
+  // Renders a text-based PDF directly from the cv data object using jsPDF's text API.
+  // This produces a real text layer so the PDF is parseable by ATS systems and by
+  // our own /api/analyze route (pdf-parse). Image-based PDFs (html2canvas) have no
+  // text layer and cannot be re-analyzed.
   const handlePdfExport = async () => {
     setExportingPdf(true)
     try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf'),
-      ])
+      const { jsPDF } = await import('jspdf')
 
-      const templateEl = document.getElementById('harvard-template')
-      if (!templateEl) return
-
-      // On mobile the desktop preview wrapper is hidden — temporarily reveal it
-      const hiddenAncestor = templateEl.parentElement?.closest('[class*="hidden"]') as HTMLElement | null
-      if (hiddenAncestor) {
-        hiddenAncestor.style.display = 'block'
-        await new Promise(r => setTimeout(r, 60))
-      }
-
-      const canvas = await html2canvas(templateEl, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      })
-
-      if (hiddenAncestor) hiddenAncestor.style.display = ''
+      const W = 210, H = 297
+      const mL = 20, mR = 20, mT = 18, mB = 20
+      const cW = W - mL - mR
+      const LH = 5   // base line-height in mm (10 pt)
+      const LH9 = 4.5 // line-height for 9 pt
 
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      const pdfW = pdf.internal.pageSize.getWidth()
-      const pdfH = pdf.internal.pageSize.getHeight()
-      const imgH = (canvas.height * pdfW) / canvas.width
+      let y = mT
 
-      if (imgH <= pdfH) {
-        pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdfW, imgH)
-      } else {
-        // Multi-page: smart slicing that never cuts mid-line
-        // Page 1 gets no extra top pad (template HTML already has its own top margin).
-        // Pages 2+ get topBreakMm of white so text doesn't start at the very edge.
-        // All pages get bottomBreakMm so text never reaches the bottom edge.
-        const topBreakMm = 14
-        const bottomBreakMm = 18
-        const fullPageHpx = Math.round((pdfH * canvas.width) / pdfW)
-        const topBreakPx = Math.round((topBreakMm / pdfH) * fullPageHpx)
-        const bottomBreakPx = Math.round((bottomBreakMm / pdfH) * fullPageHpx)
-        // Search ±gapSearchPx rows near the ideal break for a white gap between lines
-        const gapSearchPx = Math.round(fullPageHpx * 0.04)
+      // Adds a new page and resets y to top margin
+      const newPage = () => { pdf.addPage(); y = mT }
+      // Ensures at least `mm` of vertical space remains; adds page if not
+      const need = (mm: number) => { if (y + mm > H - mB) newPage() }
 
-        // Find the latest row at or before idealRow that is the BOTTOM of a band
-        // of ≥ minBand consecutive near-white rows.
-        // Requiring a band (not just a single white row) prevents cutting mid-character:
-        //   - gap between accent mark and letter body: ~2-4 px   → below minBand → ignored
-        //   - gap between lines of text:               ~10-11 px  → above minBand → valid break
-        const snapToGap = (idealRow: number): number => {
-          const ctx2d = canvas.getContext('2d')
-          if (!ctx2d) return idealRow
-          const startRow = Math.max(0, idealRow - gapSearchPx)
-          const bandH = idealRow - startRow + 1
-          if (bandH <= 0) return idealRow
-          const imgData = ctx2d.getImageData(0, startRow, canvas.width, bandH)
-          const minBand = 6 // min consecutive white rows for a valid break
+      // Font shorthand helpers
+      const bold   = (n = 10) => { pdf.setFont('times', 'bold');   pdf.setFontSize(n) }
+      const normal = (n = 10) => { pdf.setFont('times', 'normal'); pdf.setFontSize(n) }
+      const italic = (n = 10) => { pdf.setFont('times', 'italic'); pdf.setFontSize(n) }
 
-          let runStart = -1
-          let bestBreak = -1
+      // Renders wrapped text at current y; advances y by the block height
+      const textBlock = (text: string, x: number, maxW: number, lh = LH) => {
+        const lines = pdf.splitTextToSize(text, maxW)
+        need(lines.length * lh)
+        pdf.text(lines, x, y)
+        y += lines.length * lh
+      }
 
-          for (let rel = 0; rel < bandH; rel++) {
-            let whites = 0
-            for (let x = 0; x < canvas.width; x++) {
-              const i = (rel * canvas.width + x) * 4
-              if (imgData.data[i] > 240 && imgData.data[i + 1] > 240 && imgData.data[i + 2] > 240) whites++
-            }
-            if (whites / canvas.width >= 0.97) {
-              if (runStart < 0) runStart = rel
-              if (rel - runStart + 1 >= minBand) bestBreak = startRow + rel
-            } else {
-              runStart = -1
-            }
+      // Section header: bold uppercase label + full-width rule beneath
+      const sectionHeader = (title: string) => {
+        need(12)
+        bold(11)
+        pdf.text(title.toUpperCase(), mL, y)
+        y += 1.5
+        pdf.setLineWidth(0.3)
+        pdf.line(mL, y, W - mR, y)
+        y += 4
+      }
+
+      // ── Name ──────────────────────────────────────────────────────
+      bold(18)
+      pdf.text(cv.personalInfo.nombre || '', W / 2, y, { align: 'center' })
+      y += 8
+
+      if (cv.personalInfo.cargo) {
+        italic(10)
+        pdf.text(cv.personalInfo.cargo, W / 2, y, { align: 'center' })
+        y += 5
+      }
+
+      const contact = [
+        cv.personalInfo.email, cv.personalInfo.telefono,
+        cv.personalInfo.linkedin, cv.personalInfo.ubicacion, cv.personalInfo.website,
+      ].filter(Boolean)
+      if (contact.length) {
+        normal(9)
+        pdf.text(contact.join(' \u00b7 '), W / 2, y, { align: 'center' })
+        y += 5
+      }
+
+      pdf.setLineWidth(0.3)
+      pdf.line(mL, y, W - mR, y)
+      y += 5
+
+      // ── Resumen ───────────────────────────────────────────────────
+      if (cv.resumen) {
+        sectionHeader('Resumen')
+        normal(10)
+        textBlock(cv.resumen, mL, cW)
+        y += 2
+      }
+
+      // ── Experiencia ───────────────────────────────────────────────
+      if (cv.experiencia.length > 0) {
+        sectionHeader('Experiencia')
+        for (const exp of cv.experiencia) {
+          const period = exp.actual
+            ? `${exp.fechaInicio} \u2013 Presente`
+            : `${exp.fechaInicio} \u2013 ${exp.fechaFin}`
+          need(LH + 2)
+
+          // Cargo + empresa (left) · period (right) on the same baseline
+          bold(10)
+          const label = exp.cargo + (exp.empresa ? ` \u2014 ${exp.empresa}` : '')
+          pdf.text(label, mL, y)
+          italic(9)
+          pdf.text(period, W - mR, y, { align: 'right' })
+          y += LH
+
+          if (exp.ubicacion) {
+            italic(9)
+            pdf.text(exp.ubicacion, mL, y)
+            y += LH9
           }
 
-          return bestBreak >= 0 ? bestBreak : idealRow
+          normal(10)
+          for (const b of exp.bullets.filter(Boolean)) {
+            const lines = pdf.splitTextToSize(b, cW - 4)
+            need(lines.length * LH)
+            pdf.text('\u2022', mL, y)
+            pdf.text(lines, mL + 4, y)
+            y += lines.length * LH
+          }
+          y += 2
         }
+      }
 
-        let y = 0
-        let pageNum = 0
-        while (y < canvas.height) {
-          const isFirstPage = pageNum === 0
-          // Page 1: template HTML already has its own top margin → topPad = 0
-          const topPad = isFirstPage ? 0 : topBreakPx
-          const availableHpx = fullPageHpx - topPad - bottomBreakPx
-          const idealBreak = y + availableHpx
-          const isLastPage = idealBreak >= canvas.height
+      // ── Educación ─────────────────────────────────────────────────
+      if (cv.educacion.length > 0) {
+        sectionHeader('Educaci\u00f3n')
+        for (const edu of cv.educacion) {
+          const period = `${edu.fechaInicio} \u2013 ${edu.fechaFin}`
+          const degree = [edu.titulo, edu.campo].filter(Boolean).join(', ')
+          need(LH + 2)
 
-          // For last page take whatever remains; otherwise snap to nearest white gap
-          let breakAt = isLastPage ? canvas.height : snapToGap(idealBreak)
-          // Safety: always advance by at least 1 pixel to prevent infinite loop
-          if (breakAt <= y) breakAt = Math.min(y + availableHpx, canvas.height)
+          bold(10)
+          pdf.text(degree || 'T\u00edtulo', mL, y)
+          italic(9)
+          pdf.text(period, W - mR, y, { align: 'right' })
+          y += LH
 
-          const sliceH = breakAt - y
-          const pg = document.createElement('canvas')
-          pg.width = canvas.width
-          pg.height = fullPageHpx
-          const pgCtx = pg.getContext('2d')!
-          pgCtx.fillStyle = '#ffffff'
-          pgCtx.fillRect(0, 0, pg.width, pg.height)
-          pgCtx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, topPad, canvas.width, sliceH)
+          if (edu.institucion) {
+            italic(9)
+            pdf.text(edu.institucion, mL, y)
+            y += LH9
+          }
 
-          if (pageNum > 0) pdf.addPage()
-          pdf.addImage(pg.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, pdfW, pdfH)
+          normal(10)
+          for (const l of edu.logros.filter(Boolean)) {
+            const lines = pdf.splitTextToSize(l, cW - 4)
+            need(lines.length * LH)
+            pdf.text('\u2022', mL, y)
+            pdf.text(lines, mL + 4, y)
+            y += lines.length * LH
+          }
+          y += 2
+        }
+      }
 
-          y = breakAt
-          pageNum++
+      // ── Habilidades ───────────────────────────────────────────────
+      if (cv.habilidades.length > 0) {
+        sectionHeader('Habilidades')
+        normal(10)
+        textBlock(cv.habilidades.join(' \u00b7 '), mL, cW)
+        y += 2
+      }
+
+      // ── Idiomas ───────────────────────────────────────────────────
+      if (cv.idiomas.length > 0) {
+        sectionHeader('Idiomas')
+        for (const lang of cv.idiomas) {
+          need(LH)
+          bold(10)
+          const prefix = `${lang.idioma}: `
+          pdf.text(prefix, mL, y)
+          normal(10)
+          pdf.text(lang.nivel, mL + pdf.getTextWidth(prefix), y)
+          y += LH
         }
       }
 
