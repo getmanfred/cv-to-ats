@@ -11,9 +11,9 @@ const config: Config = {
       colors: {
         teal:          '#0DA1A4',
         navy:          '#092c64',
-        'purple-dark': '#1a2744',  // primary text color used throughout the app
+        'purple-dark': '#353241',
         'gray-light':  '#dedce4',
-        'bg-light':    '#f0ede8',  // warm cream page background
+        'bg-light':    '#faf9ff',
         accent:        '#7d64d6',
         neon:          '#01FFC6',
       },

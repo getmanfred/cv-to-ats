@@ -129,7 +129,7 @@ export default function ScoreHeader({
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="font-display font-[900] leading-none" style={{ fontSize: '3rem', color: arcColor }}>
+              <span className="font-sans font-[900] leading-none" style={{ fontSize: '2.5rem', color: arcColor }}>
                 {displayScore}
               </span>
               <span className="font-sans text-gray-400 text-xs mt-0.5">/ 100</span>
