@@ -271,27 +271,38 @@ export default function EditorPage() {
         // Search ±gapSearchPx rows near the ideal break for a white gap between lines
         const gapSearchPx = Math.round(fullPageHpx * 0.04)
 
-        // Scan canvas rows near idealRow and return the nearest all-white row (upward first).
-        // An all-white row = gap between text lines → safe page-break point.
+        // Find the latest row at or before idealRow that is the BOTTOM of a band
+        // of ≥ minBand consecutive near-white rows.
+        // Requiring a band (not just a single white row) prevents cutting mid-character:
+        //   - gap between accent mark and letter body: ~2-4 px   → below minBand → ignored
+        //   - gap between lines of text:               ~10-11 px  → above minBand → valid break
         const snapToGap = (idealRow: number): number => {
           const ctx2d = canvas.getContext('2d')
           if (!ctx2d) return idealRow
           const startRow = Math.max(0, idealRow - gapSearchPx)
-          const endRow = Math.min(canvas.height - 1, idealRow + Math.round(gapSearchPx * 0.25))
-          const bandH = endRow - startRow + 1
+          const bandH = idealRow - startRow + 1
+          if (bandH <= 0) return idealRow
           const imgData = ctx2d.getImageData(0, startRow, canvas.width, bandH)
-          // Prefer snapping upward (earlier break) so bottom margin is preserved
-          for (let d = 0; d <= gapSearchPx; d++) {
-            const row = (idealRow - startRow) - d
-            if (row < 0 || row >= bandH) continue
+          const minBand = 6 // min consecutive white rows for a valid break
+
+          let runStart = -1
+          let bestBreak = -1
+
+          for (let rel = 0; rel < bandH; rel++) {
             let whites = 0
             for (let x = 0; x < canvas.width; x++) {
-              const idx = (row * canvas.width + x) * 4
-              if (imgData.data[idx] > 240 && imgData.data[idx + 1] > 240 && imgData.data[idx + 2] > 240) whites++
+              const i = (rel * canvas.width + x) * 4
+              if (imgData.data[i] > 240 && imgData.data[i + 1] > 240 && imgData.data[i + 2] > 240) whites++
             }
-            if (whites / canvas.width >= 0.97) return startRow + row
+            if (whites / canvas.width >= 0.97) {
+              if (runStart < 0) runStart = rel
+              if (rel - runStart + 1 >= minBand) bestBreak = startRow + rel
+            } else {
+              runStart = -1
+            }
           }
-          return idealRow
+
+          return bestBreak >= 0 ? bestBreak : idealRow
         }
 
         let y = 0
