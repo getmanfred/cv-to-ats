@@ -3,25 +3,76 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-teal:        #0DA1A4;
+  --color-navy:        #092c64;
+  --color-purple-dark: #1a2744;
+  --color-gray-light:  #e5e0d8;
+  --color-bg-light:    #f0ede8;
+  --color-accent:      #7d64d6;
+  --color-neon:        #01FFC6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Print-only elements are hidden on screen */
+.print-only {
+  display: none;
+}
+
+@layer base {
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: var(--font-sans), 'Avenir', 'Montserrat', sans-serif;
+    color: #1a2744;
+    background-color: #f0ede8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading), 'Source Serif 4', Georgia, serif;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* ─── Print styles ─────────────────────────────────────────────────────────── */
+@media print {
+  /* Force exact background colors and images */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  /* Hide everything that isn't the results content */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: flex !important;
+  }
+
+  body {
+    background-color: #f0ede8 !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Remove sticky positioning from header so it doesn't overlap */
+  header {
+    position: static !important;
+  }
+
+  /* Avoid splitting cards across pages */
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Remove box shadows for cleaner print */
+  [style*="box-shadow"] {
+    box-shadow: none !important;
   }
 }

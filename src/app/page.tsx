@@ -1,101 +1,569 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import DropZone from '@/components/upload/DropZone'
+import FilePreview from '@/components/upload/FilePreview'
+import Button from '@/components/ui/Button'
+import type { ATSAnalysisResult } from '@/types/analysis'
+import { getLang } from '@/components/LanguageSelector'
+import { getHistory, clearHistory, type HistoryEntry } from '@/lib/history'
+import Header from '@/components/Header'
+
+type UploadState = 'idle' | 'uploading' | 'error'
+
+const LOADING_MESSAGES = [
+  'Revisando el alfabeto...',
+  'Copiando tu estilazo...',
+  'Leyendo tu experiencia...',
+  'Asimilando esa pedazo de trayectoria...',
+  'Consultando con los dioses de RRHH...',
+  'Contando tus logros con los dedos...',
+  'Buscando palabras clave con lupa...',
+  'Calibrando el detector de talento...',
+  'Descifrando tu letra de médico...',
+  'Impresionándome con tu perfil...',
+  'Calculando cuántos ATS has sobrevivido...',
+  'Desempolvando el diccionario de buzzwords...',
+  'Preguntándole a la IA si eres contratab\u006Ce...',
+  'Preparando el veredicto del robot reclutador...',
+  'Analizando si usas Comic Sans (esperemos que no)...',
+  'Midiendo el nivel de sufrimiento del recruiter...',
+  'Buscando el botón de "contratar ya"...',
+  'Evaluando si tu foto mola (aunque no la tengamos)...',
+  'Traduciendo tus logros al idioma corporativo...',
+  'Dándote más puntuación por el nombre chulo...',
+]
+
+const FEATURES = [
+  {
+    title: 'Análisis instantáneo',
+    desc: 'PDF o DOCX — la IA extrae todos los datos estructurados en segundos, sin formularios.',
+  },
+  {
+    title: 'Optimización ATS',
+    desc: 'Detecta si tu CV supera los filtros automáticos que usan el 98% de las empresas.',
+  },
+  {
+    title: 'Puntos de mejora',
+    desc: 'Recomendaciones concretas para aumentar tus posibilidades de entrevista.',
+  },
+]
+
+const STEPS = [
+  {
+    title: 'Sube tu CV',
+    desc: 'Arrastra o selecciona tu PDF o DOCX. Sin registro.',
+    icon: (
+      <svg className="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg>
+    ),
+  },
+  {
+    title: 'La IA lo analiza',
+    desc: 'Gemini AI procesa el CV: extrae datos, evalúa keywords y detecta puntos débiles.',
+    icon: (
+      <svg className="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Revisa el informe',
+    desc: 'Puntuación ATS, skills detectadas y recomendaciones accionables.',
+    icon: (
+      <svg className="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+]
+
+const ANALYSIS_AREAS = [
+  { title: 'Palabras clave ATS',       desc: 'Detecta si tu CV incluye los términos exactos que buscan los sistemas automáticos.' },
+  { title: 'Formato y estructura',     desc: 'Evalúa si el diseño es legible por máquinas: columnas, tablas, headers problemáticos.' },
+  { title: 'Experiencia y logros',     desc: 'Analiza la coherencia del historial, logros cuantificados y brechas temporales.' },
+  { title: 'Stack tecnológico',        desc: 'Extrae y categoriza automáticamente todas las tecnologías y herramientas.' },
+  { title: 'Nivel de seniority',       desc: 'Estima tu nivel a partir de años de experiencia, responsabilidades y vocabulario.' },
+  { title: 'Idiomas y certificaciones',desc: 'Identifica idiomas con nivel, certificaciones y formación académica relevante.' },
+]
+
+const MOCK_BARS = [
+  { label: 'Palabras clave ATS',   pct: 85, color: '#10b981' },
+  { label: 'Formato y legibilidad',pct: 90, color: '#10b981' },
+  { label: 'Experiencia y logros', pct: 72, color: '#f59e0b' },
+  { label: 'Stack tecnológico',    pct: 65, color: '#f59e0b' },
+]
+
+const MOCK_SKILLS = ['Figma', 'UX Research', 'Prototyping', 'Design Systems', 'User Testing', 'Sketch', 'Notion', 'Jira']
+
+const MOCK_IMPROVEMENTS = [
+  { type: 'warn', text: 'Añade métricas cuantificadas en tus logros — los ATS priorizan resultados medibles.' },
+  { type: 'warn', text: 'Incluye más keywords de producto: "OKRs", "roadmap", "discovery", "go-to-market".' },
+  { type: 'warn', text: 'La sección de habilidades no tiene suficiente densidad de keywords para tu seniority.' },
+  { type: 'ok',   text: 'Buen uso de verbos de acción al inicio de cada bullet point.' },
+  { type: 'ok',   text: 'Formato limpio y sin elementos que confundan a los parsers ATS.' },
+]
+
+export default function UploadPage() {
+  const router = useRouter()
+  const [state, setState] = useState<UploadState>('idle')
+  const [file, setFile] = useState<File | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string>('')
+  const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0])
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+
+  // Load history from localStorage (client-side only)
+  useEffect(() => {
+    setHistory(getHistory())
+  }, [])
+
+  useEffect(() => {
+    if (state !== 'uploading') return
+    let index = 0
+    const interval = setInterval(() => {
+      index = (index + 1) % LOADING_MESSAGES.length
+      setLoadingMsg(LOADING_MESSAGES[index])
+    }, 2200)
+    return () => clearInterval(interval)
+  }, [state])
+
+  const handleFileSelect = useCallback((selectedFile: File) => {
+    setFile(selectedFile)
+    setErrorMsg('')
+    setState('idle')
+  }, [])
+
+  const handleClear = useCallback(() => {
+    setFile(null)
+    setErrorMsg('')
+    setState('idle')
+  }, [])
+
+  const handleAnalyze = async () => {
+    if (!file) return
+    setState('uploading')
+    setLoadingMsg(LOADING_MESSAGES[0])
+    setErrorMsg('')
+    try {
+      const formData = new FormData()
+      formData.append('cv', file)
+      formData.append('lang', getLang())
+      const response = await fetch('/api/analyze', { method: 'POST', body: formData })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Error al analizar el CV.')
+      if (data._cvText) sessionStorage.setItem('atsCvText', data._cvText)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _cvText, ...result } = data
+      sessionStorage.setItem('atsResult', JSON.stringify(result as ATSAnalysisResult))
+      router.push('/results')
+    } catch (error) {
+      setState('error')
+      setErrorMsg(error instanceof Error ? error.message : 'Error inesperado. Por favor, inténtalo de nuevo.')
+    }
+  }
+
+  const handleViewHistory = (entry: HistoryEntry) => {
+    sessionStorage.setItem('atsResult', JSON.stringify(entry.result))
+    router.push('/results')
+  }
+
+  const handleClearHistory = () => {
+    clearHistory()
+    setHistory([])
+  }
+
+  const isUploading = state === 'uploading'
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen" style={{ backgroundColor: '#f0ede8' }}>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <Header />
+
+      {/* ── Hero ───────────────────────────────────────────────────────────── */}
+      <section className="bg-navy text-white py-16 px-6">
+        <div className="max-w-container mx-auto text-center">
+          <p className="font-sans font-[900] uppercase tracking-widest text-neon text-xs mb-5">
+            Herramienta Gratuita de Manfred
+          </p>
+          <h1 className="font-heading font-[900] text-4xl md:text-5xl leading-tight mb-4">
+            Analiza tu CV en segundos,
+            <br />
+            <span className="italic" style={{ color: '#01FFC6' }}>descubre tus puntos débiles</span>
+          </h1>
+          <p className="font-sans text-base text-white/70 max-w-xl mx-auto">
+            Sube un CV, detecta con IA si está optimizado para los ATS y revisa los puntos de mejora.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </section>
+
+      {/* ── Upload area ────────────────────────────────────────────────────── */}
+      <section id="upload" style={{ backgroundColor: '#f0ede8' }} className="px-6 py-12">
+        <main className="max-w-2xl mx-auto">
+
+          <DropZone onFileSelect={handleFileSelect} disabled={isUploading} />
+
+          {file && !isUploading && (
+            <div className="mt-4">
+              <FilePreview file={file} onClear={handleClear} />
+            </div>
+          )}
+
+          {state === 'error' && errorMsg && (
+            <div className="mt-4 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-red-700 font-sans text-sm">{errorMsg}</p>
+            </div>
+          )}
+
+          {isUploading && (
+            <div className="mt-6">
+              <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-white border border-gray-light">
+                <div className="flex gap-2">
+                  {[0, 1, 2].map(i => (
+                    <span
+                      key={i}
+                      className="w-2.5 h-2.5 rounded-full bg-teal"
+                      style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                    />
+                  ))}
+                </div>
+                <p
+                  key={loadingMsg}
+                  className="font-sans font-[800] text-center text-base"
+                  style={{ color: '#1a2744', animation: 'fadeIn 0.4s ease-in' }}
+                >
+                  {loadingMsg}
+                </p>
+                <p className="font-sans text-gray-400 text-xs">La IA está haciendo su magia</p>
+              </div>
+            </div>
+          )}
+
+          {!isUploading && (
+            <div className="mt-6">
+              <Button variant="primary" size="lg" disabled={!file} onClick={handleAnalyze} className="w-full">
+                Analizar mi CV
+              </Button>
+            </div>
+          )}
+
+          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-gray-400 font-sans">
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-teal" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+              </svg>
+              Tu CV no se almacena
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-teal" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Análisis en segundos
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-teal" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Exporta a PDF
+            </div>
+          </div>
+        </main>
+      </section>
+
+      {/* ── Recent history ─────────────────────────────────────────────────── */}
+      {history.length > 0 && (
+        <section style={{ backgroundColor: '#f0ede8' }} className="px-6 pb-10">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-sans font-[800] text-sm uppercase tracking-widest" style={{ color: '#1a2744' }}>
+                  Tus análisis recientes
+                </h2>
+                <p className="font-sans text-xs text-gray-400 mt-0.5">
+                  Guardados solo en este dispositivo · se borran al limpiar el navegador
+                </p>
+              </div>
+              <button
+                onClick={handleClearHistory}
+                className="font-sans text-xs text-gray-400 hover:text-red-500 transition-colors duration-200 underline underline-offset-2"
+              >
+                Borrar historial
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {history.map(entry => {
+                const scoreColor = entry.score >= 75 ? '#0DA1A4' : entry.score >= 50 ? '#f59e0b' : '#ef4444'
+                const scoreBg    = entry.score >= 75 ? '#e6f7f7' : entry.score >= 50 ? '#fffbeb' : '#fff1f2'
+                const date = new Date(entry.analyzedAt).toLocaleDateString('es-ES', {
+                  day: 'numeric', month: 'short', year: 'numeric',
+                })
+                return (
+                  <button
+                    key={entry.id}
+                    onClick={() => handleViewHistory(entry)}
+                    className="w-full bg-white rounded-xl px-5 py-4 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 text-left"
+                    style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}
+                  >
+                    {/* Score badge */}
+                    <div
+                      className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-sans font-[900] text-sm"
+                      style={{ backgroundColor: scoreBg, color: scoreColor }}
+                    >
+                      {entry.score}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-sans font-[700] text-sm" style={{ color: '#1a2744' }}>
+                        {entry.nombre || 'CV sin nombre'}
+                      </p>
+                      <p className="font-sans text-xs text-gray-400 truncate">{entry.headline}</p>
+                    </div>
+
+                    {/* Date + arrow */}
+                    <div className="flex-shrink-0 text-right">
+                      <p className="font-sans text-xs text-gray-400">{date}</p>
+                      <svg className="w-4 h-4 text-gray-300 mt-1 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Features 01/02/03 ──────────────────────────────────────────────── */}
+      <section style={{ backgroundColor: '#f0ede8' }} className="px-6 pb-16">
+        <div className="max-w-4xl mx-auto border-t border-gray-300/60">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-300/60">
+            {FEATURES.map((f, i) => (
+              <div key={i} className="py-8 md:px-8 first:pl-0 last:pr-0">
+                <p className="font-sans text-xs text-gray-400 mb-2">0{i + 1}</p>
+                <h3 className="font-heading font-[700] text-navy text-lg mb-2">{f.title}</h3>
+                <p className="font-sans text-sm leading-relaxed" style={{ color: '#6b7280' }}>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Tres pasos (navy) ──────────────────────────────────────────────── */}
+      <section style={{ backgroundColor: '#092c64' }} className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-12">
+            <p className="font-sans font-[600] text-xs uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              Proceso
+            </p>
+            <h2 className="font-heading font-[900] text-white leading-tight" style={{ fontSize: '2.8rem' }}>
+              Tres pasos,
+              <br />
+              <span className="italic" style={{ color: '#01FFC6' }}>un informe completo</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            {STEPS.map((step, i) => (
+              <div key={i} className="py-8 md:px-8 first:pl-0 last:pr-0">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
+                  style={{ border: '1px solid rgba(255,255,255,0.2)' }}
+                >
+                  {step.icon}
+                </div>
+                <h3 className="font-heading font-[700] text-white text-lg mb-2">{step.title}</h3>
+                <p className="font-sans text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Qué analiza la IA ──────────────────────────────────────────────── */}
+      <section style={{ backgroundColor: '#f0ede8' }} className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+            <div>
+              <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-3">Análisis</p>
+              <h2 className="font-heading font-[900] leading-tight" style={{ fontSize: '2.8rem', color: '#092c64' }}>
+                Qué analiza
+                <br />
+                <span className="italic" style={{ color: '#0DA1A4' }}>la IA</span>
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-gray-500 md:text-right leading-relaxed md:max-w-xs">
+              Todos los factores que determinan si tu CV llega a una persona o se queda en el filtro.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 border-t border-gray-300/60">
+            {ANALYSIS_AREAS.map((area, i) => (
+              <div
+                key={i}
+                className="py-8 md:px-8"
+                style={{
+                  borderRight: i % 3 !== 2 ? '1px solid rgba(0,0,0,0.1)' : undefined,
+                  borderBottom: i < 3 ? '1px solid rgba(0,0,0,0.1)' : undefined,
+                  paddingLeft: i % 3 === 0 ? 0 : undefined,
+                  paddingRight: i % 3 === 2 ? 0 : undefined,
+                }}
+              >
+                <p className="font-sans text-xs text-gray-400 mb-2">0{i + 1}</p>
+                <h3 className="font-heading font-[700] text-base mb-2" style={{ color: '#0DA1A4' }}>{area.title}</h3>
+                <p className="font-sans text-sm leading-relaxed" style={{ color: '#6b7280' }}>{area.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Así es tu informe (mockup) ─────────────────────────────────────── */}
+      <section style={{ backgroundColor: '#f0ede8' }} className="pb-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+            <div>
+              <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-3">Ejemplo real</p>
+              <h2 className="font-heading font-[900] leading-tight" style={{ fontSize: '2.8rem', color: '#092c64' }}>
+                Así es
+                <br />
+                <span className="italic" style={{ color: '#0DA1A4' }}>tu informe</span>
+              </h2>
+            </div>
+            <p className="font-sans text-sm text-gray-500 md:text-right leading-relaxed md:max-w-xs">
+              Un vistazo a lo que recibirás. Datos reales, recomendaciones concretas.
+            </p>
+          </div>
+
+          {/* Mock report card */}
+          <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+            {/* Card header */}
+            <div className="flex items-center justify-between px-6 py-4" style={{ backgroundColor: '#092c64' }}>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center font-sans font-[900] text-white text-sm"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+                >
+                  M
+                </div>
+                <div>
+                  <p className="font-sans font-[700] text-white text-sm">María González</p>
+                  <p className="font-sans text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>Senior Product Designer · 7 años</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="font-sans text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Puntuación ATS</p>
+                  <p className="font-sans font-[900] text-white text-2xl leading-none">78%</p>
+                </div>
+                <svg width="36" height="36" viewBox="0 0 36 36" className="-rotate-90">
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="#0DA1A4" strokeWidth="3"
+                    strokeDasharray={`${2 * Math.PI * 14}`}
+                    strokeDashoffset={`${2 * Math.PI * 14 * (1 - 0.78)}`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Card body */}
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+              {/* Left: breakdown + skills */}
+              <div className="p-6">
+                <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-4">Desglose</p>
+                <div className="space-y-3 mb-6">
+                  {MOCK_BARS.map((bar, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between mb-1">
+                        <span className="font-sans text-xs" style={{ color: '#374151' }}>{bar.label}</span>
+                        <span className="font-sans font-[600] text-xs" style={{ color: bar.color }}>{bar.pct}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${bar.pct}%`, backgroundColor: bar.color }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-3">Skills detectadas</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {MOCK_SKILLS.map(skill => (
+                    <span
+                      key={skill}
+                      className="font-sans text-xs px-2.5 py-1 rounded-full border"
+                      style={{ borderColor: '#e5e7eb', color: '#374151' }}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: improvement points */}
+              <div className="p-6">
+                <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-4">Puntos de mejora</p>
+                <div className="space-y-2">
+                  {MOCK_IMPROVEMENTS.map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2.5 p-3 rounded-lg text-sm font-sans leading-snug"
+                      style={{
+                        backgroundColor: item.type === 'warn' ? '#fffbeb' : '#f0fdf4',
+                        color: item.type === 'warn' ? '#92400e' : '#166534',
+                      }}
+                    >
+                      {item.type === 'warn' ? (
+                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#d97706' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#16a34a' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {item.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Card footer */}
+            <div
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4 gap-2"
+              style={{ borderTop: '1px solid #f3f4f6' }}
+            >
+              <p className="font-sans text-xs text-gray-400">
+                Este es un ejemplo. Tu informe se genera a partir de tu CV real.
+              </p>
+              <a
+                href="#upload"
+                className="font-sans font-[700] text-xs whitespace-nowrap hover:opacity-70 transition-opacity"
+                style={{ color: '#0DA1A4' }}
+              >
+                Sube tu CV arriba para empezar ↑
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <style jsx>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+          40% { transform: translateY(-8px); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
-  );
+  )
 }

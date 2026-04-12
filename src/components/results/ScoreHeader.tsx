@@ -1,0 +1,152 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { renderWithTerminos } from '@/lib/renderBold'
+import ExportButton from '@/components/results/ExportButton'
+import type { Metricas } from '@/types/analysis'
+
+interface ScoreHeaderProps {
+  score:             number
+  saludo:            string
+  saludoTerminos?:   string[]
+  skillsDetectadas?: string[]
+  metricas?:         Metricas
+}
+
+function getArcColor(score: number): string {
+  if (score >= 75) return '#0DA1A4'
+  if (score >= 50) return '#f59e0b'
+  return '#ef4444'
+}
+
+function getScoreLabel(score: number): { label: string; bg: string; text: string } {
+  if (score >= 75) return { label: 'Bueno',     bg: '#e6f7f7', text: '#0DA1A4' }
+  if (score >= 50) return { label: 'Mejorable', bg: '#fffbeb', text: '#d97706' }
+  return              { label: 'Crítico',    bg: '#fff1f2', text: '#e11d48' }
+}
+
+function densidadColor(d: number): string {
+  if (d >= 50) return '#10b981'
+  if (d >= 25) return '#f59e0b'
+  return '#ef4444'
+}
+
+const RADIUS = 52
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+
+export default function ScoreHeader({
+  score, saludo, saludoTerminos, skillsDetectadas, metricas,
+}: ScoreHeaderProps) {
+  const [animated, setAnimated] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 150)
+    return () => clearTimeout(t)
+  }, [])
+
+  const dashOffset = animated ? CIRCUMFERENCE * (1 - score / 100) : CIRCUMFERENCE
+  const arcColor = getArcColor(score)
+  const { label, bg, text } = getScoreLabel(score)
+
+  const hasSkills  = skillsDetectadas && skillsDetectadas.length > 0
+  const hasMetrics = metricas != null
+
+  return (
+    <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between mb-5">
+        <span className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400">
+          Compatibilidad ATS
+        </span>
+        <div className="no-print">
+          <ExportButton variant="solid" />
+        </div>
+      </div>
+
+      {/* Score circle + analysis text */}
+      <div className="flex flex-col sm:flex-row items-start gap-6">
+        <div className="flex flex-col items-center flex-shrink-0">
+          <div className="relative" style={{ width: 130, height: 130 }}>
+            <svg width="130" height="130" viewBox="0 0 130 130" className="-rotate-90">
+              <circle cx="65" cy="65" r={RADIUS} fill="none" stroke="#eef0f2" strokeWidth="8" />
+              <circle
+                cx="65" cy="65" r={RADIUS}
+                fill="none"
+                stroke={arcColor}
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={CIRCUMFERENCE}
+                strokeDashoffset={dashOffset}
+                style={{ transition: 'stroke-dashoffset 1.2s ease-in-out' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="font-sans font-[900] leading-none" style={{ fontSize: '2.5rem', color: arcColor }}>
+                {score}
+              </span>
+              <span className="font-sans text-gray-400 text-xs mt-0.5">/ 100</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <span
+            className="inline-block font-sans font-[600] text-sm px-3 py-1 rounded-full mb-3"
+            style={{ backgroundColor: bg, color: text }}
+          >
+            {label}
+          </span>
+          <p className="font-sans text-sm leading-relaxed" style={{ color: '#1a2744' }}>
+            {renderWithTerminos(saludo, saludoTerminos)}
+          </p>
+        </div>
+      </div>
+
+      {/* Metrics row */}
+      {hasMetrics && (
+        <div className="mt-5 pt-5 border-t border-gray-100 grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <p className="font-sans font-[700] text-lg" style={{ color: '#1a2744' }}>
+              {metricas!.palabras.toLocaleString('es-ES')}
+            </p>
+            <p className="font-sans text-xs text-gray-400 mt-0.5">palabras</p>
+          </div>
+          <div className="text-center border-x border-gray-100">
+            <p className="font-sans font-[700] text-lg" style={{ color: '#1a2744' }}>
+              ~{metricas!.paginasEstimadas}
+            </p>
+            <p className="font-sans text-xs text-gray-400 mt-0.5">
+              {metricas!.paginasEstimadas === 1 ? 'página' : 'páginas'}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="font-sans font-[700] text-lg" style={{ color: densidadColor(metricas!.densidadKeywords) }}>
+              {metricas!.densidadKeywords}%
+            </p>
+            <p className="font-sans text-xs text-gray-400 mt-0.5">densidad keywords</p>
+          </div>
+        </div>
+      )}
+
+      {/* Skills tags */}
+      {hasSkills && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-3">
+            Skills detectadas
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {skillsDetectadas!.map(skill => (
+              <span
+                key={skill}
+                className="font-sans text-xs px-2.5 py-1 rounded-full"
+                style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4', border: '1px solid #b2e8e8' }}
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
