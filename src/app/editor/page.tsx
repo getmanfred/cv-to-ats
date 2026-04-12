@@ -322,6 +322,31 @@ export default function EditorPage() {
         {/* ─── LEFT: Form ─── */}
         <div className="flex-1 min-w-0 space-y-4 max-w-xl">
 
+          {/* ─ Empty state nudge ─ */}
+          {!detectedCvText && !cvLoaded && !savedAt && (
+            <div className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+              style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+              <div className="flex-1 min-w-0">
+                <p className="font-sans font-[800] text-sm" style={{ color: '#1a2744' }}>
+                  ¿Tienes un CV existente?
+                </p>
+                <p className="font-sans text-xs text-gray-400 mt-0.5">
+                  Analízalo primero y lo importamos aquí automáticamente con todos los campos rellenos.
+                </p>
+              </div>
+              <a
+                href="/"
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans font-[900] text-xs uppercase tracking-wider text-white transition-all duration-200 hover:opacity-90"
+                style={{ backgroundColor: '#0DA1A4' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Analizar CV
+              </a>
+            </div>
+          )}
+
           {/* ─ CV detected banner ─ */}
           {detectedCvText && (
             <div className="rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3"

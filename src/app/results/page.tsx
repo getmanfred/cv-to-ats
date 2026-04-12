@@ -9,6 +9,7 @@ import ScoreHeader from '@/components/results/ScoreHeader'
 import SuggestionCard from '@/components/results/SuggestionCard'
 import AlertaBanner from '@/components/results/AlertaBanner'
 import ExportButton from '@/components/results/ExportButton'
+import ScrollToTop from '@/components/ScrollToTop'
 
 const PRIORITY_ORDER: Record<string, number> = { alta: 0, media: 1, baja: 2 }
 
@@ -48,6 +49,7 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f0ede8' }}>
+      <ScrollToTop />
       {/* Header — hidden on print */}
       <Header noPrint />
 
