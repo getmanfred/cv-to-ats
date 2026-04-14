@@ -15,6 +15,8 @@ interface FeedbackEntry {
   email: string | null
   pagina: string | null
   fecha: string
+  resuelto?: boolean
+  fechaResolucion?: string
 }
 
 function loadFeedback(): FeedbackEntry[] {
@@ -60,5 +62,24 @@ export async function GET() {
     return NextResponse.json(entries)
   } catch {
     return NextResponse.json([], { status: 200 })
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { id, resuelto } = await req.json()
+    if (!id) return NextResponse.json({ error: 'id requerido.' }, { status: 400 })
+
+    const entries = loadFeedback()
+    const idx = entries.findIndex(e => e.id === id)
+    if (idx === -1) return NextResponse.json({ error: 'No encontrado.' }, { status: 404 })
+
+    entries[idx].resuelto = !!resuelto
+    entries[idx].fechaResolucion = resuelto ? new Date().toISOString() : undefined
+    saveFeedback(entries)
+
+    return NextResponse.json({ ok: true, entry: entries[idx] })
+  } catch {
+    return NextResponse.json({ error: 'Error inesperado.' }, { status: 500 })
   }
 }
