@@ -8,7 +8,7 @@ if (!process.env.GEMINI_API_KEY) {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 const model = genAI.getGenerativeModel({
   model: 'gemini-3-flash-preview',
-  generationConfig: { temperature: 0 },
+  generationConfig: { temperature: 0.2 },
 })
 
 function buildPrompt(cvText: string, lang: 'es' | 'en'): string {
@@ -53,7 +53,7 @@ Required fields:
   - "suggestions": array of 2 to 4 objects with:
     - "titulo": short actionable title summarizing the improvement group in the specified language
     - "pasos": array of 2-4 objects, each with:
-      - "texto": concrete actionable step explained in 1-2 sentences in the specified language
+      - "texto": concrete actionable step explained in 1-2 sentences in the specified language. MANDATORY: each step must reference specific content from this CV — quote an actual job title, company name, skill, section name, or explicitly name what is missing and where. Never write a step that could apply to any CV.
       - "terminos": array of 1-3 exact substrings from "texto" that are the most important terms (must appear literally in "texto")
     - "prioridad": "alta", "media" or "baja" (always these exact Spanish values)
 
@@ -66,10 +66,11 @@ Required fields:
 
 - "alertasCriticas": array of strings in the specified language describing severe issues that can cause ATS parsing failures. Only include real problems detected in the text (e.g. photo detected, multiple columns, complex tables, decorative special characters, URLs with spaces). Empty array [] if no critical alerts.
 
-- "topPriorities": array of 3 concrete actions in the specified language (infinitive phrases, gender-neutral).
+- "topPriorities": array of 3 concrete actions in the specified language (infinitive phrases, gender-neutral). Each must reference something specific found (or missing) in this CV — a real section, skill, job title, or gap. Never write a priority that could apply to any CV.
 
 IMPORTANT:
-- Each suggestion must address a REAL and specific problem found in the CV. Do not include generic or trivial suggestions (e.g. "rename the file", "save as PDF") unless there is a concrete, demonstrable problem in that specific CV.
+- Each suggestion and priority must address a REAL and specific problem found in THIS CV. Do not include generic or trivial suggestions (e.g. "rename the file", "save as PDF", "add more keywords", "quantify your achievements") unless you can point to a concrete, specific instance in this CV that justifies it.
+- FORBIDDEN generic patterns — never write steps like: "Add relevant keywords to your CV", "Quantify your achievements with numbers", "Make sure your contact info is complete", "Use a clean format". If you need to make that point, tie it to something specific: which keywords are missing based on what this person does, which specific achievement could be quantified and how, which contact field is actually missing.
 - The overallScore must be reproducible: base the score on objective, measurable criteria, not subjective impressions.
 - ALL generated text (saludo, headline, summaries, suggestions, alerts, priorities) must be in the SAME language as the CV.
 
