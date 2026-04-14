@@ -1,10 +1,32 @@
 // Server-side only — never import from client components
 
+async function extractFromPDFWithOCR(buffer: Buffer): Promise<string> {
+  const { GoogleGenerativeAI } = await import('@google/generative-ai')
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', generationConfig: { temperature: 0 } })
+
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        mimeType: 'application/pdf',
+        data: buffer.toString('base64'),
+      },
+    },
+    'Extract all the text from this PDF document exactly as it appears. Return only the extracted text, no commentary.',
+  ])
+
+  return result.response.text()
+}
+
 export async function extractFromPDF(buffer: Buffer): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const pdfParse = require('pdf-parse')
   const data = await pdfParse(buffer)
-  return data.text
+
+  if (data.text.trim().length >= 100) return data.text
+
+  // Fallback: PDF is image-based (e.g. Canva exports) — use Gemini OCR
+  return extractFromPDFWithOCR(buffer)
 }
 
 export async function extractFromDOCX(buffer: Buffer): Promise<string> {
