@@ -3,10 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +19,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'El mensaje es obligatorio.' }, { status: 400 })
     }
 
-    const { error } = await supabase.from('feedback').insert({
+    const { error } = await getSupabase().from('feedback').insert({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       tipo: String(tipo || 'otro').slice(0, 50),
       mensaje: String(mensaje).trim().slice(0, 2000),
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('feedback')
       .select('*')
       .order('fecha', { ascending: false })
@@ -60,7 +62,7 @@ export async function PATCH(req: NextRequest) {
       fecha_resolucion: resuelto ? new Date().toISOString() : null,
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('feedback')
       .update(update)
       .eq('id', id)
