@@ -1,33 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs'
-import path from 'path'
+import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
-const DATA_DIR = path.join(process.cwd(), 'data')
-const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json')
-
-interface FeedbackEntry {
-  id: string
-  tipo: string
-  mensaje: string
-  nombre: string | null
-  email: string | null
-  pagina: string | null
-  fecha: string
-  resuelto?: boolean
-  fechaResolucion?: string
-}
-
-function loadFeedback(): FeedbackEntry[] {
-  if (!existsSync(FEEDBACK_FILE)) return []
-  try { return JSON.parse(readFileSync(FEEDBACK_FILE, 'utf-8')) } catch { return [] }
-}
-
-function saveFeedback(entries: FeedbackEntry[]) {
-  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true })
-  writeFileSync(FEEDBACK_FILE, JSON.stringify(entries, null, 2), 'utf-8')
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,8 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'El mensaje es obligatorio.' }, { status: 400 })
     }
 
-    const entries = loadFeedback()
-    entries.push({
+    const { error } = await supabase.from('feedback').insert({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       tipo: String(tipo || 'otro').slice(0, 50),
       mensaje: String(mensaje).trim().slice(0, 2000),
@@ -48,7 +26,8 @@ export async function POST(req: NextRequest) {
       pagina: pagina ? String(pagina).slice(0, 200) : null,
       fecha: new Date().toISOString(),
     })
-    saveFeedback(entries)
+
+    if (error) throw error
 
     return NextResponse.json({ ok: true })
   } catch {
@@ -58,8 +37,14 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    const entries = loadFeedback()
-    return NextResponse.json(entries)
+    const { data, error } = await supabase
+      .from('feedback')
+      .select('*')
+      .order('fecha', { ascending: false })
+
+    if (error) throw error
+
+    return NextResponse.json(data ?? [])
   } catch {
     return NextResponse.json([], { status: 200 })
   }
@@ -70,15 +55,21 @@ export async function PATCH(req: NextRequest) {
     const { id, resuelto } = await req.json()
     if (!id) return NextResponse.json({ error: 'id requerido.' }, { status: 400 })
 
-    const entries = loadFeedback()
-    const idx = entries.findIndex(e => e.id === id)
-    if (idx === -1) return NextResponse.json({ error: 'No encontrado.' }, { status: 404 })
+    const update: Record<string, unknown> = {
+      resuelto: !!resuelto,
+      fecha_resolucion: resuelto ? new Date().toISOString() : null,
+    }
 
-    entries[idx].resuelto = !!resuelto
-    entries[idx].fechaResolucion = resuelto ? new Date().toISOString() : undefined
-    saveFeedback(entries)
+    const { data, error } = await supabase
+      .from('feedback')
+      .update(update)
+      .eq('id', id)
+      .select()
+      .single()
 
-    return NextResponse.json({ ok: true, entry: entries[idx] })
+    if (error) throw error
+
+    return NextResponse.json({ ok: true, entry: data })
   } catch {
     return NextResponse.json({ error: 'Error inesperado.' }, { status: 500 })
   }

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.103.0",
     "canvas-confetti": "^1.9.4",
     "docx": "^9.6.1",
     "html2canvas": "^1.4.1",

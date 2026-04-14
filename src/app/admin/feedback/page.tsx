@@ -11,7 +11,7 @@ interface FeedbackEntry {
   pagina: string | null
   fecha: string
   resuelto?: boolean
-  fechaResolucion?: string
+  fecha_resolucion?: string
 }
 
 const TIPO_COLORS: Record<string, { bg: string; text: string }> = {
@@ -202,9 +202,9 @@ export default function AdminFeedbackPage() {
               <p className="font-sans text-sm leading-relaxed" style={{ color: '#1a2744' }}>
                 {entry.mensaje}
               </p>
-              {entry.resuelto && entry.fechaResolucion && (
+              {entry.resuelto && entry.fecha_resolucion && (
                 <p className="font-sans text-xs text-gray-300 mt-3">
-                  Archivado el {new Date(entry.fechaResolucion).toLocaleString('es-ES', {
+                  Archivado el {new Date(entry.fecha_resolucion).toLocaleString('es-ES', {
                     day: 'numeric', month: 'short', year: 'numeric',
                     hour: '2-digit', minute: '2-digit',
                   })}
