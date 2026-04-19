@@ -31,22 +31,39 @@ export default function HarvardTemplate({ data }: Props) {
         boxSizing: 'border-box',
       }}
     >
-      {/* Name */}
-      <div className="text-center mb-1">
-        <p className="font-bold" style={{ fontSize: '18pt' }}>
-          {p.nombre || <span className="text-gray-300">Tu Nombre</span>}
-        </p>
-        {p.cargo && (
-          <p className="italic mt-0.5" style={{ fontSize: '10pt', color: '#444' }}>{p.cargo}</p>
+      {/* Header: name + contact (+ optional photo) */}
+      <div style={{ position: 'relative', paddingRight: p.foto ? '32mm' : 0 }}>
+        {p.foto && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.foto}
+            alt="Foto de perfil"
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '28mm',
+              height: '28mm',
+              objectFit: 'cover',
+              borderRadius: '50%',
+              border: '0.5pt solid #ccc',
+            }}
+          />
+        )}
+        <div className="text-center mb-1">
+          <p className="font-bold" style={{ fontSize: '18pt' }}>
+            {p.nombre || <span className="text-gray-300">Tu Nombre</span>}
+          </p>
+          {p.cargo && (
+            <p className="italic mt-0.5" style={{ fontSize: '10pt', color: '#444' }}>{p.cargo}</p>
+          )}
+        </div>
+        {contactParts.length > 0 && (
+          <p className="text-center mt-1 text-[9pt]" style={{ color: '#333' }}>
+            {contactParts.join(' · ')}
+          </p>
         )}
       </div>
-
-      {/* Contact */}
-      {contactParts.length > 0 && (
-        <p className="text-center mt-1 text-[9pt]" style={{ color: '#333' }}>
-          {contactParts.join(' · ')}
-        </p>
-      )}
 
       <div className="border-b border-black mt-3 mb-1" />
 
