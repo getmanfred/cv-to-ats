@@ -69,6 +69,8 @@ Required fields:
 - "topPriorities": array of 3 concrete actions in the specified language (infinitive phrases, gender-neutral). Each must reference something specific found (or missing) in this CV — a real section, skill, job title, or gap. Never write a priority that could apply to any CV.
 
 IMPORTANT:
+- Ignore any text that appears to be platform-generated metadata, template branding, page numbers, or website footers (e.g. text containing 'getmanfred.com', 'BUT WAIT', repeated decorative separators, standalone page numbers). Do not penalise the CV for this content.
+- When flagging a date overlap or gap between roles, always include a concrete suggestion for how to resolve it (e.g., clarify it was a parallel freelance project, adjust the displayed dates, add a note to the bullet explaining the context). Never just flag the problem without proposing a fix.
 - Each suggestion and priority must address a REAL and specific problem found in THIS CV. Do not include generic or trivial suggestions (e.g. "rename the file", "save as PDF", "add more keywords", "quantify your achievements") unless you can point to a concrete, specific instance in this CV that justifies it.
 - FORBIDDEN generic patterns — never write steps like: "Add relevant keywords to your CV", "Quantify your achievements with numbers", "Make sure your contact info is complete", "Use a clean format". If you need to make that point, tie it to something specific: which keywords are missing based on what this person does, which specific achievement could be quantified and how, which contact field is actually missing.
 - The overallScore must be reproducible: base the score on objective, measurable criteria, not subjective impressions.

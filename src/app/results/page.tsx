@@ -140,6 +140,23 @@ export default function ResultsPage() {
             </div>
           </div>
 
+          {/* More tools discovery — hidden on print */}
+          <div className="no-print grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { href: '/match', icon: '🎯', label: 'Match con oferta', desc: 'Compara tu CV con una oferta concreta' },
+              { href: '/linkedin', icon: '💼', label: 'Analizar LinkedIn', desc: 'Optimiza tu perfil para que te encuentren' },
+              { href: '/editor', icon: '✏️', label: 'Editor Harvard', desc: 'Crea tu CV en el formato más aceptado' },
+            ].map(tool => (
+              <button key={tool.href} onClick={() => router.push(tool.href)}
+                className="text-left p-4 rounded-xl bg-white border border-gray-100 hover:border-teal hover:shadow-md transition-all duration-200"
+                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <p className="text-lg mb-1">{tool.icon}</p>
+                <p className="font-sans font-[700] text-sm text-purple-dark">{tool.label}</p>
+                <p className="font-sans text-xs text-gray-400 mt-0.5">{tool.desc}</p>
+              </button>
+            ))}
+          </div>
+
           <div className="no-print pb-4 text-center">
             <button
               onClick={() => router.push('/')}
