@@ -23,6 +23,8 @@ const LABELS = {
     addIdioma: 'Añadir idioma', addSkill: 'Añadir', addBullet: '+ Añadir punto',
     addLogro: '+ Añadir logro', skillPlaceholder: 'React, Python, SQL... (Enter para añadir)',
     preview: 'Vista previa · Plantilla Harvard',
+    foto: 'Foto de perfil', fotoHint: 'PNG o JPG · máx. 2 MB · formato cuadrado recomendado',
+    fotoRemove: 'Eliminar foto',
   },
   en: {
     personalInfo: 'Personal information', nombre: 'Full name', cargo: 'Professional title',
@@ -37,6 +39,8 @@ const LABELS = {
     addIdioma: 'Add language', addSkill: 'Add', addBullet: '+ Add bullet',
     addLogro: '+ Add achievement', skillPlaceholder: 'React, Python, SQL... (Enter to add)',
     preview: 'Preview · Harvard template',
+    foto: 'Profile photo', fotoHint: 'PNG or JPG · max. 2 MB · square format recommended',
+    fotoRemove: 'Remove photo',
   },
 }
 
@@ -732,6 +736,51 @@ export default function EditorPage() {
               <Field label={LABELS[lang].ubicacion} value={cv.personalInfo.ubicacion} onChange={v => setP('ubicacion', v)} placeholder="Madrid, España" />
               <div className="col-span-2">
                 <Field label={LABELS[lang].website} value={cv.personalInfo.website} onChange={v => setP('website', v)} placeholder="juangarcia.dev" />
+              </div>
+
+              {/* Photo upload */}
+              <div className="col-span-2">
+                <label className="block font-sans font-[600] text-xs uppercase tracking-wider text-gray-400 mb-2">
+                  {LABELS[lang].foto}
+                </label>
+                {cv.personalInfo.foto ? (
+                  <div className="flex items-center gap-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={cv.personalInfo.foto}
+                      alt="Foto de perfil"
+                      className="w-16 h-16 rounded-full object-cover border-2"
+                      style={{ borderColor: '#e5e7eb' }}
+                    />
+                    <button
+                      onClick={() => setP('foto', '')}
+                      className="font-sans text-xs text-gray-400 hover:text-red-400 transition-colors underline underline-offset-2"
+                    >
+                      {LABELS[lang].fotoRemove}
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-24 rounded-xl border-2 border-dashed cursor-pointer transition-colors duration-200 hover:border-teal hover:bg-teal/5"
+                    style={{ borderColor: '#d1d5db' }}>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        if (file.size > 2 * 1024 * 1024) return
+                        const reader = new FileReader()
+                        reader.onload = ev => setP('foto', ev.target?.result as string)
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                    <svg className="w-5 h-5 text-gray-300 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="font-sans text-xs text-gray-400">{LABELS[lang].fotoHint}</p>
+                  </label>
+                )}
               </div>
             </div>
           </Section>

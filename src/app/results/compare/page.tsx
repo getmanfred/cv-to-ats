@@ -54,7 +54,21 @@ export default function ComparePage() {
   useEffect(() => {
     const raw = sessionStorage.getItem('atsResult')
     if (!raw) { router.replace('/'); return }
-    try { setBefore(JSON.parse(raw)) } catch { router.replace('/') }
+    try {
+      setBefore(JSON.parse(raw))
+    } catch {
+      router.replace('/')
+      return
+    }
+    // If compareAfterResult is set (comparison launched from history), skip upload
+    const rawAfter = sessionStorage.getItem('compareAfterResult')
+    if (rawAfter) {
+      try {
+        setAfter(JSON.parse(rawAfter))
+        setState('done')
+      } catch { /* ignore, let user upload manually */ }
+      sessionStorage.removeItem('compareAfterResult')
+    }
   }, [router])
 
   const onDrop = useCallback((accepted: File[]) => {

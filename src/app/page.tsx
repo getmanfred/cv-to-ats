@@ -111,6 +111,117 @@ const ANALYSIS_AREAS = [
   { title: 'Idiomas y certificaciones',desc: 'Identifica idiomas con nivel, certificaciones y formación académica relevante.' },
 ]
 
+const DEMO_RESULT: ATSAnalysisResult = {
+  nombre: 'María',
+  overallScore: 72,
+  analyzedAt: '2026-01-15T10:00:00.000Z',
+  saludo: 'Hola María, tu CV alcanza un 72 sobre 100 en compatibilidad ATS. Tienes una estructura cronológica clara y las herramientas principales bien listadas. Sin embargo, la sección de habilidades carece de keywords ATS habituales en diseño de producto, y los bullets de experiencia en Empresa X no incluyen métricas de impacto cuantificadas que diferencian a candidatos senior.',
+  saludoTerminos: ['keywords ATS habituales en diseño de producto', 'métricas de impacto cuantificadas'],
+  headline: 'CV sólido con margen de mejora en keywords y logros cuantificados',
+  skillsDetectadas: ['Figma', 'UX Research', 'Design Systems', 'Prototyping', 'User Testing', 'Sketch', 'Jira', 'Notion', 'Adobe XD'],
+  metricas: { palabras: 650, paginasEstimadas: 2, densidadKeywords: 14 },
+  alertasCriticas: [],
+  topPriorities: [
+    "Añadir métricas de impacto a los proyectos de diseño en Empresa X (tasa de conversión, NPS, alcance del Design System)",
+    "Ampliar la sección de habilidades con keywords ATS como 'Design Thinking', 'Wireframing' y 'Usability Testing'",
+    "Incluir el nivel de inglés con certificación si la tienes — muchos ATS filtran por nivel mínimo de idioma",
+  ],
+  categories: [
+    {
+      category: 'Keywords y habilidades',
+      score: 65,
+      status: 'needs-work',
+      summary: 'La sección de habilidades tiene las herramientas principales pero le faltan keywords ATS habituales en diseño de producto senior.',
+      suggestions: [
+        {
+          titulo: 'Ampliar keywords en la sección de habilidades',
+          prioridad: 'alta',
+          pasos: [
+            { texto: "Añade 'Design Thinking', 'Wireframing' y 'Usability Testing' como habilidades explícitas — son las tres keywords más buscadas en ATS para roles de diseño senior y no aparecen en tu CV actual.", terminos: ['Design Thinking', 'Wireframing', 'Usability Testing'] },
+            { texto: "Incluye 'Design Systems' como habilidad independiente en la sección de skills y no solo mencionada en los bullets de experiencia, para que el parser ATS la detecte correctamente.", terminos: ['Design Systems'] },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'Formato y legibilidad ATS',
+      score: 88,
+      status: 'good',
+      summary: 'El formato es limpio, con una sola columna y sin tablas ni elementos gráficos que dificulten el parsing.',
+      suggestions: [
+        {
+          titulo: 'Ajuste menor en el título de sección',
+          prioridad: 'baja',
+          pasos: [
+            { texto: "La sección 'Sobre mí' puede renombrarse a 'Resumen Profesional' para mejorar la compatibilidad con ATS anglosajones que buscan el término 'Summary' o 'Professional Summary'.", terminos: ["Sobre mí", 'Resumen Profesional'] },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'Experiencia laboral',
+      score: 68,
+      status: 'needs-work',
+      summary: 'El historial cronológico es claro, pero los bullets de impacto en los roles más recientes son genéricos y no incluyen métricas.',
+      suggestions: [
+        {
+          titulo: 'Cuantificar logros en Empresa X',
+          prioridad: 'alta',
+          pasos: [
+            { texto: "En tu rol de Senior Product Designer en Empresa X, el bullet 'mejoré la experiencia del usuario' no aporta valor ATS ni humano — sustitúyelo por el dato real, por ejemplo '↑ 34% en tasa de conversión en el flujo de onboarding tras rediseño en Q3 2023'.", terminos: ['mejoré la experiencia del usuario', 'tasa de conversión'] },
+            { texto: "Para el proyecto del Design System en Empresa X, añade el alcance: número de componentes creados, equipos que lo usan o tiempo de diseño ahorrado — ese tipo de dato diferencia a candidatos senior en los ATS y en la criba humana.", terminos: ['Design System', 'número de componentes'] },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'Educación y certificaciones',
+      score: 78,
+      status: 'good',
+      summary: 'La formación está bien estructurada, aunque el nivel de inglés podría estar más explícito.',
+      suggestions: [
+        {
+          titulo: 'Precisar nivel de idioma',
+          prioridad: 'media',
+          pasos: [
+            { texto: "El inglés aparece sin nivel declarado — añade el nivel (B2, C1) y si tienes certificación (TOEIC, IELTS, Cambridge) inclúyela con año, ya que muchos ATS filtran candidatos por nivel mínimo de idioma.", terminos: ['nivel de inglés', 'certificación'] },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'Información de contacto',
+      score: 90,
+      status: 'good',
+      summary: 'Email, LinkedIn y ubicación presentes y bien formateados.',
+      suggestions: [
+        {
+          titulo: 'Añadir portfolio',
+          prioridad: 'baja',
+          pasos: [
+            { texto: "Para roles de diseño, un link al portfolio (Behance, portfolio web propio) en la cabecera aumenta significativamente la ratio de respuesta — si ya tienes portfolio activo, inclúyelo junto al LinkedIn.", terminos: ['portfolio', 'Behance'] },
+          ],
+        },
+      ],
+    },
+    {
+      category: 'Longitud y optimización',
+      score: 82,
+      status: 'good',
+      summary: '2 páginas bien aprovechadas, sin contenido redundante.',
+      suggestions: [
+        {
+          titulo: 'Condensar experiencia anterior a 2015',
+          prioridad: 'baja',
+          pasos: [
+            { texto: "Los roles anteriores a 2015 ocupan casi el mismo espacio que los más recientes — considera condensarlos a una línea por empresa (nombre, cargo y fechas) para dejar más espacio visible a tu experiencia actual.", terminos: ['roles anteriores a 2015'] },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
 const MOCK_BARS = [
   { label: 'Palabras clave ATS',   pct: 85, color: '#10b981' },
   { label: 'Formato y legibilidad',pct: 90, color: '#10b981' },
@@ -135,6 +246,7 @@ export default function UploadPage() {
   const [errorMsg, setErrorMsg] = useState<string>('')
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0])
   const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [compareFromId, setCompareFromId] = useState<string | null>(null)
 
   // Load history from localStorage (client-side only)
   useEffect(() => {
@@ -190,6 +302,11 @@ export default function UploadPage() {
     }
   }
 
+  const handleDemo = () => {
+    sessionStorage.setItem('atsResult', JSON.stringify(DEMO_RESULT))
+    router.push('/results')
+  }
+
   const handleViewHistory = (entry: HistoryEntry) => {
     sessionStorage.setItem('atsResult', JSON.stringify(entry.result))
     router.push('/results')
@@ -198,6 +315,23 @@ export default function UploadPage() {
   const handleClearHistory = () => {
     clearHistory()
     setHistory([])
+    setCompareFromId(null)
+  }
+
+  const handleCompareSelect = (entry: HistoryEntry) => {
+    if (!compareFromId) {
+      setCompareFromId(entry.id)
+      return
+    }
+    if (compareFromId === entry.id) {
+      setCompareFromId(null)
+      return
+    }
+    const fromEntry = history.find(e => e.id === compareFromId)
+    if (!fromEntry) { setCompareFromId(null); return }
+    sessionStorage.setItem('atsResult', JSON.stringify(fromEntry.result))
+    sessionStorage.setItem('compareAfterResult', JSON.stringify(entry.result))
+    router.push('/results/compare')
   }
 
   const isUploading = state === 'uploading'
@@ -270,10 +404,18 @@ export default function UploadPage() {
           )}
 
           {!isUploading && (
-            <div className="mt-6">
+            <div className="mt-6 space-y-3">
               <Button variant="primary" size="lg" disabled={!file} onClick={handleAnalyze} className="w-full">
                 Analizar mi CV
               </Button>
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={handleDemo}
+                  className="font-sans text-sm text-gray-400 hover:text-teal transition-colors duration-200"
+                >
+                  ¿No tienes un CV a mano? <span className="font-[700] underline underline-offset-2">Ver ejemplo de análisis →</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -321,17 +463,27 @@ export default function UploadPage() {
               </button>
             </div>
 
+            {compareFromId && (
+              <div className="mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-sans" style={{ backgroundColor: '#e6f7f7', color: '#0a7c7f' }}>
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span className="font-[700]">1 análisis seleccionado.</span> Selecciona otro para comparar, o haz clic de nuevo para cancelar.
+              </div>
+            )}
             <div className="space-y-2">
               {history.map(entry => {
                 const scoreColor = entry.score >= 75 ? '#0DA1A4' : entry.score >= 50 ? '#f59e0b' : '#ef4444'
                 const scoreBg    = entry.score >= 75 ? '#e6f7f7' : entry.score >= 50 ? '#fffbeb' : '#fff1f2'
                 const date = timeAgo(entry.analyzedAt)
+                const isSelected = compareFromId === entry.id
                 return (
-                  <button
+                  <div
                     key={entry.id}
-                    onClick={() => handleViewHistory(entry)}
-                    className="w-full bg-white rounded-xl px-5 py-4 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 text-left"
-                    style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}
+                    className="bg-white rounded-xl px-5 py-4 flex items-center gap-4 transition-shadow duration-200"
+                    style={{
+                      boxShadow: isSelected ? '0 0 0 2px #0DA1A4' : '0 1px 6px rgba(0,0,0,0.06)',
+                    }}
                   >
                     {/* Score badge */}
                     <div
@@ -341,22 +493,36 @@ export default function UploadPage() {
                       {entry.score}
                     </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
+                    {/* Info — clickable to view */}
+                    <button
+                      onClick={() => handleViewHistory(entry)}
+                      className="flex-1 min-w-0 text-left"
+                    >
                       <p className="font-sans font-[700] text-sm text-purple-dark">
                         {entry.nombre || 'CV sin nombre'}
                       </p>
                       <p className="font-sans text-xs text-gray-400 truncate">{entry.headline}</p>
-                    </div>
+                    </button>
 
-                    {/* Date + arrow */}
-                    <div className="flex-shrink-0 text-right">
-                      <p className="font-sans text-xs text-gray-400">{date}</p>
-                      <svg className="w-4 h-4 text-gray-300 mt-1 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    {/* Date */}
+                    <p className="font-sans text-xs text-gray-400 flex-shrink-0">{date}</p>
+
+                    {/* Compare button */}
+                    <button
+                      onClick={() => handleCompareSelect(entry)}
+                      title={compareFromId && !isSelected ? 'Comparar con este análisis' : isSelected ? 'Cancelar selección' : 'Seleccionar para comparar'}
+                      className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border-2 transition-all duration-150"
+                      style={{
+                        borderColor: isSelected ? '#0DA1A4' : compareFromId && !isSelected ? '#0DA1A4' : '#e5e7eb',
+                        backgroundColor: isSelected ? '#0DA1A4' : compareFromId && !isSelected ? '#e6f7f7' : 'transparent',
+                        color: isSelected ? '#ffffff' : compareFromId && !isSelected ? '#0DA1A4' : '#9ca3af',
+                      }}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 )
               })}
             </div>

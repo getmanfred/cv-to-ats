@@ -6,6 +6,7 @@ export interface PersonalInfo {
   linkedin:  string
   ubicacion: string
   website:   string
+  foto?:     string   // base64 data URL for profile photo
 }
 
 export interface ExperienciaEntry {
