@@ -74,6 +74,7 @@ export default function AdminFeedbackPage() {
   const [processing, setProcessing] = useState<string | null>(null)
   const [updatingIssue, setUpdatingIssue] = useState<number | null>(null)
   const [expandedIssue, setExpandedIssue] = useState<number | null>(null)
+  const [resueltasOpen, setResueltasOpen] = useState(false)
 
   // ── Fetch feedback ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -151,17 +152,21 @@ export default function AdminFeedbackPage() {
   const sugerencias = activos.filter(e => e.tipo === 'sugerencia').length
   const ideas       = activos.filter(e => e.tipo === 'idea').length
 
-  const issuesBug   = issues.filter(i => i.tipo === 'bug').length
-  const issuesUX    = issues.filter(i => i.tipo === 'ux').length
-  const issuesIdea  = issues.filter(i => i.tipo === 'idea').length
-  const issuesPend  = issues.filter(i => i.estado === 'pendiente').length
+  const issuesAbiertas = issues.filter(i => i.estado !== 'resuelto' && i.estado !== 'descartado')
+  const issuesResueltas = issues.filter(i => i.estado === 'resuelto' || i.estado === 'descartado')
 
-  // Grupo issues por tipo para ordenarlos: bug → ux → idea
-  const sortedIssues = [...issues].sort((a, b) => {
+  const issuesBug  = issuesAbiertas.filter(i => i.tipo === 'bug').length
+  const issuesUX   = issuesAbiertas.filter(i => i.tipo === 'ux').length
+  const issuesIdea = issuesAbiertas.filter(i => i.tipo === 'idea').length
+
+  const sortOrder = (a: Issue, b: Issue) => {
     const order = { bug: 0, ux: 1, idea: 2 }
     if (order[a.tipo] !== order[b.tipo]) return order[a.tipo] - order[b.tipo]
     return a.numero.localeCompare(b.numero, undefined, { numeric: true })
-  })
+  }
+
+  const sortedIssues         = [...issuesAbiertas].sort(sortOrder)
+  const sortedIssuesResueltas = [...issuesResueltas].sort(sortOrder)
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -205,10 +210,10 @@ export default function AdminFeedbackPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Total issues',   value: issues.length, bg: '#092c64', text: '#ffffff' },
-              { label: 'Bugs',           value: issuesBug,     bg: '#fff1f2', text: '#e11d48' },
-              { label: 'UX',             value: issuesUX,      bg: '#eff6ff', text: '#2563eb' },
-              { label: 'Ideas',          value: issuesIdea,    bg: '#e6f7f7', text: '#0DA1A4' },
+              { label: 'Pendientes', value: issuesAbiertas.length,  bg: '#092c64', text: '#ffffff' },
+              { label: 'Bugs',       value: issuesBug,               bg: '#fff1f2', text: '#e11d48' },
+              { label: 'UX',         value: issuesUX,                bg: '#eff6ff', text: '#2563eb' },
+              { label: 'Ideas',      value: issuesIdea,              bg: '#e6f7f7', text: '#0DA1A4' },
             ].map(stat => (
               <div key={stat.label} className="rounded-2xl p-5" style={{ backgroundColor: stat.bg }}>
                 <p className="font-sans font-[700] text-xs uppercase tracking-widest mb-1"
@@ -226,7 +231,7 @@ export default function AdminFeedbackPage() {
           {([
             { key: 'activo',    label: `Activos (${activos.length})` },
             { key: 'archivado', label: `Archivados (${archivados.length})` },
-            { key: 'issues',    label: `Issues (${issues.length})` },
+            { key: 'issues',    label: `Issues (${issuesAbiertas.length})` },
           ] as { key: Tab; label: string }[]).map(t => (
             <button
               key={t.key}
@@ -395,7 +400,7 @@ export default function AdminFeedbackPage() {
               style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
               <span className="text-lg">📋</span>
               <p className="font-sans text-sm text-gray-500 leading-snug">
-                <strong className="text-navy">{issuesPend} pendientes</strong> de {issues.length} issues generadas
+                <strong className="text-navy">{issuesAbiertas.length} pendientes</strong> de {issues.length} issues generadas
                 a partir del análisis de {entries.length} entradas de feedback. Asígnatelas para atacarlas una a una.
               </p>
             </div>
@@ -564,6 +569,124 @@ export default function AdminFeedbackPage() {
                 </div>
               )
             })}
+
+            {/* ── Acordeón issues resueltas ── */}
+            {sortedIssuesResueltas.length > 0 && (
+              <div className="mt-4">
+                <button
+                  onClick={() => setResueltasOpen(v => !v)}
+                  className="w-full flex items-center gap-3 py-3 px-1 group"
+                >
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#e5e0d8' }} />
+                  <span className="font-sans font-[700] text-xs uppercase tracking-widest flex items-center gap-2 flex-shrink-0"
+                    style={{ color: '#9ca3af' }}>
+                    <svg
+                      className="h-3.5 w-3.5 transition-transform"
+                      style={{ transform: resueltasOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    Issues resueltas ({sortedIssuesResueltas.length})
+                  </span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: '#e5e0d8' }} />
+                </button>
+
+                {resueltasOpen && (
+                  <div className="space-y-2 mt-3">
+                    {sortedIssuesResueltas.map(issue => {
+                      const tipoConf   = ISSUE_TIPO_COLORS[issue.tipo]
+                      const estadoConf = ESTADO_CONFIG[issue.estado]
+                      const isUpdating = updatingIssue === issue.id
+                      const isExpanded = expandedIssue === issue.id
+                      const linkedFeedback = entries.filter(e => issue.feedback_ids.includes(e.id))
+
+                      return (
+                        <div key={issue.id}
+                          className="bg-white rounded-2xl overflow-hidden"
+                          style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.04)', opacity: 0.65 }}>
+
+                          <button
+                            className="w-full text-left p-4"
+                            onClick={() => setExpandedIssue(isExpanded ? null : issue.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="font-sans font-[900] text-sm flex-shrink-0"
+                                style={{ color: tipoConf.text, minWidth: '4.5rem' }}>
+                                {issue.numero}
+                              </span>
+                              <p className="flex-1 font-sans font-[700] text-sm text-gray-400 line-through truncate">
+                                {issue.titulo}
+                              </p>
+                              <span className="font-sans font-[700] text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: estadoConf.bg, color: estadoConf.text }}>
+                                {estadoConf.label}
+                              </span>
+                              <svg
+                                className="flex-shrink-0 h-3.5 w-3.5 text-gray-300 transition-transform"
+                                style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-5 pb-5 space-y-4 border-t" style={{ borderColor: '#f0ede8' }}>
+                              <p className="font-sans text-sm leading-relaxed pt-4 text-gray-500">
+                                {issue.descripcion}
+                              </p>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400">Estado:</span>
+                                {(['pendiente', 'en_progreso', 'resuelto', 'descartado'] as Issue['estado'][]).map(est => {
+                                  const conf = ESTADO_CONFIG[est]
+                                  const isActive = issue.estado === est
+                                  return (
+                                    <button
+                                      key={est}
+                                      disabled={isUpdating}
+                                      onClick={() => updateIssueEstado(issue, est)}
+                                      className="font-sans font-[700] text-xs px-3 py-1.5 rounded-full transition-all"
+                                      style={isActive
+                                        ? { backgroundColor: conf.bg, color: conf.text, outline: `2px solid ${conf.text}`, outlineOffset: '1px' }
+                                        : { backgroundColor: '#f3f4f6', color: '#9ca3af' }}
+                                    >
+                                      {isUpdating && isActive ? '…' : conf.label}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                              {linkedFeedback.length > 0 && (
+                                <div className="space-y-2">
+                                  <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400">Feedback vinculado:</p>
+                                  {linkedFeedback.map(fb => {
+                                    const fbColors = TIPO_COLORS[fb.tipo] ?? TIPO_COLORS.otro
+                                    return (
+                                      <div key={fb.id} className="rounded-xl p-3 flex items-start gap-3"
+                                        style={{ backgroundColor: '#f9f8f6', border: '1px solid #e5e0d8' }}>
+                                        <span className="font-sans font-[700] text-xs px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5"
+                                          style={{ backgroundColor: fbColors.bg, color: fbColors.text }}>
+                                          {fb.tipo.toUpperCase()}
+                                        </span>
+                                        <div className="min-w-0">
+                                          <p className="font-sans text-xs leading-relaxed text-gray-600 line-clamp-3">{fb.mensaje}</p>
+                                          <p className="font-sans text-xs text-gray-400 mt-1">
+                                            {fb.nombre ?? 'Anónimo'}{fb.email ? ` · ${fb.email}` : ''}{fb.pagina ? ` · ${fb.pagina}` : ''}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
