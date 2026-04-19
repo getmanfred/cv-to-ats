@@ -94,8 +94,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Strip platform-generated artifacts (GetManfred and similar exporters)
+    const PLATFORM_PATTERNS = [
+      /but wait[^\n]*/gi,
+      /getmanfred\.com[^\n]*/gi,
+      /manfred[^\n]*/gi,
+      /página\s+\d+\s+de\s+\d+/gi,
+      /page\s+\d+\s+of\s+\d+/gi,
+      /^\s*\d+\s*$/gm,
+    ]
+    const cleanedCvText = PLATFORM_PATTERNS.reduce((t, re) => t.replace(re, ''), cvText).trim()
+
     const lang = (formData.get('lang') as string | null) === 'en' ? 'en' : 'es'
-    const result = await analyzeWithGemini(cvText, lang)
+    const result = await analyzeWithGemini(cleanedCvText, lang)
     result.analyzedAt = new Date().toISOString()
 
     return NextResponse.json({ ...result, _cvText: cvText })

@@ -24,6 +24,15 @@ export default function FeedbackWidget() {
     setPagina(window.location.pathname)
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
   const handleSubmit = async () => {
     if (!mensaje.trim()) { setError('Escribe tu mensaje antes de enviar.'); return }
     setSending(true)
@@ -146,11 +155,20 @@ export default function FeedbackWidget() {
                   <textarea
                     value={mensaje}
                     onChange={e => { setMensaje(e.target.value); setError('') }}
+                    onKeyDown={e => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault()
+                        handleSubmit()
+                      }
+                    }}
                     placeholder="Cuéntanos qué has encontrado, qué mejorarías o qué echas en falta..."
                     rows={4}
                     className="w-full font-sans text-sm rounded-xl border px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-teal/30 transition-all"
                     style={{ borderColor: error ? '#ef4444' : '#e5e7eb', color: '#1a2744' }}
                   />
+                  <p className="font-sans text-xs text-gray-400 mt-1">
+                    <kbd className="font-sans text-xs px-1 py-0.5 rounded border" style={{ borderColor: '#d1d5db', backgroundColor: '#f9fafb' }}>Ctrl+Enter</kbd> para enviar · <kbd className="font-sans text-xs px-1 py-0.5 rounded border" style={{ borderColor: '#d1d5db', backgroundColor: '#f9fafb' }}>Esc</kbd> para cerrar
+                  </p>
                 </div>
 
                 {/* Optional name / email */}
