@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useDropzone } from 'react-dropzone'
 import type { ATSAnalysisResult } from '@/types/analysis'
 import { getLang } from '@/components/LanguageSelector'
 import Header from '@/components/Header'
@@ -55,6 +56,21 @@ export default function ComparePage() {
     if (!raw) { router.replace('/'); return }
     try { setBefore(JSON.parse(raw)) } catch { router.replace('/') }
   }, [router])
+
+  const onDrop = useCallback((accepted: File[]) => {
+    if (accepted.length > 0) setFile(accepted[0])
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+    },
+    maxFiles: 1,
+    disabled: state === 'analyzing',
+  })
 
   const handleAnalyze = async () => {
     if (!file) return
@@ -111,30 +127,33 @@ export default function ComparePage() {
             <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400 mb-4">
               CV mejorado
             </p>
-            <label
+            <div
+              {...getRootProps()}
               className="flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed cursor-pointer transition-colors duration-200"
-              style={{ borderColor: file ? '#0DA1A4' : '#d1d5db', backgroundColor: file ? '#e6f7f7' : 'transparent' }}
+              style={{
+                borderColor: isDragReject ? '#ef4444' : isDragActive ? '#0DA1A4' : file ? '#0DA1A4' : '#d1d5db',
+                backgroundColor: isDragReject ? '#fff1f2' : isDragActive ? '#e6f7f7' : file ? '#e6f7f7' : 'transparent',
+              }}
             >
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                className="hidden"
-                onChange={e => setFile(e.target.files?.[0] ?? null)}
-              />
-              {file ? (
+              <input {...getInputProps()} />
+              {isDragReject ? (
+                <p className="font-sans font-[700] text-sm text-red-500">Formato no admitido</p>
+              ) : isDragActive ? (
+                <p className="font-sans font-[700] text-sm" style={{ color: '#0DA1A4' }}>Suelta aquí tu CV mejorado</p>
+              ) : file ? (
                 <div className="text-center">
                   <p className="font-sans font-[700] text-sm" style={{ color: '#0DA1A4' }}>{file.name}</p>
-                  <p className="font-sans text-xs text-gray-400 mt-1">Haz clic para cambiar</p>
+                  <p className="font-sans text-xs text-gray-400 mt-1">Haz clic o arrastra para cambiar</p>
                 </div>
               ) : (
                 <div className="text-center">
                   <svg className="w-6 h-6 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  <p className="font-sans text-sm text-gray-400">Sube tu CV mejorado <span className="font-[700] text-gray-500">PDF o DOCX</span></p>
+                  <p className="font-sans text-sm text-gray-400">Arrastra o haz clic · <span className="font-[700] text-gray-500">PDF o DOCX</span></p>
                 </div>
               )}
-            </label>
+            </div>
 
             {state === 'error' && (
               <div className="mt-4 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">

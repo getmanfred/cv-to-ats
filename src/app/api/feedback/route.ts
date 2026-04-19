@@ -54,12 +54,20 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { id, resuelto } = await req.json()
+    const body = await req.json()
+    const { id, resuelto, procesado } = body
     if (!id) return NextResponse.json({ error: 'id requerido.' }, { status: 400 })
 
-    const update: Record<string, unknown> = {
-      resuelto: !!resuelto,
-      fecha_resolucion: resuelto ? new Date().toISOString() : null,
+    const update: Record<string, unknown> = {}
+
+    if (typeof resuelto === 'boolean') {
+      update.resuelto = resuelto
+      update.fecha_resolucion = resuelto ? new Date().toISOString() : null
+    }
+
+    if (typeof procesado === 'boolean') {
+      update.procesado = procesado
+      update.procesado_en = procesado ? new Date().toISOString() : null
     }
 
     const { data, error } = await getSupabase()

@@ -26,6 +26,8 @@ export function saveToHistory(result: ATSAnalysisResult): void {
   if (typeof window === 'undefined') return
   try {
     const history = getHistory()
+    // Skip if this exact analysis is already in history (navigating back doesn't duplicate)
+    if (history.some(e => e.analyzedAt === result.analyzedAt)) return
     const entry: HistoryEntry = {
       id:         Date.now().toString(),
       nombre:     result.nombre || 'CV',

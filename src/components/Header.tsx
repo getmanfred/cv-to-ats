@@ -55,7 +55,7 @@ export default function Header({ noPrint = false }: HeaderProps) {
               {link.label}
             </a>
           ))}
-          <LanguageSelector />
+          <LanguageSelector showHint />
           <button
             onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login' }}
             className="font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
@@ -66,9 +66,8 @@ export default function Header({ noPrint = false }: HeaderProps) {
           </button>
         </nav>
 
-        {/* Mobile: lang + hamburger */}
-        <div className="flex sm:hidden items-center gap-1">
-          <LanguageSelector />
+        {/* Mobile: only hamburger — language goes inside the dropdown */}
+        <div className="flex sm:hidden items-center">
           <button
             onClick={() => setMenuOpen(v => !v)}
             className="p-2 rounded-lg transition-colors duration-200"
@@ -104,6 +103,11 @@ export default function Header({ noPrint = false }: HeaderProps) {
               {link.label}
             </a>
           ))}
+          {/* Language selector inside mobile menu */}
+          <div className="px-3 py-3 flex items-center gap-3">
+            <span className="font-sans font-[700] text-xs uppercase tracking-wider text-gray-400">Idioma</span>
+            <LanguageSelector showHint />
+          </div>
           <button
             onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login' }}
             className="flex w-full items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"

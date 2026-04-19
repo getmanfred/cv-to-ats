@@ -73,6 +73,10 @@ export default function MatchResultsPage() {
       }
       formData.append('lang', getLang())
       const response = await fetch('/api/match', { method: 'POST', body: formData })
+      const ct = response.headers.get('content-type') ?? ''
+      if (!ct.includes('application/json')) {
+        throw new Error('El servicio no está disponible en este momento. Inténtalo de nuevo en unos segundos.')
+      }
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Error al analizar el match.')
       sessionStorage.setItem('matchResult', JSON.stringify(data as MatchResult))
