@@ -35,9 +35,9 @@ export default function HarvardTemplate({ data }: { data: CVData }) {
   const firstName = nameParts.length > 2
     ? nameParts.slice(0, -2).join(' ')
     : (nameParts.length === 2 ? nameParts[0] : '')
-  const lastNames = nameParts.length > 1
+  const lastNames = nameParts.length > 2
     ? nameParts.slice(-2).join(' ')
-    : (nameParts[0] || '')
+    : (nameParts.length === 2 ? nameParts[1] : (nameParts[0] || ''))
 
   const contactParts = [p.email, p.telefono, p.ubicacion, p.linkedin, p.website].filter(Boolean)
   const hasSkills = SKILL_ROWS.some(r => habilidades[r.key].length > 0)

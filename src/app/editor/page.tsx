@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import type { CVData, ExperienciaEntry, EducacionEntry, IdiomaEntry, ProyectoEntry, SkillCategories } from '@/types/cv'
 import type { ATSAnalysisResult, Suggestion } from '@/types/analysis'
 import Header from '@/components/Header'
-import { EMPTY_CV, DEMO_CV } from '@/types/cv'
+import { DEMO_CV } from '@/types/cv'
 import { exportToMarkdown } from '@/lib/export-markdown'
 import { getLang } from '@/components/LanguageSelector'
 
@@ -143,7 +143,6 @@ function wordCount(cv: CVData): number {
 export default function EditorPage() {
   const [cv, setCv] = useState<CVData>(DEMO_CV)
   const [showPreview, setShowPreview] = useState(false)
-  const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [lang, setLang] = useState<'es' | 'en'>('es')
@@ -164,9 +163,10 @@ export default function EditorPage() {
     if (draft) {
       try {
         const parsed = JSON.parse(draft) as CVData
-        // Migrate legacy flat habilidades array → SkillCategories
+        // Migrate legacy flat habilidades array → SkillCategories (put all in tools as catch-all)
         if (Array.isArray(parsed.habilidades)) {
-          parsed.habilidades = { languages: parsed.habilidades as unknown as string[], frameworks: [], databases: [], tools: [], practices: [] }
+          const flat = parsed.habilidades as unknown as string[]
+          parsed.habilidades = { languages: [], frameworks: [], databases: [], tools: flat, practices: [] }
         }
         if (!parsed.proyectos) parsed.proyectos = []
         setCv(parsed)
@@ -360,9 +360,9 @@ export default function EditorPage() {
       const pdfFirstName = nameParts.length > 2
         ? nameParts.slice(0, -2).join(' ')
         : (nameParts.length === 2 ? nameParts[0] : '')
-      const pdfLastNames = nameParts.length > 1
+      const pdfLastNames = nameParts.length > 2
         ? nameParts.slice(-2).join(' ')
-        : (nameParts[0] || '')
+        : (nameParts.length === 2 ? nameParts[1] : (nameParts[0] || ''))
 
       if (pdfFirstName && pdfLastNames) {
         normal(18)
@@ -521,16 +521,6 @@ export default function EditorPage() {
       pdf.save(`${nombre.replace(/\s+/g, '_').toLowerCase()}_cv.pdf`)
     } finally {
       setExportingPdf(false)
-    }
-  }
-
-  const handleDocxExport = async () => {
-    setExportingDocx(true)
-    try {
-      const { exportToDocx } = await import('@/lib/export-docx')
-      await exportToDocx(cv)
-    } finally {
-      setExportingDocx(false)
     }
   }
 
@@ -755,17 +745,6 @@ export default function EditorPage() {
 
           {/* Export buttons */}
           <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={handleDocxExport}
-              disabled={exportingDocx}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans font-[900] text-xs uppercase tracking-wider text-white transition-all duration-300 disabled:opacity-60 hover:opacity-80"
-              style={{ backgroundColor: '#092c64' }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {exportingDocx ? 'Generando...' : 'Descargar DOCX'}
-            </button>
             <button
               onClick={handlePdfExport}
               disabled={exportingPdf}
