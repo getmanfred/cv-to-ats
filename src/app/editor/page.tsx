@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useCallback, useEffect } from 'react'
 import dynamic from 'next/dynamic'
@@ -302,9 +302,9 @@ export default function EditorPage() {
       const need = (mm: number) => { if (y + mm > H - mB) newPage() }
 
       // Font shorthand helpers
-      const bold   = (n = 10) => { pdf.setFont('times', 'bold');   pdf.setFontSize(n) }
-      const normal = (n = 10) => { pdf.setFont('times', 'normal'); pdf.setFontSize(n) }
-      const italic = (n = 10) => { pdf.setFont('times', 'italic'); pdf.setFontSize(n) }
+      const bold   = (n = 10) => { pdf.setFont('helvetica', 'bold');   pdf.setFontSize(n) }
+      const normal = (n = 10) => { pdf.setFont('helvetica', 'normal'); pdf.setFontSize(n) }
+      const italic = (n = 10) => { pdf.setFont('helvetica', 'oblique'); pdf.setFontSize(n) }
 
       // Renders wrapped text at current y; advances y by the block height
       const textBlock = (text: string, x: number, maxW: number, lh = LH) => {
@@ -350,38 +350,42 @@ export default function EditorPage() {
       pdf.line(mL, y, W - mR, y)
       y += 5
 
+      const pdfL = lang === 'en'
+        ? { summary: 'Summary', skills: 'Skills', experience: 'Experience', education: 'Education', languages: 'Languages', present: 'Present' }
+        : { summary: 'Resumen', skills: 'Habilidades', experience: 'Experiencia', education: 'Educación', languages: 'Idiomas', present: 'Presente' }
+
       // ── Resumen ───────────────────────────────────────────────────
       if (cv.resumen) {
-        sectionHeader('Resumen')
+        sectionHeader(pdfL.summary)
         normal(10)
         textBlock(cv.resumen, mL, cW)
         y += 2
       }
 
+      // ── Habilidades ───────────────────────────────────────────────
+      if (cv.habilidades.length > 0) {
+        sectionHeader(pdfL.skills)
+        normal(10)
+        textBlock(cv.habilidades.join(', '), mL, cW)
+        y += 2
+      }
+
       // ── Experiencia ───────────────────────────────────────────────
       if (cv.experiencia.length > 0) {
-        sectionHeader('Experiencia')
+        sectionHeader(pdfL.experience)
         for (const exp of cv.experiencia) {
           const period = exp.actual
-            ? `${exp.fechaInicio} \u2013 Presente`
+            ? `${exp.fechaInicio} \u2013 ${pdfL.present}`
             : `${exp.fechaInicio} \u2013 ${exp.fechaFin}`
           need(LH + 2)
 
-          // Cargo + empresa (left) · period (right) on the same baseline
           bold(10)
-          const label = exp.cargo + (exp.empresa ? ` \u2014 ${exp.empresa}` : '')
-          pdf.text(label, mL, y)
-          italic(9)
+          pdf.text(exp.cargo, mL, y)
+          normal(9)
           pdf.text(period, W - mR, y, { align: 'right' })
           y += LH
-
-          if (exp.ubicacion) {
-            italic(9)
-            pdf.text(exp.ubicacion, mL, y)
-            y += LH9
-          }
-
-          normal(10)
+          const meta = [exp.empresa, exp.ubicacion].filter(Boolean).join(' · ')
+          if (meta) { normal(9); pdf.text(meta, mL, y); y += LH9 }
           for (const b of exp.bullets.filter(Boolean)) {
             const lines = pdf.splitTextToSize(b, cW - 4)
             need(lines.length * LH)
@@ -395,7 +399,7 @@ export default function EditorPage() {
 
       // ── Educación ─────────────────────────────────────────────────
       if (cv.educacion.length > 0) {
-        sectionHeader('Educaci\u00f3n')
+        sectionHeader(pdfL.education)
         for (const edu of cv.educacion) {
           const period = `${edu.fechaInicio} \u2013 ${edu.fechaFin}`
           const degree = [edu.titulo, edu.campo].filter(Boolean).join(', ')
@@ -403,12 +407,12 @@ export default function EditorPage() {
 
           bold(10)
           pdf.text(degree || 'T\u00edtulo', mL, y)
-          italic(9)
+          normal(9)
           pdf.text(period, W - mR, y, { align: 'right' })
           y += LH
 
           if (edu.institucion) {
-            italic(9)
+            normal(9)
             pdf.text(edu.institucion, mL, y)
             y += LH9
           }
@@ -425,30 +429,22 @@ export default function EditorPage() {
         }
       }
 
-      // ── Habilidades ───────────────────────────────────────────────
-      if (cv.habilidades.length > 0) {
-        sectionHeader('Habilidades')
-        normal(10)
-        textBlock(cv.habilidades.join(' \u00b7 '), mL, cW)
-        y += 2
-      }
-
       // ── Idiomas ───────────────────────────────────────────────────
       if (cv.idiomas.length > 0) {
-        sectionHeader('Idiomas')
-        for (const lang of cv.idiomas) {
+        sectionHeader(pdfL.languages)
+        for (const idioma of cv.idiomas) {
           need(LH)
           bold(10)
-          const prefix = `${lang.idioma}: `
+          const prefix = `${idioma.idioma}: `
           pdf.text(prefix, mL, y)
           normal(10)
-          pdf.text(lang.nivel, mL + pdf.getTextWidth(prefix), y)
+          pdf.text(idioma.nivel, mL + pdf.getTextWidth(prefix), y)
           y += LH
         }
       }
 
       const nombre = cv.personalInfo.nombre || 'cv'
-      pdf.save(`${nombre.replace(/\s+/g, '_').toLowerCase()}_harvard.pdf`)
+      pdf.save(`${nombre.replace(/\s+/g, '_').toLowerCase()}_cv.pdf`)
     } finally {
       setExportingPdf(false)
     }
@@ -477,11 +473,23 @@ export default function EditorPage() {
           </p>
           <h1 className="font-heading font-[900] text-4xl md:text-5xl leading-tight mb-3">
             Editor de CV
-            <br />
-            <span className="italic" style={{ color: '#01FFC6' }}>estilo Harvard</span>
           </h1>
           <p className="font-sans text-base text-white/70 max-w-xl mx-auto">
             Crea tu CV en el formato más aceptado por los ATS. Exporta a DOCX, PDF o Markdown.
+          </p>
+          <p className="font-sans text-xs mt-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            Plantilla basada en el CV de{' '}
+            <a href="https://newsletter.danielblanco.dev/p/17-como-llevar-tu-cv-al-siguiente"
+               target="_blank" rel="noopener noreferrer"
+               className="underline hover:text-white/60 transition-colors">
+              Daniel Blanco
+            </a>
+            {' · '}
+            <a href="https://github.com/danielblanco96/resume-public"
+               target="_blank" rel="noopener noreferrer"
+               className="underline hover:text-white/60 transition-colors">
+              GitHub
+            </a>
           </p>
         </div>
       </section>
@@ -970,7 +978,7 @@ export default function EditorPage() {
             {LABELS[lang].preview}
           </p>
           <div style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden' }}>
-            <HarvardTemplate data={cv} />
+            <HarvardTemplate data={cv} lang={lang} />
           </div>
         </div>
 
@@ -995,7 +1003,7 @@ export default function EditorPage() {
         <div className="lg:hidden fixed inset-0 z-30 bg-black/50 overflow-auto p-4"
           onClick={() => setShowPreview(false)}>
           <div onClick={e => e.stopPropagation()} className="max-w-full overflow-x-auto">
-            <HarvardTemplate data={cv} />
+            <HarvardTemplate data={cv} lang={lang} />
           </div>
         </div>
       )}
