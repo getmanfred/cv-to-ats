@@ -7,7 +7,6 @@ import LanguageSelector from './LanguageSelector'
 const NAV_LINKS = [
   { href: '/',          label: 'Analizar CV' },
   { href: '/match',     label: 'Match con oferta' },
-  { href: '/linkedin',  label: 'Analizar LinkedIn' },
   { href: '/editor',    label: 'Editor CV' },
 ]
 
