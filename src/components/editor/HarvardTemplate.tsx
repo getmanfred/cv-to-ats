@@ -1,12 +1,5 @@
 import type { CVData, SkillCategories } from '@/types/cv'
-
-const SKILL_ROWS: { key: keyof SkillCategories; label: string }[] = [
-  { key: 'languages',  label: 'Languages' },
-  { key: 'frameworks', label: 'Frameworks' },
-  { key: 'databases',  label: 'Databases' },
-  { key: 'tools',      label: 'Technologies / Tools' },
-  { key: 'practices',  label: 'Practices' },
-]
+import { CV_TEMPLATE_LABELS, type CvLang } from '@/lib/cv-labels'
 
 function SectionHeader({ title }: { title: string }) {
   return (
@@ -27,8 +20,17 @@ function SectionHeader({ title }: { title: string }) {
   )
 }
 
-export default function HarvardTemplate({ data }: { data: CVData }) {
+export default function HarvardTemplate({ data, lang = 'en', id = 'harvard-template' }: { data: CVData; lang?: CvLang; id?: string }) {
   const { personalInfo: p, experiencia, proyectos, educacion, habilidades, idiomas } = data
+  const L = CV_TEMPLATE_LABELS[lang]
+
+  const SKILL_ROWS: { key: keyof SkillCategories; label: string }[] = [
+    { key: 'languages',  label: L.skillRows.languages },
+    { key: 'frameworks', label: L.skillRows.frameworks },
+    { key: 'databases',  label: L.skillRows.databases },
+    { key: 'tools',      label: L.skillRows.tools },
+    { key: 'practices',  label: L.skillRows.practices },
+  ]
 
   // Last 2 words → bold surnames; everything before → light given name(s)
   const nameParts = (p.nombre || '').trim().split(/\s+/)
@@ -44,7 +46,7 @@ export default function HarvardTemplate({ data }: { data: CVData }) {
 
   return (
     <div
-      id="harvard-template"
+      id={id}
       className="bg-white text-black"
       style={{
         width: '210mm',
@@ -99,8 +101,8 @@ export default function HarvardTemplate({ data }: { data: CVData }) {
 
       {/* Skills */}
       {hasSkills && (
-        <section aria-label="Skills">
-          <SectionHeader title="Skills" />
+        <section aria-label={L.skills}>
+          <SectionHeader title={L.skills} />
           <div style={{ fontSize: '9.5pt', lineHeight: '1.7' }}>
             {SKILL_ROWS.map(({ key, label }) =>
               habilidades[key].length > 0 && (
@@ -116,11 +118,11 @@ export default function HarvardTemplate({ data }: { data: CVData }) {
 
       {/* Experience */}
       {experiencia.length > 0 && (
-        <section aria-label="Experience">
-          <SectionHeader title="Experience" />
+        <section aria-label={L.experience}>
+          <SectionHeader title={L.experience} />
           {experiencia.map(exp => {
             const period = exp.actual
-              ? `${exp.fechaInicio} – Present`
+              ? `${exp.fechaInicio} – ${L.present}`
               : `${exp.fechaInicio} – ${exp.fechaFin}`
             const roleMeta = [exp.cargo, exp.ubicacion].filter(Boolean).join(' · ')
             return (
@@ -150,8 +152,8 @@ export default function HarvardTemplate({ data }: { data: CVData }) {
 
       {/* Projects */}
       {proyectos.length > 0 && (
-        <section aria-label="Projects">
-          <SectionHeader title="Projects" />
+        <section aria-label={L.projects}>
+          <SectionHeader title={L.projects} />
           {proyectos.map(proj => (
             <div key={proj.id} style={{ marginBottom: '8pt', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -170,8 +172,8 @@ export default function HarvardTemplate({ data }: { data: CVData }) {
 
       {/* Education */}
       {educacion.length > 0 && (
-        <section aria-label="Education">
-          <SectionHeader title="Education" />
+        <section aria-label={L.education}>
+          <SectionHeader title={L.education} />
           {educacion.map(edu => {
             const period = `${edu.fechaInicio} – ${edu.fechaFin}`
             const degree = [edu.titulo, edu.campo].filter(Boolean).join(', ')
@@ -204,8 +206,8 @@ export default function HarvardTemplate({ data }: { data: CVData }) {
 
       {/* Languages (spoken) */}
       {idiomas.length > 0 && (
-        <section aria-label="Languages">
-          <SectionHeader title="Languages" />
+        <section aria-label={L.languages}>
+          <SectionHeader title={L.languages} />
           <p style={{ fontSize: '9.5pt', lineHeight: '1.6', margin: 0 }}>
             {idiomas.map(l => `${l.idioma}: ${l.nivel}`).join('  ·  ')}
           </p>

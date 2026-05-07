@@ -8,7 +8,7 @@ import Header from '@/components/Header'
 import { DEMO_CV } from '@/types/cv'
 import { exportToMarkdown } from '@/lib/export-markdown'
 import { getLang, type Lang } from '@/components/LanguageSelector'
-import { CV_TEMPLATE_LABELS, type CvLang } from '@/lib/cv-labels'
+import { type CvLang } from '@/lib/cv-labels'
 
 const LABELS = {
   es: {
@@ -408,207 +408,54 @@ export default function EditorPage() {
   // ─ PDF Export ─
   const handlePdfExport = async () => {
     setExportingPdf(true)
-    const cvL = CV_TEMPLATE_LABELS[cvLang]
     const cvToExport = translatedCv[cvLang] ?? cv
+    const nombre = cvToExport.personalInfo.nombre || 'cv'
     try {
-      const { jsPDF } = await import('jspdf')
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
 
-      const W = 210, H = 297
-      const mL = 20, mR = 20, mT = 18, mB = 20
-      const cW = W - mL - mR
-      const LH = 5
-      const LH9 = 4.5
+      const element = document.getElementById('harvard-pdf-source')
+      if (!element) throw new Error('Template not found')
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
+
+      const W = 210
+      const H = 297
+      const pxPerMm = canvas.width / W
+      const pageHeightPx = H * pxPerMm
+      const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx))
 
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      let y = mT
 
-      const newPage = () => { pdf.addPage(); y = mT }
-      const need = (mm: number) => { if (y + mm > H - mB) newPage() }
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage()
 
-      const bold   = (n = 10) => { pdf.setFont('helvetica', 'bold');    pdf.setFontSize(n) }
-      const normal = (n = 10) => { pdf.setFont('helvetica', 'normal');  pdf.setFontSize(n) }
-      const italic = (n = 10) => { pdf.setFont('helvetica', 'oblique'); pdf.setFontSize(n) }
+        const srcY = page * pageHeightPx
+        const srcH = Math.min(pageHeightPx, canvas.height - srcY)
 
-      const textBlock = (text: string, x: number, maxW: number, lh = LH) => {
-        const lines = pdf.splitTextToSize(text, maxW)
-        need(lines.length * lh)
-        pdf.text(lines, x, y)
-        y += lines.length * lh
+        const pageCanvas = document.createElement('canvas')
+        pageCanvas.width = canvas.width
+        pageCanvas.height = srcH
+        const ctx = pageCanvas.getContext('2d')!
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH)
+
+        pdf.addImage(
+          pageCanvas.toDataURL('image/jpeg', 0.95),
+          'JPEG',
+          0, 0,
+          W, srcH / pxPerMm,
+        )
       }
 
-      const sectionHeader = (title: string) => {
-        need(12)
-        bold(11)
-        pdf.text(title.toUpperCase(), mL, y)
-        y += 1.5
-        pdf.setLineWidth(0.3)
-        pdf.line(mL, y, W - mR, y)
-        y += 4
-      }
-
-      // ── Name ──────────────────────────────────────────────────────
-      const nameParts = (cvToExport.personalInfo.nombre || '').trim().split(/\s+/)
-      const pdfFirstName = nameParts.length > 2
-        ? nameParts.slice(0, -2).join(' ')
-        : (nameParts.length === 2 ? nameParts[0] : '')
-      const pdfLastNames = nameParts.length > 2
-        ? nameParts.slice(-2).join(' ')
-        : (nameParts.length === 2 ? nameParts[1] : (nameParts[0] || ''))
-
-      if (pdfFirstName && pdfLastNames) {
-        normal(18)
-        const fnW = pdf.getTextWidth(pdfFirstName + ' ')
-        bold(18)
-        const lnW = pdf.getTextWidth(pdfLastNames)
-        const startX = W / 2 - (fnW + lnW) / 2
-        normal(18)
-        pdf.text(pdfFirstName + ' ', startX, y)
-        bold(18)
-        pdf.text(pdfLastNames, startX + fnW, y)
-      } else {
-        bold(18)
-        pdf.text(pdfLastNames || cvToExport.personalInfo.nombre || '', W / 2, y, { align: 'center' })
-      }
-      y += 8
-
-      if (cvToExport.personalInfo.cargo) {
-        italic(10)
-        pdf.text(cvToExport.personalInfo.cargo, W / 2, y, { align: 'center' })
-        y += 5
-      }
-
-      const contact = [
-        cvToExport.personalInfo.email, cvToExport.personalInfo.telefono,
-        cvToExport.personalInfo.linkedin, cvToExport.personalInfo.ubicacion, cvToExport.personalInfo.website,
-      ].filter(Boolean)
-      if (contact.length) {
-        normal(9)
-        pdf.text(contact.join(' · '), W / 2, y, { align: 'center' })
-        y += 5
-      }
-
-      pdf.setLineWidth(0.3)
-      pdf.line(mL, y, W - mR, y)
-      y += 5
-
-      // ── Skills ────────────────────────────────────────────────────
-      const skillRows = [
-        { label: cvL.skillRows.languages,  items: cvToExport.habilidades.languages },
-        { label: cvL.skillRows.frameworks, items: cvToExport.habilidades.frameworks },
-        { label: cvL.skillRows.databases,  items: cvToExport.habilidades.databases },
-        { label: cvL.skillRows.tools,      items: cvToExport.habilidades.tools },
-        { label: cvL.skillRows.practices,  items: cvToExport.habilidades.practices },
-      ].filter(r => r.items.length > 0)
-
-      if (skillRows.length > 0) {
-        sectionHeader(cvL.skills)
-        for (const row of skillRows) {
-          need(LH9)
-          bold(9.5)
-          const prefix = `${row.label}: `
-          const prefixW = pdf.getTextWidth(prefix)
-          pdf.text(prefix, mL, y)
-          normal(9.5)
-          const valueText = row.items.join(', ')
-          const valueLines = pdf.splitTextToSize(valueText, cW - prefixW)
-          pdf.text(valueLines[0], mL + prefixW, y)
-          y += LH9
-          for (let i = 1; i < valueLines.length; i++) {
-            need(LH9)
-            pdf.text(valueLines[i], mL + prefixW, y)
-            y += LH9
-          }
-        }
-        y += 2
-      }
-
-      // ── Experience ────────────────────────────────────────────────
-      if (cvToExport.experiencia.length > 0) {
-        sectionHeader(cvL.experience)
-        for (const exp of cvToExport.experiencia) {
-          const period = exp.actual
-            ? `${exp.fechaInicio} – ${cvL.present}`
-            : `${exp.fechaInicio} – ${exp.fechaFin}`
-          need(LH + 2)
-          bold(10)
-          pdf.text(exp.empresa || '', mL, y)
-          normal(9)
-          pdf.text(period, W - mR, y, { align: 'right' })
-          y += LH
-          const roleMeta = [exp.cargo, exp.ubicacion].filter(Boolean).join(' · ')
-          if (roleMeta) { italic(9); pdf.text(roleMeta, mL, y); y += LH9 }
-          normal(10)
-          for (const b of exp.bullets.filter(Boolean)) {
-            const lines = pdf.splitTextToSize(b, cW - 4)
-            need(lines.length * LH)
-            pdf.text('•', mL, y)
-            pdf.text(lines, mL + 4, y)
-            y += lines.length * LH
-          }
-          y += 2
-        }
-      }
-
-      // ── Projects ──────────────────────────────────────────────────
-      if (cvToExport.proyectos.length > 0) {
-        sectionHeader(cvL.projects)
-        for (const proj of cvToExport.proyectos) {
-          need(LH + 2)
-          bold(10)
-          pdf.text(proj.nombre || '', mL, y)
-          if (proj.url) {
-            normal(8.5)
-            pdf.text(proj.url, W - mR, y, { align: 'right' })
-          }
-          y += LH
-          if (proj.descripcion) {
-            normal(10)
-            textBlock(proj.descripcion, mL, cW)
-          }
-          y += 2
-        }
-      }
-
-      // ── Education ─────────────────────────────────────────────────
-      if (cvToExport.educacion.length > 0) {
-        sectionHeader(cvL.education)
-        for (const edu of cvToExport.educacion) {
-          const period = `${edu.fechaInicio} – ${edu.fechaFin}`
-          const degree = [edu.titulo, edu.campo].filter(Boolean).join(', ')
-          need(LH + 2)
-          bold(10)
-          pdf.text(edu.institucion || '', mL, y)
-          normal(9)
-          pdf.text(period, W - mR, y, { align: 'right' })
-          y += LH
-          if (degree) { italic(9); pdf.text(degree, mL, y); y += LH9 }
-          normal(10)
-          for (const l of edu.logros.filter(Boolean)) {
-            const lines = pdf.splitTextToSize(l, cW - 4)
-            need(lines.length * LH)
-            pdf.text('•', mL, y)
-            pdf.text(lines, mL + 4, y)
-            y += lines.length * LH
-          }
-          y += 2
-        }
-      }
-
-      // ── Languages (spoken) ────────────────────────────────────────
-      if (cvToExport.idiomas.length > 0) {
-        sectionHeader(cvL.languages)
-        for (const idioma of cvToExport.idiomas) {
-          need(LH)
-          bold(10)
-          const prefix = `${idioma.idioma}: `
-          pdf.text(prefix, mL, y)
-          normal(10)
-          pdf.text(idioma.nivel, mL + pdf.getTextWidth(prefix), y)
-          y += LH
-        }
-      }
-
-      const nombre = cvToExport.personalInfo.nombre || 'cv'
       pdf.save(`${nombre.replace(/\s+/g, '_').toLowerCase()}_cv.pdf`)
     } finally {
       setExportingPdf(false)
@@ -1238,6 +1085,11 @@ export default function EditorPage() {
           </div>
         </div>
       )}
+
+      {/* Off-screen template — always rendered, used as html2canvas capture source */}
+      <div aria-hidden="true" style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1, pointerEvents: 'none', width: '210mm' }}>
+        <HarvardTemplate id="harvard-pdf-source" data={translatedCv[cvLang] ?? cv} lang={cvLang} />
+      </div>
 
     </div>
   )
