@@ -148,13 +148,23 @@ export default function LinkedInPage() {
             </a>
           </div>
 
+          {/* Critical warning */}
+          <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg" style={{ backgroundColor: '#fef3c7', border: '1px solid #fde68a' }}>
+            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#b45309' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <p className="font-sans text-xs" style={{ color: '#92400e' }}>
+              <strong>Antes de copiar, despliega todas las secciones.</strong> LinkedIn oculta parte del contenido detrás de botones «ver más» — si no los pulsas, el análisis será incompleto.
+            </p>
+          </div>
+
           <ol className="space-y-3">
             {/* Step 1 */}
             <li className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-sans font-[700] text-xs mt-0.5" style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4' }}>1</span>
-              <div>
+              <div className="space-y-1">
                 <p className="font-sans text-sm" style={{ color: '#1a2744' }}>
-                  Abre tu perfil de LinkedIn y <strong>haz scroll hasta el final</strong> para que toda la página cargue
+                  Abre tu perfil y <strong>haz scroll hasta el final</strong>. Luego <strong>pulsa todos los botones «ver más»</strong> que veas en Experiencia, Resumen, Habilidades y cualquier otra sección
                 </p>
               </div>
             </li>

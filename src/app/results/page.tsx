@@ -143,8 +143,6 @@ export default function ResultsPage() {
           {/* More tools discovery — hidden on print */}
           <div className="no-print grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { href: '/match', icon: '🎯', label: 'Match con oferta', desc: 'Compara tu CV con una oferta concreta' },
-              { href: '/linkedin', icon: '💼', label: 'Analizar LinkedIn', desc: 'Optimiza tu perfil para que te encuentren' },
               { href: '/editor', icon: '✏️', label: 'Editor Harvard', desc: 'Crea tu CV en el formato más aceptado' },
             ].map(tool => (
               <button key={tool.href} onClick={() => router.push(tool.href)}

@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '@/lib/supabase'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
-function getSupabase() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
-
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req)
+  const { allowed, retryAfter } = checkRateLimit(`feedback:${ip}`, 5)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas solicitudes. Por favor, espera un momento.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+    )
+  }
+
   try {
     const body = await req.json()
     const { tipo, mensaje, nombre, email, pagina } = body
@@ -43,6 +46,7 @@ export async function GET() {
       .from('feedback')
       .select('*')
       .order('fecha', { ascending: false })
+      .limit(500)
 
     if (error) throw error
 

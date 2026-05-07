@@ -2,46 +2,107 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import type { CVData, ExperienciaEntry, EducacionEntry, IdiomaEntry } from '@/types/cv'
+import type { CVData, ExperienciaEntry, EducacionEntry, IdiomaEntry, ProyectoEntry, SkillCategories } from '@/types/cv'
 import type { ATSAnalysisResult, Suggestion } from '@/types/analysis'
 import Header from '@/components/Header'
-import { EMPTY_CV } from '@/types/cv'
+import { DEMO_CV } from '@/types/cv'
 import { exportToMarkdown } from '@/lib/export-markdown'
-import { getLang } from '@/components/LanguageSelector'
+import { getLang, type Lang } from '@/components/LanguageSelector'
+import { type CvLang } from '@/lib/cv-labels'
 
 const LABELS = {
   es: {
     personalInfo: 'Información personal', nombre: 'Nombre completo', cargo: 'Título profesional',
     email: 'Email', telefono: 'Teléfono', linkedin: 'LinkedIn', ubicacion: 'Ubicación',
-    website: 'Web / Portfolio', resumenSection: 'Resumen profesional', resumenField: 'Resumen',
+    website: 'Web / Portfolio',
     experiencia: 'Experiencia', educacion: 'Educación', habilidades: 'Habilidades', idiomas: 'Idiomas',
+    proyectos: 'Proyectos',
     posicion: 'Posición', formacion: 'Formación', cargoField: 'Cargo', empresa: 'Empresa',
     fechaInicio: 'Fecha inicio', fechaFin: 'Fecha fin', actual: 'Trabajo actual',
     logros: 'Logros y responsabilidades', logrosEdu: 'Logros destacados (opcional)',
     institucion: 'Institución', titulo: 'Título', campo: 'Campo de estudio',
     idioma: 'Idioma', nivel: 'Nivel', addExp: 'Añadir experiencia', addEdu: 'Añadir educación',
-    addIdioma: 'Añadir idioma', addSkill: 'Añadir', addBullet: '+ Añadir punto',
-    addLogro: '+ Añadir logro', skillPlaceholder: 'React, Python, SQL... (Enter para añadir)',
-    preview: 'Vista previa · Plantilla Harvard',
+    addIdioma: 'Añadir idioma', addProyecto: 'Añadir proyecto',
+    addSkill: 'Añadir', addBullet: '+ Añadir punto',
+    addLogro: '+ Añadir logro', skillPlaceholder: 'Escribe y pulsa Enter',
+    preview: 'Vista previa',
     foto: 'Foto de perfil', fotoHint: 'PNG o JPG · máx. 2 MB · formato cuadrado recomendado',
     fotoRemove: 'Eliminar foto',
+    proyectoNombre: 'Nombre del proyecto', proyectoDesc: 'Descripción', proyectoUrl: 'URL / GitHub',
+    proyecto: 'Proyecto',
+    heroTitle: 'Editor de CV',
+    heroSubtitle: 'Crea tu CV en el formato más aceptado por los ATS. Exporta a PDF o Markdown.',
+    heroAttr: 'Plantilla basada en el CV de',
+    palabras: 'palabras', pagina: 'página', paginas: 'páginas',
+    descargarPdf: 'Descargar PDF', generandoPdf: 'Generando PDF...',
+    guardado: 'Guardado',
+    tienesCv: '¿Tienes un CV existente?',
+    tienesCvHint: 'Analízalo primero y lo importamos aquí automáticamente con todos los campos rellenos.',
+    analizarCv: 'Analizar CV',
+    cvDetectadoPre: 'Hemos detectado el CV de',
+    cvDetectadoFallback: 'Hemos detectado un CV del análisis anterior',
+    cvDetectadoHint: 'Cárgalo automáticamente en el editor con todos los campos rellenados.',
+    cargando: 'Cargando...', cargarEditor: 'Cargar en el editor',
+    recsAtsSuffix: 'recomendaciones del análisis ATS',
+    recsHint: 'La IA optimizará tu perfil profesional, los logros de cada puesto y añadirá las habilidades técnicas que faltan.',
+    aplicando: 'Aplicando mejoras...', aplicarRecs: 'Aplicar recomendaciones al CV',
+    cvOptimizado: 'CV optimizado — revisa el resultado antes de exportar',
+    revisar: 'revisa los cambios antes de exportar',
+    mejora: 'mejora aplicada', mejoras: 'mejoras aplicadas',
+    vistaPrevia: 'Vista previa', ocultarVista: 'Ocultar',
+    traducirContenido: 'Traducir contenido con IA',
+    traduciendo: 'Traduciendo...', retraducir: 'Retraducir',
+    cvLangLabel: 'Idioma CV',
   },
   en: {
     personalInfo: 'Personal information', nombre: 'Full name', cargo: 'Professional title',
     email: 'Email', telefono: 'Phone', linkedin: 'LinkedIn', ubicacion: 'Location',
-    website: 'Website / Portfolio', resumenSection: 'Professional summary', resumenField: 'Summary',
+    website: 'Website / Portfolio',
     experiencia: 'Experience', educacion: 'Education', habilidades: 'Skills', idiomas: 'Languages',
+    proyectos: 'Projects',
     posicion: 'Position', formacion: 'Education entry', cargoField: 'Job title', empresa: 'Company',
     fechaInicio: 'Start date', fechaFin: 'End date', actual: 'Current job',
     logros: 'Achievements and responsibilities', logrosEdu: 'Notable achievements (optional)',
     institucion: 'Institution', titulo: 'Degree', campo: 'Field of study',
     idioma: 'Language', nivel: 'Level', addExp: 'Add experience', addEdu: 'Add education',
-    addIdioma: 'Add language', addSkill: 'Add', addBullet: '+ Add bullet',
-    addLogro: '+ Add achievement', skillPlaceholder: 'React, Python, SQL... (Enter to add)',
-    preview: 'Preview · Harvard template',
+    addIdioma: 'Add language', addProyecto: 'Add project',
+    addSkill: 'Add', addBullet: '+ Add bullet',
+    addLogro: '+ Add achievement', skillPlaceholder: 'Type and press Enter',
+    preview: 'Preview',
     foto: 'Profile photo', fotoHint: 'PNG or JPG · max. 2 MB · square format recommended',
     fotoRemove: 'Remove photo',
+    proyectoNombre: 'Project name', proyectoDesc: 'Description', proyectoUrl: 'URL / GitHub',
+    proyecto: 'Project',
+    heroTitle: 'CV Editor',
+    heroSubtitle: 'Create your CV in the most ATS-accepted format. Export to PDF or Markdown.',
+    heroAttr: 'Template based on the CV by',
+    palabras: 'words', pagina: 'page', paginas: 'pages',
+    descargarPdf: 'Download PDF', generandoPdf: 'Generating PDF...',
+    guardado: 'Saved',
+    tienesCv: 'Do you have an existing CV?',
+    tienesCvHint: 'Analyse it first and we will automatically import it here with all fields filled in.',
+    analizarCv: 'Analyse CV',
+    cvDetectadoPre: 'We detected the CV of',
+    cvDetectadoFallback: 'We detected a CV from a previous analysis',
+    cvDetectadoHint: 'Load it automatically in the editor with all fields filled in.',
+    cargando: 'Loading...', cargarEditor: 'Load in editor',
+    recsAtsSuffix: 'ATS analysis recommendations',
+    recsHint: 'AI will optimise your professional profile, each role\'s achievements and add any missing technical skills.',
+    aplicando: 'Applying improvements...', aplicarRecs: 'Apply recommendations to CV',
+    cvOptimizado: 'CV optimised — review the result before exporting',
+    revisar: 'review changes before exporting',
+    mejora: 'improvement applied', mejoras: 'improvements applied',
+    vistaPrevia: 'Preview', ocultarVista: 'Hide',
+    traducirContenido: 'Translate content with AI',
+    traduciendo: 'Translating...', retraducir: 'Retranslate',
+    cvLangLabel: 'CV language',
   },
+}
+
+const SKILL_KEYS: (keyof SkillCategories)[] = ['languages', 'frameworks', 'databases', 'tools', 'practices']
+const SKILL_LABELS: Record<keyof SkillCategories, string> = {
+  languages: 'Languages', frameworks: 'Frameworks', databases: 'Databases',
+  tools: 'Technologies / Tools', practices: 'Practices',
 }
 
 const HarvardTemplate = dynamic(() => import('@/components/editor/HarvardTemplate'), { ssr: false })
@@ -110,22 +171,31 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 const DRAFT_KEY = 'cv-editor-draft'
 
 function wordCount(cv: CVData): number {
+  const skillWords = [
+    ...cv.habilidades.languages,
+    ...cv.habilidades.frameworks,
+    ...cv.habilidades.databases,
+    ...cv.habilidades.tools,
+    ...cv.habilidades.practices,
+  ]
   return [
-    cv.resumen,
     ...cv.experiencia.map(e => `${e.cargo} ${e.empresa} ${e.bullets.join(' ')}`),
+    ...cv.proyectos.map(p => `${p.nombre} ${p.descripcion}`),
     ...cv.educacion.map(e => `${e.titulo} ${e.institucion} ${e.logros.join(' ')}`),
-    cv.habilidades,
+    ...skillWords,
     ...cv.idiomas.map(l => l.idioma),
   ].join(' ').split(/\s+/).filter(Boolean).length
 }
 
 export default function EditorPage() {
-  const [cv, setCv] = useState<CVData>(EMPTY_CV)
+  const [cv, setCv] = useState<CVData>(DEMO_CV)
   const [showPreview, setShowPreview] = useState(false)
-  const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [lang, setLang] = useState<'es' | 'en'>('es')
+  const [cvLang, setCvLang] = useState<CvLang>('en')
+  const [translatedCv, setTranslatedCv] = useState<Partial<Record<CvLang, CVData>>>({})
+  const [translating, setTranslating] = useState(false)
 
   // ─ Detected CV from previous analysis ─
   const [detectedCvText, setDetectedCvText] = useState<string | null>(null)
@@ -139,18 +209,22 @@ export default function EditorPage() {
   useEffect(() => {
     setLang(getLang())
 
-    // Always restore the persisted draft first so the editor is never empty on return
     const draft = localStorage.getItem(DRAFT_KEY)
     if (draft) {
       try {
-        setCv(JSON.parse(draft))
+        const parsed = JSON.parse(draft) as CVData
+        // Migrate legacy flat habilidades array → SkillCategories (put all in tools as catch-all)
+        if (Array.isArray(parsed.habilidades)) {
+          const flat = parsed.habilidades as unknown as string[]
+          parsed.habilidades = { languages: [], frameworks: [], databases: [], tools: flat, practices: [] }
+        }
+        if (!parsed.proyectos) parsed.proyectos = []
+        setCv(parsed)
         setSavedAt(new Date())
       } catch { /* ignore */ }
     }
 
-    // If there's fresh analysis data, show the import banner on top of whatever is loaded
-    // Check sessionStorage first, fall back to localStorage (UX-04 persists it there)
-    const cvText = sessionStorage.getItem('atsCvText') || localStorage.getItem('atsCvText')
+    const cvText = sessionStorage.getItem('atsCvText')
     const resultRaw = sessionStorage.getItem('atsResult')
     if (cvText && cvText.length > 100) {
       setDetectedCvText(cvText)
@@ -158,6 +232,13 @@ export default function EditorPage() {
         try { setDetectedResult(JSON.parse(resultRaw) as ATSAnalysisResult) } catch { /* ignore */ }
       }
     }
+  }, [])
+
+  // Sync lang when user changes it from the header selector
+  useEffect(() => {
+    const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail)
+    window.addEventListener('langchange', handler)
+    return () => window.removeEventListener('langchange', handler)
   }, [])
 
   // Autosave draft on every change (debounced 800ms)
@@ -178,17 +259,20 @@ export default function EditorPage() {
     setLoadingCv(true)
     setLoadError('')
     try {
+      const ctrl = new AbortController()
+      const tid = setTimeout(() => ctrl.abort(), 55_000)
       const res = await fetch('/api/editor/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: 'parse', cvText: detectedCvText }),
+        signal: ctrl.signal,
       })
+      clearTimeout(tid)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al cargar el CV.')
       setCv(data as CVData)
       setCvLoaded(true)
       setDetectedCvText(null)
-      // Clear sessionStorage so the import banner doesn't reappear on next visit
       sessionStorage.removeItem('atsCvText')
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Error inesperado.')
@@ -203,27 +287,53 @@ export default function EditorPage() {
     setLoadError('')
     const prevCv = cv
     try {
+      const ctrl = new AbortController()
+      const tid = setTimeout(() => ctrl.abort(), 55_000)
       const res = await fetch('/api/editor/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: 'improve', cvData: cv, suggestions: allSuggestions }),
+        signal: ctrl.signal,
       })
+      clearTimeout(tid)
       const data = await res.json() as CVData
       if (!res.ok) throw new Error((data as unknown as { error: string }).error || 'Error al aplicar las recomendaciones.')
-      // Count changes between old and new CV
       const bulletChanges = prevCv.experiencia.reduce((sum, exp, i) => {
         const newExp = data.experiencia[i]
         if (!newExp) return sum
         return sum + exp.bullets.filter((b, bi) => b !== (newExp.bullets[bi] ?? '')).length
       }, 0)
-      const resumenChanged = prevCv.resumen !== data.resumen ? 1 : 0
-      setChangesApplied(bulletChanges + resumenChanged)
+      setChangesApplied(bulletChanges)
       setCv(data)
       setDetectedResult(null)
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Error inesperado.')
     } finally {
       setLoadingRecs(false)
+    }
+  }
+
+  const handleTranslate = async () => {
+    const targetLang = cvLang
+    setTranslating(true)
+    setLoadError('')
+    try {
+      const ctrl = new AbortController()
+      const tid = setTimeout(() => ctrl.abort(), 55_000)
+      const res = await fetch('/api/editor/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'translate', cvData: cv, targetLang }),
+        signal: ctrl.signal,
+      })
+      clearTimeout(tid)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al traducir el CV.')
+      setTranslatedCv(prev => ({ ...prev, [targetLang]: data as CVData }))
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Error inesperado.')
+    } finally {
+      setTranslating(false)
     }
   }
 
@@ -245,6 +355,17 @@ export default function EditorPage() {
   }))
   const removeExp = (id: string) => setCv(prev => ({ ...prev, experiencia: prev.experiencia.filter(e => e.id !== id) }))
 
+  // ─ Projects ─
+  const addProyecto = () => setCv(prev => ({
+    ...prev,
+    proyectos: [...prev.proyectos, { id: genId(), nombre: '', descripcion: '', url: '' }],
+  }))
+  const updateProyecto = (id: string, patch: Partial<ProyectoEntry>) => setCv(prev => ({
+    ...prev,
+    proyectos: prev.proyectos.map(p => p.id === id ? { ...p, ...patch } : p),
+  }))
+  const removeProyecto = (id: string) => setCv(prev => ({ ...prev, proyectos: prev.proyectos.filter(p => p.id !== id) }))
+
   // ─ Education ─
   const addEdu = () => setCv(prev => ({
     ...prev,
@@ -260,12 +381,17 @@ export default function EditorPage() {
   const removeEdu = (id: string) => setCv(prev => ({ ...prev, educacion: prev.educacion.filter(e => e.id !== id) }))
 
   // ─ Skills ─
-  const [skillInput, setSkillInput] = useState('')
-  const addSkill = () => {
-    const trimmed = skillInput.trim()
+  const [skillInputs, setSkillInputs] = useState<Record<keyof SkillCategories, string>>({
+    languages: '', frameworks: '', databases: '', tools: '', practices: '',
+  })
+  const addSkill = (cat: keyof SkillCategories) => {
+    const trimmed = skillInputs[cat].trim()
     if (!trimmed) return
-    setCv(prev => ({ ...prev, habilidades: [...prev.habilidades, trimmed] }))
-    setSkillInput('')
+    setCv(prev => ({ ...prev, habilidades: { ...prev.habilidades, [cat]: [...prev.habilidades[cat], trimmed] } }))
+    setSkillInputs(prev => ({ ...prev, [cat]: '' }))
+  }
+  const removeSkill = (cat: keyof SkillCategories, idx: number) => {
+    setCv(prev => ({ ...prev, habilidades: { ...prev.habilidades, [cat]: prev.habilidades[cat].filter((_, i) => i !== idx) } }))
   }
 
   // ─ Languages ─
@@ -279,220 +405,102 @@ export default function EditorPage() {
   }))
   const removeIdioma = (id: string) => setCv(prev => ({ ...prev, idiomas: prev.idiomas.filter(l => l.id !== id) }))
 
-  // ─ Exports ─
-  // Renders a text-based PDF directly from the cv data object using jsPDF's text API.
-  // This produces a real text layer so the PDF is parseable by ATS systems and by
-  // our own /api/analyze route (pdf-parse). Image-based PDFs (html2canvas) have no
-  // text layer and cannot be re-analyzed.
+  // ─ PDF Export ─
   const handlePdfExport = async () => {
     setExportingPdf(true)
+    const cvToExport = translatedCv[cvLang] ?? cv
+    const nombre = cvToExport.personalInfo.nombre || 'cv'
     try {
-      const { jsPDF } = await import('jspdf')
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
 
-      const W = 210, H = 297
-      const mL = 20, mR = 20, mT = 18, mB = 20
-      const cW = W - mL - mR
-      const LH = 5   // base line-height in mm (10 pt)
-      const LH9 = 4.5 // line-height for 9 pt
+      const element = document.getElementById('harvard-pdf-source')
+      if (!element) throw new Error('Template not found')
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
+
+      const W = 210
+      const H = 297
+      const pxPerMm = canvas.width / W
+      const pageHeightPx = H * pxPerMm
+      const totalPages = Math.max(1, Math.ceil(canvas.height / pageHeightPx))
 
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      let y = mT
 
-      // Adds a new page and resets y to top margin
-      const newPage = () => { pdf.addPage(); y = mT }
-      // Ensures at least `mm` of vertical space remains; adds page if not
-      const need = (mm: number) => { if (y + mm > H - mB) newPage() }
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage()
 
-      // Font shorthand helpers
-      const bold   = (n = 10) => { pdf.setFont('times', 'bold');   pdf.setFontSize(n) }
-      const normal = (n = 10) => { pdf.setFont('times', 'normal'); pdf.setFontSize(n) }
-      const italic = (n = 10) => { pdf.setFont('times', 'italic'); pdf.setFontSize(n) }
+        const srcY = page * pageHeightPx
+        const srcH = Math.min(pageHeightPx, canvas.height - srcY)
 
-      // Renders wrapped text at current y; advances y by the block height
-      const textBlock = (text: string, x: number, maxW: number, lh = LH) => {
-        const lines = pdf.splitTextToSize(text, maxW)
-        need(lines.length * lh)
-        pdf.text(lines, x, y)
-        y += lines.length * lh
+        const pageCanvas = document.createElement('canvas')
+        pageCanvas.width = canvas.width
+        pageCanvas.height = srcH
+        const ctx = pageCanvas.getContext('2d')!
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH)
+
+        pdf.addImage(
+          pageCanvas.toDataURL('image/jpeg', 0.95),
+          'JPEG',
+          0, 0,
+          W, srcH / pxPerMm,
+        )
       }
 
-      // Section header: bold uppercase label + full-width rule beneath
-      const sectionHeader = (title: string) => {
-        need(12)
-        bold(11)
-        pdf.text(title.toUpperCase(), mL, y)
-        y += 1.5
-        pdf.setLineWidth(0.3)
-        pdf.line(mL, y, W - mR, y)
-        y += 4
-      }
-
-      // ── Name ──────────────────────────────────────────────────────
-      bold(18)
-      pdf.text(cv.personalInfo.nombre || '', W / 2, y, { align: 'center' })
-      y += 8
-
-      if (cv.personalInfo.cargo) {
-        italic(10)
-        pdf.text(cv.personalInfo.cargo, W / 2, y, { align: 'center' })
-        y += 5
-      }
-
-      const contact = [
-        cv.personalInfo.email, cv.personalInfo.telefono,
-        cv.personalInfo.linkedin, cv.personalInfo.ubicacion, cv.personalInfo.website,
-      ].filter(Boolean)
-      if (contact.length) {
-        normal(9)
-        pdf.text(contact.join(' \u00b7 '), W / 2, y, { align: 'center' })
-        y += 5
-      }
-
-      pdf.setLineWidth(0.3)
-      pdf.line(mL, y, W - mR, y)
-      y += 5
-
-      // ── Resumen ───────────────────────────────────────────────────
-      if (cv.resumen) {
-        sectionHeader('Resumen')
-        normal(10)
-        textBlock(cv.resumen, mL, cW)
-        y += 2
-      }
-
-      // ── Experiencia ───────────────────────────────────────────────
-      if (cv.experiencia.length > 0) {
-        sectionHeader('Experiencia')
-        for (const exp of cv.experiencia) {
-          const period = exp.actual
-            ? `${exp.fechaInicio} \u2013 Presente`
-            : `${exp.fechaInicio} \u2013 ${exp.fechaFin}`
-          need(LH + 2)
-
-          // Cargo + empresa (left) · period (right) on the same baseline
-          bold(10)
-          const label = exp.cargo + (exp.empresa ? ` \u2014 ${exp.empresa}` : '')
-          pdf.text(label, mL, y)
-          italic(9)
-          pdf.text(period, W - mR, y, { align: 'right' })
-          y += LH
-
-          if (exp.ubicacion) {
-            italic(9)
-            pdf.text(exp.ubicacion, mL, y)
-            y += LH9
-          }
-
-          normal(10)
-          for (const b of exp.bullets.filter(Boolean)) {
-            const lines = pdf.splitTextToSize(b, cW - 4)
-            need(lines.length * LH)
-            pdf.text('\u2022', mL, y)
-            pdf.text(lines, mL + 4, y)
-            y += lines.length * LH
-          }
-          y += 2
-        }
-      }
-
-      // ── Educación ─────────────────────────────────────────────────
-      if (cv.educacion.length > 0) {
-        sectionHeader('Educaci\u00f3n')
-        for (const edu of cv.educacion) {
-          const period = `${edu.fechaInicio} \u2013 ${edu.fechaFin}`
-          const degree = [edu.titulo, edu.campo].filter(Boolean).join(', ')
-          need(LH + 2)
-
-          bold(10)
-          pdf.text(degree || 'T\u00edtulo', mL, y)
-          italic(9)
-          pdf.text(period, W - mR, y, { align: 'right' })
-          y += LH
-
-          if (edu.institucion) {
-            italic(9)
-            pdf.text(edu.institucion, mL, y)
-            y += LH9
-          }
-
-          normal(10)
-          for (const l of edu.logros.filter(Boolean)) {
-            const lines = pdf.splitTextToSize(l, cW - 4)
-            need(lines.length * LH)
-            pdf.text('\u2022', mL, y)
-            pdf.text(lines, mL + 4, y)
-            y += lines.length * LH
-          }
-          y += 2
-        }
-      }
-
-      // ── Habilidades ───────────────────────────────────────────────
-      if (cv.habilidades.length > 0) {
-        sectionHeader('Habilidades')
-        normal(10)
-        textBlock(cv.habilidades.join(' \u00b7 '), mL, cW)
-        y += 2
-      }
-
-      // ── Idiomas ───────────────────────────────────────────────────
-      if (cv.idiomas.length > 0) {
-        sectionHeader('Idiomas')
-        for (const lang of cv.idiomas) {
-          need(LH)
-          bold(10)
-          const prefix = `${lang.idioma}: `
-          pdf.text(prefix, mL, y)
-          normal(10)
-          pdf.text(lang.nivel, mL + pdf.getTextWidth(prefix), y)
-          y += LH
-        }
-      }
-
-      const nombre = cv.personalInfo.nombre || 'cv'
-      pdf.save(`${nombre.replace(/\s+/g, '_').toLowerCase()}_harvard.pdf`)
+      pdf.save(`${nombre.replace(/\s+/g, '_').toLowerCase()}_cv.pdf`)
     } finally {
       setExportingPdf(false)
     }
   }
 
-  const handleDocxExport = async () => {
-    setExportingDocx(true)
-    try {
-      const { exportToDocx } = await import('@/lib/export-docx')
-      await exportToDocx(cv)
-    } finally {
-      setExportingDocx(false)
-    }
-  }
-
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f0ede8' }}>
+    <div className="flex flex-col h-screen overflow-hidden" style={{ backgroundColor: '#f0ede8' }}>
 
       <Header />
 
       {/* Hero */}
-      <section className="bg-navy text-white py-10 px-6">
+      <section className="bg-navy text-white py-10 px-6 flex-shrink-0">
         <div className="max-w-container mx-auto text-center">
           <p className="font-sans font-[900] uppercase tracking-widest text-neon text-xs mb-4">
             Herramienta Gratuita de Manfred
           </p>
           <h1 className="font-heading font-[900] text-4xl md:text-5xl leading-tight mb-3">
-            Editor de CV
-            <br />
-            <span className="italic" style={{ color: '#01FFC6' }}>estilo Harvard</span>
+            {LABELS[lang].heroTitle}
           </h1>
           <p className="font-sans text-base text-white/70 max-w-xl mx-auto">
-            Crea tu CV en el formato más aceptado por los ATS. Exporta a DOCX, PDF o Markdown.
+            {LABELS[lang].heroSubtitle}
+          </p>
+          <p className="font-sans text-xs mt-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            {LABELS[lang].heroAttr}{' '}
+            <a href="https://newsletter.danielblanco.dev/p/17-como-llevar-tu-cv-al-siguiente"
+               target="_blank" rel="noopener noreferrer"
+               className="underline hover:text-white/60 transition-colors">
+              Daniel Blanco
+            </a>
+            {' · '}
+            <a href="https://github.com/danielblanco96/resume-public"
+               target="_blank" rel="noopener noreferrer"
+               className="underline hover:text-white/60 transition-colors">
+              GitHub
+            </a>
           </p>
         </div>
       </section>
 
-      {/* Two-column layout — each column scrolls independently */}
-      <div className="max-w-7xl mx-auto px-4 flex gap-6" style={{ height: 'calc(100vh - 64px)' }}>
+      {/* Two-column layout */}
+      <div className="flex-1 overflow-hidden w-full max-w-[1400px] mx-auto px-6 flex gap-8">
 
         {/* ─── LEFT: Form ─── */}
-        <div className="flex-1 min-w-0 max-w-xl overflow-y-auto py-8 pr-2 space-y-4">
+        <div className="flex-1 min-w-0 overflow-y-auto py-8 pr-2 space-y-4">
 
           {/* ─ Empty state nudge ─ */}
           {!detectedCvText && !cvLoaded && !savedAt && (
@@ -500,10 +508,10 @@ export default function EditorPage() {
               style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
               <div className="flex-1 min-w-0">
                 <p className="font-sans font-[800] text-sm" style={{ color: '#1a2744' }}>
-                  ¿Tienes un CV existente?
+                  {LABELS[lang].tienesCv}
                 </p>
                 <p className="font-sans text-xs text-gray-400 mt-0.5">
-                  Analízalo primero y lo importamos aquí automáticamente con todos los campos rellenos.
+                  {LABELS[lang].tienesCvHint}
                 </p>
               </div>
               <a
@@ -514,7 +522,7 @@ export default function EditorPage() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Analizar CV
+                {LABELS[lang].analizarCv}
               </a>
             </div>
           )}
@@ -533,11 +541,11 @@ export default function EditorPage() {
                 <div>
                   <p className="font-sans font-[700] text-sm" style={{ color: '#0DA1A4' }}>
                     {detectedResult?.nombre
-                      ? `Hemos detectado el CV de ${detectedResult.nombre}`
-                      : 'Hemos detectado un CV del análisis anterior'}
+                      ? `${LABELS[lang].cvDetectadoPre} ${detectedResult.nombre}`
+                      : LABELS[lang].cvDetectadoFallback}
                   </p>
                   <p className="font-sans text-xs mt-0.5" style={{ color: '#0a7a7c' }}>
-                    Cárgalo automáticamente en el editor con todos los campos rellenados.
+                    {LABELS[lang].cvDetectadoHint}
                   </p>
                 </div>
               </div>
@@ -554,9 +562,9 @@ export default function EditorPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
-                      Cargando...
+                      {LABELS[lang].cargando}
                     </>
-                  ) : 'Cargar en el editor'}
+                  ) : LABELS[lang].cargarEditor}
                 </button>
                 <button
                   onClick={() => { setDetectedCvText(null); sessionStorage.removeItem('atsCvText') }}
@@ -586,10 +594,10 @@ export default function EditorPage() {
                   </div>
                   <div>
                     <p className="font-sans font-[700] text-sm" style={{ color: '#92400e' }}>
-                      {allSuggestions.length} recomendaciones del análisis ATS
+                      {allSuggestions.length} {LABELS[lang].recsAtsSuffix}
                     </p>
                     <p className="font-sans text-xs mt-0.5" style={{ color: '#b45309' }}>
-                      La IA optimizará tu perfil profesional, los logros de cada puesto y añadirá las habilidades técnicas que faltan.
+                      {LABELS[lang].recsHint}
                     </p>
                   </div>
                 </div>
@@ -616,9 +624,9 @@ export default function EditorPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
-                    Aplicando mejoras...
+                    {LABELS[lang].aplicando}
                   </>
-                ) : 'Aplicar recomendaciones al CV'}
+                ) : LABELS[lang].aplicarRecs}
               </button>
             </div>
           )}
@@ -633,8 +641,8 @@ export default function EditorPage() {
                 </svg>
                 <p className="font-sans text-sm font-[600]" style={{ color: '#166534' }}>
                   {changesApplied > 0
-                    ? `${changesApplied} ${changesApplied === 1 ? 'mejora aplicada' : 'mejoras aplicadas'} — revisa los cambios antes de exportar`
-                    : 'CV optimizado — revisa el resultado antes de exportar'}
+                    ? `${changesApplied} ${changesApplied === 1 ? LABELS[lang].mejora : LABELS[lang].mejoras} — ${LABELS[lang].revisar}`
+                    : LABELS[lang].cvOptimizado}
                 </p>
               </div>
               <button onClick={() => setChangesApplied(null)} style={{ color: '#16a34a' }} aria-label="Cerrar">
@@ -658,67 +666,124 @@ export default function EditorPage() {
           {/* Word count + autosave indicator */}
           <div className="flex items-center justify-between text-xs font-sans text-gray-400">
             <span>
-              <span className="font-[700]" style={{ color: '#1a2744' }}>{wordCount(cv).toLocaleString('es-ES')}</span> palabras
+              <span className="font-[700]" style={{ color: '#1a2744' }}>{wordCount(cv).toLocaleString('es-ES')}</span> {LABELS[lang].palabras}
               {' · '}
               <span className="font-[700]" style={{ color: '#1a2744' }}>~{Math.max(1, Math.ceil(wordCount(cv) / 350))}</span>{' '}
-              {Math.max(1, Math.ceil(wordCount(cv) / 350)) === 1 ? 'página' : 'páginas'}
+              {Math.max(1, Math.ceil(wordCount(cv) / 350)) === 1 ? LABELS[lang].pagina : LABELS[lang].paginas}
             </span>
             {savedAt && (
               <span className="flex items-center gap-1" style={{ color: '#10b981' }}>
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
-                Guardado
+                {LABELS[lang].guardado}
               </span>
             )}
           </div>
 
-          {/* Export buttons */}
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={handleDocxExport}
-              disabled={exportingDocx}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans font-[900] text-xs uppercase tracking-wider text-white transition-all duration-300 disabled:opacity-60 hover:opacity-80"
-              style={{ backgroundColor: '#092c64' }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {exportingDocx ? 'Generando...' : 'Descargar DOCX'}
-            </button>
-            <button
-              onClick={handlePdfExport}
-              disabled={exportingPdf}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans font-[900] text-xs uppercase tracking-wider border-2 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ borderColor: '#092c64', color: '#092c64' }}
-            >
-              {exportingPdf ? (
-                <>
-                  <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          {/* Language + Export card */}
+          <div className="rounded-2xl p-4 space-y-3 bg-white" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+
+            {/* CV language row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-sans text-xs font-[600] uppercase tracking-wider text-gray-400">
+                {LABELS[lang].cvLangLabel}
+              </span>
+              {(['en', 'es'] as CvLang[]).map(l => (
+                <button
+                  key={l}
+                  onClick={() => setCvLang(l)}
+                  className="px-3 py-1.5 rounded-lg font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-200"
+                  style={cvLang === l
+                    ? { backgroundColor: '#092c64', color: '#fff' }
+                    : { backgroundColor: '#f9fafb', color: '#9ca3af', border: '1px solid #e5e7eb' }}
+                >
+                  {l === 'en' ? 'English' : 'Español'}
+                </button>
+              ))}
+              {translatedCv[cvLang] && (
+                <button
+                  onClick={() => {
+                    setTranslatedCv(prev => { const n = { ...prev }; delete n[cvLang]; return n })
+                  }}
+                  title={LABELS[lang].retraducir}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-sans font-[600] text-xs transition-all duration-200"
+                  style={{ color: '#10b981', border: '1px solid #d1fae5', backgroundColor: '#f0fdf4' }}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  Generando PDF...
-                </>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Descargar PDF
-                </>
+                  {LABELS[lang].retraducir}
+                </button>
               )}
-            </button>
-            <button
-              onClick={() => exportToMarkdown(cv)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans font-[900] text-xs uppercase tracking-wider border-2 transition-all duration-300"
-              style={{ borderColor: '#e5e7eb', color: '#9ca3af' }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Markdown
-            </button>
+            </div>
+
+            {/* Translate content button */}
+            {!translatedCv[cvLang] && (
+              <button
+                onClick={handleTranslate}
+                disabled={translating}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-60"
+                style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}
+              >
+                {translating ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    {LABELS[lang].traduciendo}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                    </svg>
+                    {LABELS[lang].traducirContenido}
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Divider */}
+            <div style={{ borderTop: '1px solid #f3f4f6' }} />
+
+            {/* Export buttons */}
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={handlePdfExport}
+                disabled={exportingPdf}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans font-[900] text-xs uppercase tracking-wider border-2 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ borderColor: '#092c64', color: '#092c64' }}
+              >
+                {exportingPdf ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    {LABELS[lang].generandoPdf}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {LABELS[lang].descargarPdf}
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => exportToMarkdown(translatedCv[cvLang] ?? cv, cvLang)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans font-[900] text-xs uppercase tracking-wider border-2 transition-all duration-300"
+                style={{ borderColor: '#e5e7eb', color: '#9ca3af' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Markdown
+              </button>
+            </div>
           </div>
 
           {/* Personal Info */}
@@ -785,12 +850,48 @@ export default function EditorPage() {
             </div>
           </Section>
 
-          {/* Summary */}
-          <Section title={LABELS[lang].resumenSection}>
-            <Field label={LABELS[lang].resumenField} value={cv.resumen}
-              onChange={v => setCv(prev => ({ ...prev, resumen: v }))}
-              placeholder="Escribe un resumen conciso de tu perfil profesional..."
-              multiline rows={4} />
+          {/* Skills */}
+          <Section title={LABELS[lang].habilidades}>
+            <div className="space-y-4">
+              {SKILL_KEYS.map(cat => (
+                <div key={cat}>
+                  <p className="font-sans font-[700] text-xs uppercase tracking-wider mb-1.5" style={{ color: '#374151' }}>
+                    {SKILL_LABELS[cat]}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 min-h-[32px] mb-2">
+                    {cv.habilidades[cat].map((skill, i) => (
+                      <span key={i}
+                        className="flex items-center gap-1 font-sans text-sm px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4' }}>
+                        {skill}
+                        <button onClick={() => removeSkill(cat, i)}
+                          className="text-teal/50 hover:text-teal transition-colors duration-200">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={skillInputs[cat]}
+                      onChange={e => setSkillInputs(prev => ({ ...prev, [cat]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill(cat) } }}
+                      placeholder={LABELS[lang].skillPlaceholder}
+                      className="flex-1 font-sans text-sm rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal/30 transition-all"
+                      style={{ borderColor: '#e5e7eb', color: '#1a2744' }}
+                    />
+                    <button onClick={() => addSkill(cat)}
+                      className="px-3 py-2 rounded-lg font-sans font-[700] text-xs uppercase tracking-wider text-white transition-all hover:opacity-80 duration-200"
+                      style={{ backgroundColor: '#0DA1A4' }}>
+                      {LABELS[lang].addSkill}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </Section>
 
           {/* Experience */}
@@ -802,12 +903,12 @@ export default function EditorPage() {
                   <RemoveButton onClick={() => removeExp(exp.id)} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label={LABELS[lang].cargoField} value={exp.cargo} onChange={v => updateExp(exp.id, { cargo: v })} placeholder="Software Engineer" />
                   <Field label={LABELS[lang].empresa} value={exp.empresa} onChange={v => updateExp(exp.id, { empresa: v })} placeholder="Acme Corp" />
-                  <Field label={LABELS[lang].fechaInicio} value={exp.fechaInicio} onChange={v => updateExp(exp.id, { fechaInicio: v })} placeholder="Ene 2022" />
-                  <Field label={LABELS[lang].fechaFin} value={exp.fechaFin} onChange={v => updateExp(exp.id, { fechaFin: v })} placeholder="Dic 2024" />
+                  <Field label={LABELS[lang].cargoField} value={exp.cargo} onChange={v => updateExp(exp.id, { cargo: v })} placeholder="Software Engineer" />
+                  <Field label={LABELS[lang].fechaInicio} value={exp.fechaInicio} onChange={v => updateExp(exp.id, { fechaInicio: v })} placeholder="Jan 2022" />
+                  <Field label={LABELS[lang].fechaFin} value={exp.fechaFin} onChange={v => updateExp(exp.id, { fechaFin: v })} placeholder="Dec 2024" />
                   <div className="col-span-2">
-                    <Field label={LABELS[lang].ubicacion} value={exp.ubicacion} onChange={v => updateExp(exp.id, { ubicacion: v })} placeholder="Madrid, España" />
+                    <Field label={LABELS[lang].ubicacion} value={exp.ubicacion} onChange={v => updateExp(exp.id, { ubicacion: v })} placeholder="Madrid, Spain" />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -855,6 +956,23 @@ export default function EditorPage() {
             <AddButton label={LABELS[lang].addExp} onClick={addExp} />
           </Section>
 
+          {/* Projects */}
+          <Section title={LABELS[lang].proyectos}>
+            {cv.proyectos.map((proj, idx) => (
+              <div key={proj.id} className="space-y-3 pt-3 border-t border-gray-100 first:border-0 first:pt-0">
+                <div className="flex items-center justify-between">
+                  <p className="font-sans font-[700] text-xs text-gray-500">{LABELS[lang].proyecto} {idx + 1}</p>
+                  <RemoveButton onClick={() => removeProyecto(proj.id)} />
+                </div>
+                <Field label={LABELS[lang].proyectoNombre} value={proj.nombre} onChange={v => updateProyecto(proj.id, { nombre: v })} placeholder="Open Toponym" />
+                <Field label={LABELS[lang].proyectoDesc} value={proj.descripcion} onChange={v => updateProyecto(proj.id, { descripcion: v })}
+                  placeholder="Brief description of what you built and the impact..." multiline rows={3} />
+                <Field label={LABELS[lang].proyectoUrl} value={proj.url} onChange={v => updateProyecto(proj.id, { url: v })} placeholder="github.com/user/project" />
+              </div>
+            ))}
+            <AddButton label={LABELS[lang].addProyecto} onClick={addProyecto} />
+          </Section>
+
           {/* Education */}
           <Section title={LABELS[lang].educacion}>
             {cv.educacion.map((edu, idx) => (
@@ -867,8 +985,8 @@ export default function EditorPage() {
                   <div className="col-span-2">
                     <Field label={LABELS[lang].institucion} value={edu.institucion} onChange={v => updateEdu(edu.id, { institucion: v })} placeholder="Universidad Complutense" />
                   </div>
-                  <Field label={LABELS[lang].titulo} value={edu.titulo} onChange={v => updateEdu(edu.id, { titulo: v })} placeholder="Grado en Ingeniería" />
-                  <Field label={LABELS[lang].campo} value={edu.campo} onChange={v => updateEdu(edu.id, { campo: v })} placeholder="Informática" />
+                  <Field label={LABELS[lang].titulo} value={edu.titulo} onChange={v => updateEdu(edu.id, { titulo: v })} placeholder="B.Sc. Computer Science" />
+                  <Field label={LABELS[lang].campo} value={edu.campo} onChange={v => updateEdu(edu.id, { campo: v })} placeholder="Software Engineering" />
                   <Field label={LABELS[lang].fechaInicio} value={edu.fechaInicio} onChange={v => updateEdu(edu.id, { fechaInicio: v })} placeholder="2016" />
                   <Field label={LABELS[lang].fechaFin} value={edu.fechaFin} onChange={v => updateEdu(edu.id, { fechaFin: v })} placeholder="2020" />
                 </div>
@@ -885,7 +1003,7 @@ export default function EditorPage() {
                             logros[li] = e.target.value
                             updateEdu(edu.id, { logros })
                           }}
-                          placeholder="Premio, distinción, TFG destacado..."
+                          placeholder="GPA, awards, thesis..."
                           className="flex-1 font-sans text-sm rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal/30 transition-all"
                           style={{ borderColor: '#e5e7eb', color: '#1a2744' }}
                         />
@@ -910,51 +1028,17 @@ export default function EditorPage() {
             <AddButton label={LABELS[lang].addEdu} onClick={addEdu} />
           </Section>
 
-          {/* Skills */}
-          <Section title={LABELS[lang].habilidades}>
-            <div className="flex flex-wrap gap-2 min-h-[40px]">
-              {cv.habilidades.map((skill, i) => (
-                <span key={i}
-                  className="flex items-center gap-1.5 font-sans text-sm px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4' }}>
-                  {skill}
-                  <button onClick={() => setCv(prev => ({ ...prev, habilidades: prev.habilidades.filter((_, idx) => idx !== i) }))}
-                    className="text-teal/50 hover:text-teal transition-colors duration-200">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text" value={skillInput}
-                onChange={e => setSkillInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill() } }}
-                placeholder={LABELS[lang].skillPlaceholder}
-                className="flex-1 font-sans text-sm rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal/30 transition-all"
-                style={{ borderColor: '#e5e7eb', color: '#1a2744' }}
-              />
-              <button onClick={addSkill}
-                className="px-4 py-2 rounded-lg font-sans font-[700] text-xs uppercase tracking-wider text-white transition-all hover:opacity-80 duration-200"
-                style={{ backgroundColor: '#0DA1A4' }}>
-                {LABELS[lang].addSkill}
-              </button>
-            </div>
-          </Section>
-
           {/* Languages */}
           <Section title={LABELS[lang].idiomas}>
             {cv.idiomas.map((l, idx) => (
               <div key={l.id} className="flex gap-3 items-end">
                 <div className="flex-1">
                   <Field label={idx === 0 ? LABELS[lang].idioma : ''} value={l.idioma}
-                    onChange={v => updateIdioma(l.id, { idioma: v })} placeholder="Español" />
+                    onChange={v => updateIdioma(l.id, { idioma: v })} placeholder="English" />
                 </div>
                 <div className="flex-1">
                   <Field label={idx === 0 ? LABELS[lang].nivel : ''} value={l.nivel}
-                    onChange={v => updateIdioma(l.id, { nivel: v })} placeholder="Nativo / B2 / Avanzado" />
+                    onChange={v => updateIdioma(l.id, { nivel: v })} placeholder="Native / B2 / Advanced" />
                 </div>
                 <div className="mb-0.5">
                   <RemoveButton onClick={() => removeIdioma(l.id)} />
@@ -972,7 +1056,7 @@ export default function EditorPage() {
             {LABELS[lang].preview}
           </p>
           <div style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden' }}>
-            <HarvardTemplate data={cv} />
+            <HarvardTemplate data={translatedCv[cvLang] ?? cv} lang={cvLang} />
           </div>
         </div>
 
@@ -988,7 +1072,7 @@ export default function EditorPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
-          {showPreview ? 'Ocultar' : 'Vista previa'}
+          {showPreview ? LABELS[lang].ocultarVista : LABELS[lang].vistaPrevia}
         </button>
       </div>
 
@@ -997,10 +1081,15 @@ export default function EditorPage() {
         <div className="lg:hidden fixed inset-0 z-30 bg-black/50 overflow-auto p-4"
           onClick={() => setShowPreview(false)}>
           <div onClick={e => e.stopPropagation()} className="max-w-full overflow-x-auto">
-            <HarvardTemplate data={cv} />
+            <HarvardTemplate data={translatedCv[cvLang] ?? cv} lang={cvLang} />
           </div>
         </div>
       )}
+
+      {/* Off-screen template — always rendered, used as html2canvas capture source */}
+      <div aria-hidden="true" style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1, pointerEvents: 'none', width: '210mm' }}>
+        <HarvardTemplate id="harvard-pdf-source" data={translatedCv[cvLang] ?? cv} lang={cvLang} />
+      </div>
 
     </div>
   )

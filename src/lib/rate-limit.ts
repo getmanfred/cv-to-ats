@@ -21,16 +21,20 @@ if (typeof setInterval !== 'undefined') {
   }, 5 * 60_000)
 }
 
-export function checkRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
+export function checkRateLimit(
+  key: string,
+  maxRequests = MAX_REQUESTS,
+  windowMs = WINDOW_MS
+): { allowed: boolean; retryAfter: number } {
   const now = Date.now()
-  const entry = store.get(ip)
+  const entry = store.get(key)
 
   if (!entry || entry.resetAt < now) {
-    store.set(ip, { count: 1, resetAt: now + WINDOW_MS })
+    store.set(key, { count: 1, resetAt: now + windowMs })
     return { allowed: true, retryAfter: 0 }
   }
 
-  if (entry.count >= MAX_REQUESTS) {
+  if (entry.count >= maxRequests) {
     return { allowed: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) }
   }
 
@@ -38,11 +42,20 @@ export function checkRateLimit(ip: string): { allowed: boolean; retryAfter: numb
   return { allowed: true, retryAfter: 0 }
 }
 
+function isValidIp(ip: string): boolean {
+  return ip.length > 0 && ip.length <= 45 && /^[\d.:a-fA-F]+$/.test(ip)
+}
+
 export function getClientIp(request: Request): string {
-  // Vercel / proxies set x-forwarded-for; fall back to a generic key
   const xff = (request.headers as Headers).get('x-forwarded-for')
-  if (xff) return xff.split(',')[0].trim()
+  if (xff) {
+    const ip = xff.split(',')[0].trim()
+    if (isValidIp(ip)) return ip
+  }
   const realIp = (request.headers as Headers).get('x-real-ip')
-  if (realIp) return realIp.trim()
+  if (realIp) {
+    const ip = realIp.trim()
+    if (isValidIp(ip)) return ip
+  }
   return 'unknown'
 }

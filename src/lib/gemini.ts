@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { ATSAnalysisResult } from '@/types/analysis'
+import { withGeminiRetry } from '@/lib/gemini-retry'
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error('GEMINI_API_KEY environment variable is not set.')
@@ -35,7 +36,7 @@ Required fields:
 
 - "headline": short technical phrase (max 15 words) about the ATS state of the CV. in the specified language.
 
-- "overallScore": number 0-100, weighted average of the categories.
+- "overallScore": number 0-100. Calculate as the exact weighted average of the 6 category scores using these fixed weights: Keywords & skills 30%, Format & parseability 25%, Work experience structure 20%, Education & certifications 10%, Contact information 10%, Length & file optimization 5%. Round to the nearest integer.
 
 - "categories": evaluate these 6 categories (name them in the specified language):
   1. Keywords & skills
@@ -121,7 +122,7 @@ ${cvText}
 
 export async function analyzeWithGemini(cvText: string, lang: 'es' | 'en' = 'es'): Promise<ATSAnalysisResult> {
   const prompt = buildPrompt(cvText, lang)
-  const result = await model.generateContent(prompt)
+  const result = await withGeminiRetry(() => model.generateContent(prompt))
   const text = result.response.text()
 
   const cleaned = text

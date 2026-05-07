@@ -1,13 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import LanguageSelector from './LanguageSelector'
 
 const NAV_LINKS = [
   { href: '/',          label: 'Analizar CV' },
-  { href: '/match',     label: 'Match con oferta' },
-  { href: '/linkedin',  label: 'Analizar LinkedIn' },
   { href: '/editor',    label: 'Editor CV' },
 ]
 
@@ -23,6 +21,14 @@ interface HeaderProps {
 export default function Header({ noPrint = false }: HeaderProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [cvsAnalyzed, setCvsAnalyzed] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(d => setCvsAnalyzed(d.cvs_analyzed))
+      .catch(() => {})
+  }, [])
 
   return (
     <header className={`bg-white border-b sticky top-0 z-10${noPrint ? ' no-print' : ''}`}
@@ -42,6 +48,14 @@ export default function Header({ noPrint = false }: HeaderProps) {
             Beta
           </span>
         </a>
+
+        {/* CVs analyzed counter */}
+        {cvsAnalyzed !== null && (
+          <span className="hidden sm:flex items-center gap-1.5 font-sans text-xs" style={{ color: '#9ca3af' }}>
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#01FFC6' }} />
+            {cvsAnalyzed.toLocaleString('es-ES')} CVs analizados
+          </span>
+        )}
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1">
