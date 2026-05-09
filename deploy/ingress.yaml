@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cv-to-ats
+  namespace: manfred
+  labels:
+    app.kubernetes.io/name: cv-to-ats
+    app.kubernetes.io/part-of: manfred
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: cv.nan.builders
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cv-to-ats
+                port:
+                  number: 80
