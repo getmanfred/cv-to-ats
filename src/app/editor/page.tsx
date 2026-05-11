@@ -43,6 +43,8 @@ const LABELS = {
     cvDetectadoFallback: 'Hemos detectado un CV del análisis anterior',
     cvDetectadoHint: 'Cárgalo automáticamente en el editor con todos los campos rellenados.',
     cargando: 'Cargando...', cargarEditor: 'Cargar en el editor',
+    cargandoHint: 'Esto puede tardar un poco, el CV se está formateando...',
+    traducindoHint: 'Esto puede tardar un poco, el contenido se está traduciendo...',
     recsAtsSuffix: 'recomendaciones del análisis ATS',
     recsHint: 'La IA optimizará tu perfil profesional, los logros de cada puesto y añadirá las habilidades técnicas que faltan.',
     aplicando: 'Aplicando mejoras...', aplicarRecs: 'Aplicar recomendaciones al CV',
@@ -86,6 +88,8 @@ const LABELS = {
     cvDetectadoFallback: 'We detected a CV from a previous analysis',
     cvDetectadoHint: 'Load it automatically in the editor with all fields filled in.',
     cargando: 'Loading...', cargarEditor: 'Load in editor',
+    cargandoHint: 'This may take a moment, the CV is being formatted...',
+    traducindoHint: 'This may take a moment, the content is being translated...',
     recsAtsSuffix: 'ATS analysis recommendations',
     recsHint: 'AI will optimise your professional profile, each role\'s achievements and add any missing technical skills.',
     aplicando: 'Applying improvements...', aplicarRecs: 'Apply recommendations to CV',
@@ -260,7 +264,7 @@ export default function EditorPage() {
     setLoadError('')
     try {
       const ctrl = new AbortController()
-      const tid = setTimeout(() => ctrl.abort(), 55_000)
+      const tid = setTimeout(() => ctrl.abort(), 90_000)
       const res = await fetch('/api/editor/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -275,7 +279,10 @@ export default function EditorPage() {
       setDetectedCvText(null)
       sessionStorage.removeItem('atsCvText')
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Error inesperado.')
+      const isAbort = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))
+      setLoadError(isAbort
+        ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+        : err instanceof Error ? err.message : 'Error inesperado.')
     } finally {
       setLoadingCv(false)
     }
@@ -288,7 +295,7 @@ export default function EditorPage() {
     const prevCv = cv
     try {
       const ctrl = new AbortController()
-      const tid = setTimeout(() => ctrl.abort(), 55_000)
+      const tid = setTimeout(() => ctrl.abort(), 90_000)
       const res = await fetch('/api/editor/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -307,7 +314,10 @@ export default function EditorPage() {
       setCv(data)
       setDetectedResult(null)
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Error inesperado.')
+      const isAbort = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))
+      setLoadError(isAbort
+        ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+        : err instanceof Error ? err.message : 'Error inesperado.')
     } finally {
       setLoadingRecs(false)
     }
@@ -319,7 +329,7 @@ export default function EditorPage() {
     setLoadError('')
     try {
       const ctrl = new AbortController()
-      const tid = setTimeout(() => ctrl.abort(), 55_000)
+      const tid = setTimeout(() => ctrl.abort(), 90_000)
       const res = await fetch('/api/editor/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -331,7 +341,10 @@ export default function EditorPage() {
       if (!res.ok) throw new Error(data.error || 'Error al traducir el CV.')
       setTranslatedCv(prev => ({ ...prev, [targetLang]: data as CVData }))
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Error inesperado.')
+      const isAbort = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))
+      setLoadError(isAbort
+        ? 'La operación tardó demasiado. Inténtalo de nuevo.'
+        : err instanceof Error ? err.message : 'Error inesperado.')
     } finally {
       setTranslating(false)
     }
@@ -580,7 +593,7 @@ export default function EditorPage() {
                       : LABELS[lang].cvDetectadoFallback}
                   </p>
                   <p className="font-sans text-xs mt-0.5" style={{ color: '#0a7a7c' }}>
-                    {LABELS[lang].cvDetectadoHint}
+                    {loadingCv ? LABELS[lang].cargandoHint : LABELS[lang].cvDetectadoHint}
                   </p>
                 </div>
               </div>
@@ -755,29 +768,36 @@ export default function EditorPage() {
 
             {/* Translate content button */}
             {!translatedCv[cvLang] && (
-              <button
-                onClick={handleTranslate}
-                disabled={translating}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-60"
-                style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}
-              >
-                {translating ? (
-                  <>
-                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    {LABELS[lang].traduciendo}
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                    </svg>
-                    {LABELS[lang].traducirContenido}
-                  </>
+              <div className="space-y-1">
+                <button
+                  onClick={handleTranslate}
+                  disabled={translating}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-200 disabled:opacity-60"
+                  style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}
+                >
+                  {translating ? (
+                    <>
+                      <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      {LABELS[lang].traduciendo}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                      </svg>
+                      {LABELS[lang].traducirContenido}
+                    </>
+                  )}
+                </button>
+                {translating && (
+                  <p className="font-sans text-xs text-center" style={{ color: '#6b7280' }}>
+                    {LABELS[lang].traducindoHint}
+                  </p>
                 )}
-              </button>
+              </div>
             )}
 
             {/* Divider */}
