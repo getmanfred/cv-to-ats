@@ -15,7 +15,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV GEMINI_API_KEY=build-placeholder
 ENV SUPABASE_URL=https://build-placeholder.supabase.co
 ENV SUPABASE_SERVICE_ROLE_KEY=build-placeholder
-ENV AUTH_SECRET=build-placeholder
+ENV GOOGLE_CLIENT_ID=build-placeholder
+ENV GOOGLE_CLIENT_SECRET=build-placeholder
+ENV NEXTAUTH_SECRET=build-placeholder
+ENV NEXTAUTH_URL=http://localhost:3000
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

@@ -8,6 +8,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       '/api/analyze': ['./node_modules/pdf-parse/**'],
       '/api/match': ['./node_modules/pdf-parse/**'],
+      '/api/anonymize': ['./node_modules/pdf-parse/**'],
     },
   },
 
