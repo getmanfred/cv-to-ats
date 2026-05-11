@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import type { CVData } from '@/types/cv'
+import { EMPTY_CV } from '@/types/cv'
 
 const FIELD_LABELS: Record<string, string> = {
   nombre:     'nombre completo de la persona',
   email:      'direcciones de correo electrónico',
   telefono:   'números de teléfono',
-  direccion:  'dirección postal (calle, número, ciudad, código postal)',
+  direccion:  'dirección postal (calle, número, código postal)',
   linkedin:   'URLs de LinkedIn, GitHub u otras redes sociales personales',
-  nacimiento: 'fecha de nacimiento y edad',
+  nacimiento: 'fecha de nacimiento o edad',
   dni:        'DNI, NIE, NIF, pasaporte u otros documentos de identidad',
   foto:       'menciones o referencias a fotografía',
 }
@@ -28,10 +30,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract text from PDF
-    const buffer = Buffer.from(await file.arrayBuffer())
+    const buffer   = Buffer.from(await file.arrayBuffer())
     const pdfParse = (await import('pdf-parse')).default
-    const parsed = await pdfParse(buffer)
-    const rawText = parsed.text?.trim()
+    const parsed   = await pdfParse(buffer)
+    const rawText  = parsed.text?.trim()
 
     if (!rawText) {
       return NextResponse.json(
@@ -40,105 +42,113 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Build Gemini prompt
     const fieldList = fields.map(f => `- ${FIELD_LABELS[f] ?? f}`).join('\n')
 
-    const prompt = `Eres una herramienta de anonimización de CVs. Dado el siguiente texto de un CV, sustituye los datos personales identificativos indicados por la etiqueta [REDACTADO].
+    const prompt = `Eres un parser y anonimizador de CVs. Analiza el siguiente texto de CV, extrae su contenido en la estructura JSON indicada y anonimiza los datos personales señalados.
 
-Datos que debes anonimizar:
+Datos a anonimizar (sustituir por "[ANONIMIZADO]"):
 ${fieldList}
 
-Reglas estrictas:
-- Sustituye cada dato identificativo por [REDACTADO]
-- Conserva íntegro el contenido profesional: experiencia, habilidades, formación, logros, fechas de trabajo, nombres de empresas, universidades y cargos
-- NO redactes nombres de empresas, universidades ni empleadores
-- NO redactes tecnologías, idiomas, herramientas ni habilidades profesionales
-- No uses formato markdown (sin asteriscos, sin almohadillas, sin backticks)
-- Devuelve únicamente el texto del CV anonimizado, sin explicaciones ni comentarios adicionales
+Devuelve ÚNICAMENTE JSON válido con esta estructura exacta:
+{
+  "personalInfo": {
+    "nombre": string,
+    "cargo": string,
+    "email": string,
+    "telefono": string,
+    "linkedin": string,
+    "ubicacion": string,
+    "website": string
+  },
+  "resumen": string,
+  "experiencia": [
+    {
+      "id": string,
+      "empresa": string,
+      "cargo": string,
+      "ubicacion": string,
+      "fechaInicio": string,
+      "fechaFin": string,
+      "actual": boolean,
+      "bullets": string[]
+    }
+  ],
+  "proyectos": [
+    {
+      "id": string,
+      "nombre": string,
+      "descripcion": string,
+      "url": string
+    }
+  ],
+  "educacion": [
+    {
+      "id": string,
+      "institucion": string,
+      "titulo": string,
+      "campo": string,
+      "fechaInicio": string,
+      "fechaFin": string,
+      "logros": string[]
+    }
+  ],
+  "habilidades": {
+    "languages": string[],
+    "frameworks": string[],
+    "databases": string[],
+    "tools": string[],
+    "practices": string[]
+  },
+  "idiomas": [
+    {
+      "id": string,
+      "idioma": string,
+      "nivel": string
+    }
+  ]
+}
+
+Reglas:
+- Los campos en la lista de datos a anonimizar se sustituyen por "[ANONIMIZADO]"
+- Todo el contenido profesional (empresas, logros, fechas de trabajo, habilidades, formación, proyectos) se conserva íntegro
+- Si un campo no está en el CV, usa string vacío "" o array vacío []
+- "actual": true si es el trabajo presente, false en caso contrario
+- Los IDs deben ser únicos: "exp-1", "exp-2", "edu-1", "proj-1", "lang-1", etc.
+- No incluyas markdown, solo JSON puro
 
 Texto del CV:
 ${rawText}`
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model  = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' })
-    const result = await model.generateContent(prompt)
-    const anonymizedText = result.response.text()
-
-    // Generate PDF
-    const pdfBuffer = await buildPDF(anonymizedText)
-
-    return new NextResponse(pdfBuffer, {
-      headers: {
-        'Content-Type':        'application/pdf',
-        'Content-Disposition': 'attachment; filename="cv-anonimizado.pdf"',
-      },
+    const model  = genAI.getGenerativeModel({
+      model: 'gemini-3-flash-preview',
+      generationConfig: { responseMimeType: 'application/json' },
     })
+    const result = await model.generateContent(prompt)
+    const text   = result.response.text()
+
+    let cvData: CVData
+    try {
+      cvData = mergeWithEmpty(JSON.parse(text))
+    } catch {
+      return NextResponse.json({ error: 'Error al procesar la estructura del CV.' }, { status: 500 })
+    }
+
+    return NextResponse.json({ cvData })
   } catch (err) {
     console.error('[anonymize]', err)
     return NextResponse.json({ error: 'Error interno al procesar el CV.' }, { status: 500 })
   }
 }
 
-async function buildPDF(text: string): Promise<ArrayBuffer> {
-  const { jsPDF } = await import('jspdf')
-  const doc    = new jsPDF({ unit: 'mm', format: 'a4' })
-  const pageW  = doc.internal.pageSize.getWidth()
-  const pageH  = doc.internal.pageSize.getHeight()
-  const mX     = 20
-  const mTop   = 22
-  const mBot   = 20
-  const textW  = pageW - 2 * mX
-  let y        = mTop
-
-  function newPage() {
-    doc.addPage()
-    y = mTop
+function mergeWithEmpty(raw: Partial<CVData>): CVData {
+  return {
+    personalInfo: { ...EMPTY_CV.personalInfo, ...(raw.personalInfo ?? {}) },
+    resumen:      raw.resumen      ?? '',
+    experiencia:  raw.experiencia  ?? [],
+    proyectos:    raw.proyectos    ?? [],
+    educacion:    raw.educacion    ?? [],
+    habilidades:  { ...EMPTY_CV.habilidades, ...(raw.habilidades ?? {}) },
+    idiomas:      raw.idiomas      ?? [],
   }
-
-  function ensureSpace(h: number) {
-    if (y + h > pageH - mBot) newPage()
-  }
-
-  for (const line of text.split('\n')) {
-    const t = line.trim()
-
-    if (t === '') {
-      y += 3
-      continue
-    }
-
-    // Detect section headers: short, fully uppercase lines without dots or @
-    const isHeader =
-      t === t.toUpperCase() &&
-      t.length >= 3 &&
-      t.length <= 60 &&
-      /[A-ZÁÉÍÓÚÑ]/.test(t) &&
-      !/[.@]/.test(t)
-
-    if (isHeader) {
-      y += 2
-      ensureSpace(10)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.setTextColor(9, 44, 100)
-      doc.text(t, mX, y)
-      y += 1.5
-      doc.setDrawColor(13, 161, 164)
-      doc.setLineWidth(0.4)
-      doc.line(mX, y, pageW - mX, y)
-      y += 5
-    } else {
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(10)
-      doc.setTextColor(40, 40, 40)
-      const wrapped = doc.splitTextToSize(t, textW) as string[]
-      for (const wl of wrapped) {
-        ensureSpace(5)
-        doc.text(wl, mX, y)
-        y += 5
-      }
-    }
-  }
-
-  return doc.output('arraybuffer')
 }
