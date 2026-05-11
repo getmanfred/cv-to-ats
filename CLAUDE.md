@@ -12,7 +12,7 @@ Next.js 14 (App Router) + Supabase + Gemini AI. Desplegado en **Railway**.
 ### Stack
 - **Frontend/Backend**: Next.js 14.2 (App Router, `src/` directory)
 - **Base de datos**: Supabase — tablas `feedback` e `issues`
-- **IA**: Gemini — modelo **siempre `gemini-2.5-flash-preview`**, nunca modelos `2.0` (dan error)
+- **IA**: Gemini — modelo **siempre `gemini-3-flash-preview`**
 - **Estilos**: Tailwind CSS con tokens de diseño Manfred (navy `#092c64`, teal `#0DA1A4`, neon `#01FFC6`)
 - **Fuentes**: `Big Shoulders Display` solo para números/gráficos, nunca para headings
 

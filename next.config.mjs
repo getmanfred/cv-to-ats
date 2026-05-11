@@ -2,6 +2,15 @@
 const isDev = process.env.NODE_ENV !== 'production'
 
 const nextConfig = {
+  output: 'standalone',
+
+  experimental: {
+    outputFileTracingIncludes: {
+      '/api/analyze': ['./node_modules/pdf-parse/**'],
+      '/api/match': ['./node_modules/pdf-parse/**'],
+    },
+  },
+
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals.push({ 'pdf-parse': 'commonjs pdf-parse' })
