@@ -36,6 +36,8 @@ spec:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: cv-to-ats
+      imagePullSecrets:
+        - name: ghcr-pull
       containers:
         - name: cv-to-ats
           image: ghcr.io/borjaperfra/cv-to-ats:latest
