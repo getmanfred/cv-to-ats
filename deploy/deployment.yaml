@@ -6,6 +6,13 @@ metadata:
   labels:
     app.kubernetes.io/name: cv-to-ats
     app.kubernetes.io/part-of: manfred
+  annotations:
+    # Keel watches the GHCR registry for new digests of the :latest
+    # tag and triggers a rolling update when the digest changes.
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 1m"
+    keel.sh/match-tag: "true"
 spec:
   replicas: 2
   revisionHistoryLimit: 5
