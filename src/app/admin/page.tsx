@@ -225,24 +225,20 @@ export default function AnonymizePage() {
           <button
             onClick={handleAnonymize}
             disabled={loading || selected.size === 0}
-            className="w-full font-sans font-[700] text-sm uppercase tracking-widest py-4 rounded-2xl transition-all"
+            className="w-full flex items-center justify-center gap-3 font-sans font-[700] text-sm uppercase tracking-widest py-4 rounded-2xl transition-all"
             style={{
               backgroundColor: loading || selected.size === 0 ? '#c8c3ba' : '#092c64',
               color: '#ffffff',
               cursor: loading || selected.size === 0 ? 'not-allowed' : 'pointer',
             }}
           >
-            {loading ? (
-              <span className="flex items-center justify-center gap-3">
-                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                Procesando con IA...
-              </span>
-            ) : (
-              'Anonimizar CV'
+            {loading && (
+              <svg className="animate-spin h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3" />
+                <path fill="currentColor" d="M12 2a10 10 0 0110 10h-3a7 7 0 00-7-7V2z" />
+              </svg>
             )}
+            {loading ? 'Procesando con IA...' : 'Anonimizar CV'}
           </button>
         )}
 
