@@ -8,6 +8,7 @@ const LABELS = {
   es: {
     analyzeCV: 'Analizar CV',
     cvEditor: 'Editor CV',
+    matchCv: 'CV vs Oferta',
     cvsAnalyzed: (n: string) => `${n} CVs analizados`,
     language: 'Idioma',
     openMenu: 'Abrir menú',
@@ -16,6 +17,7 @@ const LABELS = {
   en: {
     analyzeCV: 'Analyse CV',
     cvEditor: 'CV Editor',
+    matchCv: 'CV vs Job',
     cvsAnalyzed: (n: string) => `${n} CVs analysed`,
     language: 'Language',
     openMenu: 'Open menu',
@@ -57,6 +59,7 @@ export default function Header({ noPrint = false }: HeaderProps) {
   const navLinks = [
     { href: '/',       label: L.analyzeCV },
     { href: '/editor', label: L.cvEditor },
+    { href: '/match',  label: L.matchCv },
   ]
 
   return (
