@@ -527,7 +527,7 @@ export default function EditorPage() {
       <Header />
 
       {/* Hero */}
-      <section className="bg-navy text-white py-10 px-6 flex-shrink-0">
+      <section className="bg-navy text-white py-6 sm:py-10 px-6 flex-shrink-0">
         <div className="max-w-container mx-auto text-center">
           <p className="font-sans font-[900] uppercase tracking-widest text-neon text-xs mb-4">
             Herramienta Gratuita de Manfred

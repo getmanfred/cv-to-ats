@@ -42,15 +42,17 @@ export default function MatchPage() {
   const jdIsUrl = /^https?:\/\/\S+$/.test(jdText.trim())
 
   useEffect(() => {
-    const cached = sessionStorage.getItem('atsCvText')
+    const cached = sessionStorage.getItem('atsCvText') || localStorage.getItem('atsCvText')
     const result = sessionStorage.getItem('atsResult')
     if (cached && cached.length > 100) {
       setHasCachedCv(true)
       if (result) {
         try {
           const r = JSON.parse(result)
-          setCachedCvName(r.nombre || 'Tu CV')
-        } catch { setCachedCvName('Tu CV') }
+          setCachedCvName(r.nombre || localStorage.getItem('atsCvName') || 'Tu CV')
+        } catch { setCachedCvName(localStorage.getItem('atsCvName') || 'Tu CV') }
+      } else {
+        setCachedCvName(localStorage.getItem('atsCvName') || 'Tu CV')
       }
     }
     setHasCachedResult(!!sessionStorage.getItem('matchResult'))
@@ -82,7 +84,7 @@ export default function MatchPage() {
       const formData = new FormData()
 
       if (hasCachedCv) {
-        formData.append('cvText', sessionStorage.getItem('atsCvText') ?? '')
+        formData.append('cvText', sessionStorage.getItem('atsCvText') || localStorage.getItem('atsCvText') || '')
       } else if (cvFile) {
         formData.append('cvFile', cvFile)
       }
@@ -122,7 +124,7 @@ export default function MatchPage() {
       <Header />
 
       {/* Hero */}
-      <section className="bg-navy text-white py-14 px-6">
+      <section className="bg-navy text-white py-8 sm:py-14 px-6">
         <div className="max-w-container mx-auto text-center">
           <p className="font-sans font-[900] uppercase tracking-widest text-neon text-xs mb-5">
             Herramienta Gratuita de Manfred
@@ -139,7 +141,7 @@ export default function MatchPage() {
       </section>
 
       {/* Form */}
-      <main className="max-w-2xl mx-auto px-6 py-10 space-y-5">
+      <main className="max-w-2xl mx-auto px-6 py-6 sm:py-10 space-y-5">
 
         {/* Cached result banner */}
         {hasCachedResult && (
