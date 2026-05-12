@@ -6,7 +6,6 @@ import Link from 'next/link'
 interface Stats {
   cvs_analyzed:     number
   match:            number
-  linkedin:         number
   editor_parse:     number
   editor_improve:   number
   editor_translate: number
@@ -29,14 +28,6 @@ const ACTIONS = [
     gemini: true,
     color: '#092c64',
     bg: '#e8ecf5',
-  },
-  {
-    key: 'linkedin' as keyof Stats,
-    label: 'Análisis LinkedIn',
-    description: 'Revisión de perfil de LinkedIn',
-    gemini: true,
-    color: '#2563eb',
-    bg: '#eff6ff',
   },
   {
     key: 'editor_parse' as keyof Stats,
