@@ -527,18 +527,12 @@ export default function EditorPage() {
       <Header />
 
       {/* Hero */}
-      <section className="bg-navy text-white py-6 sm:py-10 px-6 flex-shrink-0">
-        <div className="max-w-container mx-auto text-center">
-          <p className="font-sans font-[900] uppercase tracking-widest text-neon text-xs mb-4">
-            Herramienta Gratuita de Manfred
-          </p>
-          <h1 className="font-heading font-[900] text-4xl md:text-5xl leading-tight mb-3">
+      <section className="bg-navy text-white py-3 px-6 flex-shrink-0">
+        <div className="max-w-container mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <h1 className="font-heading font-[900] text-xl leading-tight">
             {LABELS[lang].heroTitle}
           </h1>
-          <p className="font-sans text-base text-white/70 max-w-xl mx-auto">
-            {LABELS[lang].heroSubtitle}
-          </p>
-          <p className="font-sans text-xs mt-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="font-sans text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
             {LABELS[lang].heroAttr}{' '}
             <a href="https://newsletter.danielblanco.dev/p/17-como-llevar-tu-cv-al-siguiente"
                target="_blank" rel="noopener noreferrer"
