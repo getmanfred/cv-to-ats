@@ -10,7 +10,7 @@ import { getLang, type Lang } from '@/components/LanguageSelector'
 import { getHistory, clearHistory, type HistoryEntry } from '@/lib/history'
 import Header from '@/components/Header'
 
-type UploadState = 'idle' | 'uploading' | 'error'
+type UploadState = 'idle' | 'uploading' | 'error' | 'daily_limit'
 
 // ─── Bilingual content ───────────────────────────────────────────────────────
 
@@ -78,6 +78,23 @@ const ERROR_MESSAGES = {
     'Unexpected error. The team is on it (hopefully).',
     'Houston, we have a problem. Try again.',
   ],
+}
+
+const DAILY_LIMIT_LABELS = {
+  es: {
+    title: 'El analizador ha llegado a su límite diario',
+    body: 'Procesamos miles de CVs cada día y hemos alcanzado el máximo de hoy. El contador se renueva a medianoche.',
+    cta: 'Ver un ejemplo de análisis →',
+    chipWarning: 'Cupo casi agotado para hoy — analiza ahora',
+    chipFull: 'Límite diario alcanzado · Vuelve mañana',
+  },
+  en: {
+    title: 'The analyser has reached its daily limit',
+    body: 'We process thousands of CVs every day and have reached today\'s maximum. The counter resets at midnight.',
+    cta: 'See an analysis example →',
+    chipWarning: 'Daily capacity almost full — analyse now',
+    chipFull: 'Daily limit reached · Come back tomorrow',
+  },
 }
 
 const LABELS = {
@@ -342,12 +359,22 @@ export default function UploadPage() {
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES.es[0])
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [compareFromId, setCompareFromId] = useState<string | null>(null)
+  const [dailyCapacity, setDailyCapacity] = useState<{ used: number; limit: number } | null>(null)
 
   useEffect(() => {
     const l = getLang()
     setLang(l)
     setLoadingMsg(LOADING_MESSAGES[l][0])
     setHistory(getHistory())
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.daily_used === 'number' && typeof d.daily_limit === 'number') {
+          setDailyCapacity({ used: d.daily_used, limit: d.daily_limit })
+          if (d.daily_used >= d.daily_limit) setState('daily_limit')
+        }
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -394,7 +421,10 @@ export default function UploadPage() {
       formData.append('lang', getLang())
       const response = await fetch('/api/analyze', { method: 'POST', body: formData })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Error al analizar el CV.')
+      if (!response.ok) {
+        if (data.code === 'DAILY_LIMIT_REACHED') { setState('daily_limit'); return }
+        throw new Error(data.error || 'Error al analizar el CV.')
+      }
       if (data._cvText) {
         sessionStorage.setItem('atsCvText', data._cvText)
         localStorage.setItem('atsCvText', data._cvText)
@@ -441,6 +471,7 @@ export default function UploadPage() {
   }
 
   const isUploading = state === 'uploading'
+  const isDailyLimit = state === 'daily_limit'
   const L = LABELS[lang]
 
   return (
@@ -474,6 +505,31 @@ export default function UploadPage() {
           {file && !isUploading && (
             <div className="mt-4">
               <FilePreview file={file} onClear={handleClear} />
+            </div>
+          )}
+
+          {state === 'daily_limit' && (
+            <div className="mt-4 p-5 rounded-xl border-2 border-dashed flex items-start gap-4"
+              style={{ borderColor: '#0DA1A4', backgroundColor: '#f0fdfd' }}>
+              <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                style={{ color: '#0DA1A4' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="font-sans font-[700] text-sm" style={{ color: '#092c64' }}>
+                  {DAILY_LIMIT_LABELS[lang].title}
+                </p>
+                <p className="font-sans text-sm mt-1" style={{ color: '#6b7280' }}>
+                  {DAILY_LIMIT_LABELS[lang].body}
+                </p>
+                <button
+                  onClick={handleDemo}
+                  className="font-sans font-[700] text-sm mt-2 underline underline-offset-2 transition-opacity hover:opacity-70"
+                  style={{ color: '#0DA1A4' }}
+                >
+                  {DAILY_LIMIT_LABELS[lang].cta}
+                </button>
+              </div>
             </div>
           )}
 
@@ -512,7 +568,29 @@ export default function UploadPage() {
 
           {!isUploading && (
             <div className="mt-6 space-y-3">
-              <Button variant="primary" size="lg" disabled={!file} onClick={handleAnalyze} className="w-full">
+              {dailyCapacity && (() => {
+                const pct = dailyCapacity.used / dailyCapacity.limit
+                if (pct >= 1) return (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: '#f0fdfd', border: '1px solid #0DA1A4' }}>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#0DA1A4' }} />
+                    <p className="font-sans text-xs font-[600]" style={{ color: '#092c64' }}>
+                      {DAILY_LIMIT_LABELS[lang].chipFull}
+                    </p>
+                  </div>
+                )
+                if (pct >= 0.8) return (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: '#fffbeb', border: '1px solid #f59e0b' }}>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#f59e0b' }} />
+                    <p className="font-sans text-xs font-[600]" style={{ color: '#92400e' }}>
+                      {DAILY_LIMIT_LABELS[lang].chipWarning}
+                    </p>
+                  </div>
+                )
+                return null
+              })()}
+              <Button variant="primary" size="lg" disabled={!file || isDailyLimit} onClick={handleAnalyze} className="w-full">
                 {L.analyzeBtn}
               </Button>
               <div className="flex items-center justify-center">
