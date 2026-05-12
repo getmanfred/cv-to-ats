@@ -82,18 +82,18 @@ const ERROR_MESSAGES = {
 
 const DAILY_LIMIT_LABELS = {
   es: {
-    title: 'El analizador ha llegado a su límite diario',
-    body: 'Procesamos miles de CVs cada día y hemos alcanzado el máximo de hoy. El contador se renueva a medianoche.',
-    cta: 'Ver un ejemplo de análisis →',
-    chipWarning: 'Cupo casi agotado para hoy — analiza ahora',
-    chipFull: 'Límite diario alcanzado · Vuelve mañana',
+    title: 'Vuelve mañana',
+    body: 'ATS Killer es gratuito y tiene un límite diario de análisis para poder mantener el servicio. El contador se renueva cada noche a medianoche. Mientras tanto, puedes ver cómo sería tu informe con el ejemplo.',
+    cta: 'Ver ejemplo de análisis →',
+    chipWarning: (remaining: number) => `Solo quedan ${remaining} análisis gratuitos disponibles hoy`,
+    chipFull: 'Análisis gratuitos agotados por hoy · Vuelve mañana',
   },
   en: {
-    title: 'The analyser has reached its daily limit',
-    body: 'We process thousands of CVs every day and have reached today\'s maximum. The counter resets at midnight.',
-    cta: 'See an analysis example →',
-    chipWarning: 'Daily capacity almost full — analyse now',
-    chipFull: 'Daily limit reached · Come back tomorrow',
+    title: 'Come back tomorrow',
+    body: 'ATS Killer is free and has a daily analysis limit to keep the service running. The counter resets every night at midnight. In the meantime, you can preview what your report would look like with the example.',
+    cta: 'See analysis example →',
+    chipWarning: (remaining: number) => `Only ${remaining} free analyses left today`,
+    chipFull: 'Free analyses used up for today · Come back tomorrow',
   },
 }
 
@@ -584,7 +584,7 @@ export default function UploadPage() {
                     style={{ backgroundColor: '#fffbeb', border: '1px solid #f59e0b' }}>
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#f59e0b' }} />
                     <p className="font-sans text-xs font-[600]" style={{ color: '#92400e' }}>
-                      {DAILY_LIMIT_LABELS[lang].chipWarning}
+                      {DAILY_LIMIT_LABELS[lang].chipWarning(dailyCapacity.limit - dailyCapacity.used)}
                     </p>
                   </div>
                 )
