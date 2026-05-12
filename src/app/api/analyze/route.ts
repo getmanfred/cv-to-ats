@@ -18,10 +18,8 @@ function getDailyLimit(): number {
   const launchUTC = Date.UTC(launch.getUTCFullYear(), launch.getUTCMonth(), launch.getUTCDate())
   const day = Math.floor((todayUTC - launchUTC) / 86_400_000)
 
-  if (day <= 0) return 500
-  if (day === 1) return 700
-  if (day === 2) return 500
-  if (day === 3) return 400
+  if (day <= 0) return 700
+  if (day === 1) return 500
   return 400
 }
 
