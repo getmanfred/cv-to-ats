@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { extractCVText } from '@/lib/extractors'
 import { analyzeWithGemini } from '@/lib/gemini'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
@@ -15,10 +14,11 @@ const ALLOWED_TYPES = [
   'text/plain',
   'text/markdown',
 ]
-const MAX_SIZE_BYTES = 3 * 1024 * 1024   // 3 MB
-const MAX_PAGES      = 5
-const MAX_TEXT_CHARS = 60_000
+const MAX_SIZE_BYTES      = 3 * 1024 * 1024
+const MAX_PAGES           = 5
+const MAX_TEXT_CHARS      = 60_000
 const ANALYSIS_TIMEOUT_MS = 85_000
+const MAX_DAILY_ANALYSES  = 300
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -29,45 +29,35 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ])
 }
 
-async function checkIsCV(text: string): Promise<boolean> {
+function looksLikeCV(text: string): boolean {
+  const sample = text.slice(0, 3000).toLowerCase()
+  const keywords = [
+    'experiencia', 'experience', 'trabajo', 'work history',
+    'formación', 'education', 'estudios', 'studies',
+    'habilidades', 'skills', 'competencias',
+    'curriculum', 'resume',
+    'empresa', 'company', 'empleado', 'employed',
+    'cargo', 'puesto', 'position', 'role',
+    'universidad', 'university', 'titulación', 'degree',
+  ]
+  return keywords.filter(kw => sample.includes(kw)).length >= 2
+}
+
+async function checkDailyQuota(): Promise<boolean> {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const precheck = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
-      generationConfig: { temperature: 0, maxOutputTokens: 10 },
-    })
-    // Sample beginning + middle to get a more representative view
-    const beginning = text.slice(0, 1500)
-    const middle = text.length > 3000 ? text.slice(Math.floor(text.length / 2), Math.floor(text.length / 2) + 800) : ''
-    const sample = middle ? `${beginning}\n...\n${middle}` : beginning
-
-    const prompt = `You are evaluating whether a document is a CV, resume, or curriculum vitae.
-
-A CV includes any professional document that lists personal data, work experience, education, skills, or professional achievements for job application purposes. LinkedIn exports, professional profiles, and any document primarily describing a person's professional background all count as CVs.
-
-Only answer "no" if the document is clearly something else entirely (e.g. invoice, contract, article, instruction manual, legal document).
-
-When in doubt, answer "yes".
-
-Document excerpt:
-${sample}
-
-Is this a CV or resume? Answer only "yes" or "no".`
-
-    const res = await Promise.race([
-      precheck.generateContent(prompt),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
-    ])
-    const answer = res.response.text().trim().toLowerCase()
-    // Only reject if Gemini explicitly says "no" — give benefit of the doubt otherwise
-    return !answer.startsWith('n')
+    const today = new Date().toISOString().slice(0, 10)
+    const { data } = await getSupabase()
+      .from('stats')
+      .select('value')
+      .eq('id', `daily:${today}`)
+      .single()
+    return (data?.value ?? 0) < MAX_DAILY_ANALYSES
   } catch {
     return true
   }
 }
 
 function sanitizeError(error: unknown): string {
-  // Never expose raw SDK / internal errors to the client
   if (error instanceof Error) {
     const msg = error.message
     if (msg.includes('API key') || msg.includes('quota') || msg.includes('PERMISSION_DENIED')) {
@@ -82,9 +72,8 @@ function sanitizeError(error: unknown): string {
 }
 
 export async function POST(request: NextRequest) {
-  // Rate limiting
   const ip = getClientIp(request)
-  const { allowed, retryAfter } = checkRateLimit(`analyze:${ip}`)
+  const { allowed, retryAfter } = checkRateLimit(`analyze:${ip}`, 3)
   if (!allowed) {
     return NextResponse.json(
       { error: 'Demasiadas solicitudes. Por favor, espera un momento antes de volver a intentarlo.' },
@@ -114,6 +103,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!await checkDailyQuota()) {
+      return NextResponse.json(
+        { error: 'Hemos alcanzado el límite diario de análisis. Por favor, inténtalo mañana.' },
+        { status: 429 }
+      )
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer())
     const cvText = await extractCVText(buffer, file.name, MAX_PAGES)
 
@@ -132,7 +128,7 @@ export async function POST(request: NextRequest) {
     const quickSample = cvText.slice(0, 1000).toLowerCase()
     const isObviouslyNotCV = OBVIOUS_NON_CV.some(kw => quickSample.includes(kw))
 
-    if (isObviouslyNotCV || !await checkIsCV(cvText)) {
+    if (isObviouslyNotCV || !looksLikeCV(cvText)) {
       return NextResponse.json(
         { error: 'El documento no parece un CV. Por favor, sube tu currículum en formato PDF, DOCX, TXT o MD.' },
         { status: 422 }
@@ -146,7 +142,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Strip platform-generated artifacts (GetManfred and similar exporters)
     const PLATFORM_PATTERNS = [
       /but wait[^\n]*/gi,
       /getmanfred\.com[^\n]*/gi,
@@ -161,7 +156,13 @@ export async function POST(request: NextRequest) {
     const result = await withTimeout(analyzeWithGemini(cleanedCvText, lang), ANALYSIS_TIMEOUT_MS)
     result.analyzedAt = new Date().toISOString()
 
-    void (async () => { try { await getSupabase().rpc('increment_stat', { stat_id: 'cvs_analyzed' }) } catch {} })()
+    const today = new Date().toISOString().slice(0, 10)
+    void (async () => {
+      try {
+        await getSupabase().rpc('increment_stat', { stat_id: 'cvs_analyzed' })
+        await getSupabase().rpc('increment_stat', { stat_id: `daily:${today}` })
+      } catch {}
+    })()
 
     return NextResponse.json({ ...result, _cvText: cvText })
   } catch (error) {
