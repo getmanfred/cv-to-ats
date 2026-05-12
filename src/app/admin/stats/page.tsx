@@ -75,7 +75,7 @@ export default function StatsPage() {
   const [updatedAt, setUpdatedAt] = useState('')
 
   useEffect(() => {
-    fetch('/api/stats')
+    fetch('/api/admin/stats')
       .then(r => r.json())
       .then((data: Stats) => {
         setStats(data)
@@ -107,7 +107,7 @@ export default function StatsPage() {
               <span className="font-sans text-xs text-gray-400">Actualizado a las {updatedAt}</span>
             )}
             <button
-              onClick={() => { setLoading(true); fetch('/api/stats').then(r => r.json()).then((data: Stats) => { setStats(data); setUpdatedAt(new Date().toLocaleTimeString('es-ES')) }).finally(() => setLoading(false)) }}
+              onClick={() => { setLoading(true); fetch('/api/admin/stats').then(r => r.json()).then((data: Stats) => { setStats(data); setUpdatedAt(new Date().toLocaleTimeString('es-ES')) }).finally(() => setLoading(false)) }}
               className="font-sans font-[700] text-xs px-3 py-1.5 rounded-lg border transition-colors hover:border-teal hover:text-teal"
               style={{ borderColor: '#e5e7eb', color: '#6b7280' }}
             >
