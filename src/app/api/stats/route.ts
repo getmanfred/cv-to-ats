@@ -6,7 +6,6 @@ export const runtime = 'nodejs'
 const STAT_IDS = [
   'cvs_analyzed',
   'action:match',
-  'action:linkedin',
   'action:editor_parse',
   'action:editor_improve',
   'action:editor_translate',
@@ -26,19 +25,18 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        cvs_analyzed:      map['cvs_analyzed']          ?? 0,
-        match:             map['action:match']           ?? 0,
-        linkedin:          map['action:linkedin']        ?? 0,
-        editor_parse:      map['action:editor_parse']    ?? 0,
-        editor_improve:    map['action:editor_improve']  ?? 0,
+        cvs_analyzed:      map['cvs_analyzed']           ?? 0,
+        match:             map['action:match']            ?? 0,
+        editor_parse:      map['action:editor_parse']     ?? 0,
+        editor_improve:    map['action:editor_improve']   ?? 0,
         editor_translate:  map['action:editor_translate'] ?? 0,
-        anonymize:         map['action:anonymize']       ?? 0,
+        anonymize:         map['action:anonymize']        ?? 0,
       },
       { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } }
     )
   } catch {
     return NextResponse.json({
-      cvs_analyzed: 0, match: 0, linkedin: 0,
+      cvs_analyzed: 0, match: 0,
       editor_parse: 0, editor_improve: 0, editor_translate: 0, anonymize: 0,
     })
   }
