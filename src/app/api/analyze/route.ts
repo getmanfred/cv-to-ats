@@ -28,15 +28,33 @@ async function checkIsCV(text: string): Promise<boolean> {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     const precheck = genAI.getGenerativeModel({
       model: 'gemini-3-flash-preview',
-      generationConfig: { temperature: 0, maxOutputTokens: 5 },
+      generationConfig: { temperature: 0, maxOutputTokens: 10 },
     })
-    const prompt = `Is the following document a CV or resume? Answer only "yes" or "no".\n\n${text.slice(0, 500)}`
+    // Sample beginning + middle to get a more representative view
+    const beginning = text.slice(0, 1500)
+    const middle = text.length > 3000 ? text.slice(Math.floor(text.length / 2), Math.floor(text.length / 2) + 800) : ''
+    const sample = middle ? `${beginning}\n...\n${middle}` : beginning
+
+    const prompt = `You are evaluating whether a document is a CV, resume, or curriculum vitae.
+
+A CV includes any professional document that lists personal data, work experience, education, skills, or professional achievements for job application purposes. LinkedIn exports, professional profiles, and any document primarily describing a person's professional background all count as CVs.
+
+Only answer "no" if the document is clearly something else entirely (e.g. invoice, contract, article, instruction manual, legal document).
+
+When in doubt, answer "yes".
+
+Document excerpt:
+${sample}
+
+Is this a CV or resume? Answer only "yes" or "no".`
+
     const res = await Promise.race([
       precheck.generateContent(prompt),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
     ])
     const answer = res.response.text().trim().toLowerCase()
-    return answer.startsWith('y') || answer.startsWith('s')
+    // Only reject if Gemini explicitly says "no" — give benefit of the doubt otherwise
+    return !answer.startsWith('n')
   } catch {
     return true
   }
