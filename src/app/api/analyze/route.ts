@@ -30,15 +30,26 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 function looksLikeCV(text: string): boolean {
-  const sample = text.slice(0, 3000).toLowerCase()
+  const sample = text.slice(0, 10_000).toLowerCase()
   const keywords = [
-    'experiencia', 'experience', 'trabajo', 'work history',
-    'formación', 'education', 'estudios', 'studies',
-    'habilidades', 'skills', 'competencias',
-    'curriculum', 'resume',
-    'empresa', 'company', 'empleado', 'employed',
-    'cargo', 'puesto', 'position', 'role',
-    'universidad', 'university', 'titulación', 'degree',
+    // ES
+    'experiencia', 'formación', 'estudios', 'habilidades', 'competencias',
+    'trabajo', 'empresa', 'empleado', 'cargo', 'puesto', 'universidad',
+    'titulación', 'curriculum', 'perfil', 'objetivo', 'referencias',
+    // EN
+    'experience', 'education', 'skills', 'resume', 'work history',
+    'company', 'employed', 'position', 'role', 'university', 'degree',
+    'profile', 'summary', 'references', 'volunteer', 'achievements',
+    // FR
+    'expérience', 'formation', 'compétences', 'diplôme', 'entreprise',
+    // DE
+    'erfahrung', 'ausbildung', 'kenntnisse', 'lebenslauf', 'berufserfahrung',
+    // IT
+    'esperienza', 'istruzione', 'competenze', 'curriculum vitae',
+    // PT
+    'experiência', 'formação', 'habilidades',
+    // Universal
+    'linkedin', 'github', 'portfolio',
   ]
   return keywords.filter(kw => sample.includes(kw)).length >= 2
 }
