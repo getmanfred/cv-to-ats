@@ -85,11 +85,15 @@ const DAILY_LIMIT_LABELS = {
     title: 'El analizador ha llegado a su límite diario',
     body: 'Procesamos miles de CVs cada día y hemos alcanzado el máximo de hoy. El contador se renueva a medianoche.',
     cta: 'Ver un ejemplo de análisis →',
+    chipWarning: 'Cupo casi agotado para hoy — analiza ahora',
+    chipFull: 'Límite diario alcanzado · Vuelve mañana',
   },
   en: {
     title: 'The analyser has reached its daily limit',
     body: 'We process thousands of CVs every day and have reached today\'s maximum. The counter resets at midnight.',
     cta: 'See an analysis example →',
+    chipWarning: 'Daily capacity almost full — analyse now',
+    chipFull: 'Daily limit reached · Come back tomorrow',
   },
 }
 
@@ -355,12 +359,22 @@ export default function UploadPage() {
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES.es[0])
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [compareFromId, setCompareFromId] = useState<string | null>(null)
+  const [dailyCapacity, setDailyCapacity] = useState<{ used: number; limit: number } | null>(null)
 
   useEffect(() => {
     const l = getLang()
     setLang(l)
     setLoadingMsg(LOADING_MESSAGES[l][0])
     setHistory(getHistory())
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.daily_used === 'number' && typeof d.daily_limit === 'number') {
+          setDailyCapacity({ used: d.daily_used, limit: d.daily_limit })
+          if (d.daily_used >= d.daily_limit) setState('daily_limit')
+        }
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -554,6 +568,28 @@ export default function UploadPage() {
 
           {!isUploading && (
             <div className="mt-6 space-y-3">
+              {dailyCapacity && (() => {
+                const pct = dailyCapacity.used / dailyCapacity.limit
+                if (pct >= 1) return (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: '#f0fdfd', border: '1px solid #0DA1A4' }}>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#0DA1A4' }} />
+                    <p className="font-sans text-xs font-[600]" style={{ color: '#092c64' }}>
+                      {DAILY_LIMIT_LABELS[lang].chipFull}
+                    </p>
+                  </div>
+                )
+                if (pct >= 0.8) return (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: '#fffbeb', border: '1px solid #f59e0b' }}>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#f59e0b' }} />
+                    <p className="font-sans text-xs font-[600]" style={{ color: '#92400e' }}>
+                      {DAILY_LIMIT_LABELS[lang].chipWarning}
+                    </p>
+                  </div>
+                )
+                return null
+              })()}
               <Button variant="primary" size="lg" disabled={!file || isDailyLimit} onClick={handleAnalyze} className="w-full">
                 {L.analyzeBtn}
               </Button>

@@ -1,23 +1,25 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
+import { getDailyLimit, todayKey } from '@/lib/daily-limit'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  try {
-    const { data, error } = await getSupabase()
-      .from('stats')
-      .select('value')
-      .eq('id', 'cvs_analyzed')
-      .single()
+  const dailyLimit = getDailyLimit()
+  const dailyStatKey = todayKey()
 
-    if (error) throw error
+  const [totalResult, dailyResult] = await Promise.allSettled([
+    getSupabase().from('stats').select('value').eq('id', 'cvs_analyzed').maybeSingle(),
+    getSupabase().from('stats').select('value').eq('id', dailyStatKey).maybeSingle(),
+  ])
 
-    return NextResponse.json(
-      { cvs_analyzed: data?.value ?? 0 },
-      { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } }
-    )
-  } catch {
-    return NextResponse.json({ cvs_analyzed: 0 })
-  }
+  const cvsAnalyzed = totalResult.status === 'fulfilled' ? (totalResult.value.data?.value ?? 0) : 0
+  const dailyUsed   = dailyResult.status  === 'fulfilled' ? (dailyResult.value.data?.value  ?? 0) : 0
+
+  return NextResponse.json({
+    cvs_analyzed: cvsAnalyzed,
+    daily_used:   dailyUsed,
+    daily_limit:  dailyLimit,
+  })
 }
