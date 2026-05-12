@@ -7,6 +7,32 @@ import { getSupabase } from '@/lib/supabase'
 export const runtime = 'nodejs'
 export const maxDuration = 90
 
+// Límite diario escalonado desde el día de lanzamiento (2026-05-12)
+// Escala descendente para absorber el pico de lanzamiento sin agotar el crédito
+const LAUNCH_DATE = '2026-05-12'
+
+function getDailyLimit(): number {
+  const launch = new Date(LAUNCH_DATE + 'T00:00:00Z')
+  const now = new Date()
+  const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  const launchUTC = Date.UTC(launch.getUTCFullYear(), launch.getUTCMonth(), launch.getUTCDate())
+  const day = Math.floor((todayUTC - launchUTC) / 86_400_000)
+
+  if (day <= 0) return 500
+  if (day === 1) return 700
+  if (day === 2) return 500
+  if (day === 3) return 400
+  return 400
+}
+
+function todayKey(): string {
+  const d = new Date()
+  const y = d.getUTCFullYear()
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `daily:cvs:${y}-${m}-${day}`
+}
+
 const ALLOWED_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -65,6 +91,24 @@ export async function POST(request: NextRequest) {
       { error: 'Demasiadas solicitudes. Por favor, espera un momento antes de volver a intentarlo.' },
       { status: 429, headers: { 'Retry-After': String(retryAfter) } }
     )
+  }
+
+  const dailyStatKey = todayKey()
+  const dailyLimit = getDailyLimit()
+  try {
+    const { data: dailyStat } = await getSupabase()
+      .from('stats')
+      .select('value')
+      .eq('id', dailyStatKey)
+      .maybeSingle()
+    if ((dailyStat?.value ?? 0) >= dailyLimit) {
+      return NextResponse.json(
+        { error: 'El analizador ha alcanzado el límite diario de CVs. Vuelve mañana.', code: 'DAILY_LIMIT_REACHED' },
+        { status: 429 }
+      )
+    }
+  } catch {
+    // Si falla la consulta del límite, dejamos pasar para no bloquear usuarios
   }
 
   try {
@@ -135,7 +179,10 @@ export async function POST(request: NextRequest) {
     const result = await withTimeout(analyzeWithGemini(cleanedCvText, lang), ANALYSIS_TIMEOUT_MS)
     result.analyzedAt = new Date().toISOString()
 
-    void (async () => { try { await getSupabase().rpc('increment_stat', { stat_id: 'cvs_analyzed' }) } catch {} })()
+    void (async () => {
+      try { await getSupabase().rpc('increment_stat', { stat_id: 'cvs_analyzed' }) } catch {}
+      try { await getSupabase().rpc('increment_stat', { stat_id: dailyStatKey }) } catch {}
+    })()
 
     return NextResponse.json({ ...result, _cvText: cvText })
   } catch (error) {
