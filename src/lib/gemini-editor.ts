@@ -94,6 +94,7 @@ Rules:
   * practices:  methodologies, processes and engineering practices — Agile, Scrum, Kanban, TDD, BDD, CI/CD, SOLID, DDD, Microservices, REST, Code Reviews, Pair Programming...
   - When a skill fits multiple categories, choose the most specific one (e.g. "Spring" → frameworks, not tools).
   - Never put all skills into a single category — always spread them across the relevant ones.
+  - CRITICAL: preserve ALL characters exactly as they appear in the source text. Do NOT replace, omit, transliterate or escape accented letters (á, é, í, ó, ú, ü, à, è) or special characters (ñ, ç). Output them as real Unicode characters in the JSON, not as backslash-u escape sequences.
 
 CV TEXT:
 ---
@@ -151,12 +152,22 @@ function hydrateCVData(raw: RawCVData): CVData {
   }
 }
 
+function decodeUnicodeEscapes(s: string): string {
+  // If the model emits literal \uXXXX sequences as text (double-escaped),
+  // decode them before JSON.parse so accents and ñ are restored correctly.
+  return s.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16))
+  )
+}
+
 function parseNaNJson(text: string): RawCVData {
-  const cleaned = text
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim()
+  const cleaned = decodeUnicodeEscapes(
+    text
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim()
+  )
   return JSON.parse(cleaned)
 }
 
