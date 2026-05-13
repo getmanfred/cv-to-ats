@@ -3,7 +3,6 @@ import { extractCVText } from '@/lib/extractors'
 import { analyzeWithGemini } from '@/lib/gemini'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getSupabase } from '@/lib/supabase'
-import { getDailyLimit, todayKey } from '@/lib/daily-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 90
@@ -79,25 +78,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const dailyStatKey = todayKey()
-  const dailyLimit = getDailyLimit()
-  try {
-    if (process.env.NODE_ENV !== 'development') {
-      const { data: dailyStat } = await getSupabase()
-        .from('stats')
-        .select('value')
-        .eq('id', dailyStatKey)
-        .maybeSingle()
-      if ((dailyStat?.value ?? 0) >= dailyLimit) {
-        return NextResponse.json(
-          { error: 'El analizador ha alcanzado el límite diario de CVs. Vuelve mañana.', code: 'DAILY_LIMIT_REACHED' },
-          { status: 429 }
-        )
-      }
-    }
-  } catch {
-    // Si falla la consulta del límite, dejamos pasar para no bloquear usuarios
-  }
 
   try {
     const formData = await request.formData()
@@ -169,7 +149,6 @@ export async function POST(request: NextRequest) {
 
     void (async () => {
       try { await getSupabase().rpc('increment_stat', { stat_id: 'cvs_analyzed' }) } catch {}
-      try { await getSupabase().rpc('increment_stat', { stat_id: dailyStatKey }) } catch {}
     })()
 
     return NextResponse.json({ ...result, _cvText: cvText })
