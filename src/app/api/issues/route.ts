@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { getSupabase } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
+
+async function requireAdmin() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.email?.endsWith('@getmanfred.com')) {
+    return NextResponse.json({ error: 'No autorizado.' }, { status: 401 })
+  }
+  return null
+}
 
 // Issues pre-generadas a partir del análisis del feedback (seed inicial)
 const SEED_ISSUES = [
@@ -203,6 +213,9 @@ const SEED_ISSUES = [
 ]
 
 export async function GET() {
+  const denied = await requireAdmin()
+  if (denied) return denied
+
   try {
     const supabase = getSupabase()
     const { data, error } = await supabase
@@ -231,6 +244,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const denied = await requireAdmin()
+  if (denied) return denied
+
   try {
     const body = await req.json()
     const { numero, tipo, titulo, descripcion, prioridad, feedback_ids } = body
@@ -254,6 +270,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const denied = await requireAdmin()
+  if (denied) return denied
+
   try {
     const body = await req.json()
     const { id, ...fields } = body
