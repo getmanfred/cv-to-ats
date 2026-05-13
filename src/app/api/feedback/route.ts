@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { getSupabase } from '@/lib/supabase'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
-
-async function requireAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email?.endsWith('@getmanfred.com')) {
-    return NextResponse.json({ error: 'No autorizado.' }, { status: 401 })
-  }
-  return null
-}
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req)
@@ -51,9 +41,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const denied = await requireAdmin()
-  if (denied) return denied
-
   try {
     const { data, error } = await getSupabase()
       .from('feedback')
@@ -70,9 +57,6 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const denied = await requireAdmin()
-  if (denied) return denied
-
   try {
     const body = await req.json()
     const { id, resuelto, procesado } = body
