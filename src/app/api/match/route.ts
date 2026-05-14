@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractCVText } from '@/lib/extractors'
-import { matchWithGemini } from '@/lib/gemini-match'
+import { matchWithGemini } from '@/lib/match-ai'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getSupabase } from '@/lib/supabase'
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { analyzeLinkedIn } from '@/lib/gemini-linkedin'
+import { analyzeLinkedIn } from '@/lib/linkedin-ai'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getSupabase } from '@/lib/supabase'
 

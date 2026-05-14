@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { nanComplete } from '@/lib/nan-client'
 import type { CVData } from '@/types/cv'
 import { EMPTY_CV } from '@/types/cv'
 import { getSupabase } from '@/lib/supabase'
@@ -123,13 +123,7 @@ Reglas:
 Texto del CV:
 ${rawText}`
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model  = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
-      generationConfig: { responseMimeType: 'application/json' },
-    })
-    const result = await model.generateContent(prompt)
-    const text   = result.response.text()
+    const text = await nanComplete(prompt)
 
     let cvData: CVData
     try {

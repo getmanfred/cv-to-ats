@@ -1,5 +1,5 @@
 import type { LinkedInResult } from '@/types/linkedin'
-import { withGeminiRetry } from '@/lib/gemini-retry'
+import { withGeminiRetry } from '@/lib/api-retry'
 import { nanComplete } from '@/lib/nan-client'
 
 function buildLinkedInPrompt(profileText: string, lang: 'es' | 'en'): string {

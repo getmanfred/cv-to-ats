@@ -1,5 +1,5 @@
 import type { MatchResult } from '@/types/match'
-import { withGeminiRetry } from '@/lib/gemini-retry'
+import { withGeminiRetry } from '@/lib/api-retry'
 import { nanComplete } from '@/lib/nan-client'
 
 function buildMatchPrompt(cvText: string, jdText: string, lang: 'es' | 'en'): string {

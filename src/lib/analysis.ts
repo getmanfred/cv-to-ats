@@ -1,5 +1,5 @@
 import type { ATSAnalysisResult, CategoryAnalysis, Suggestion } from '@/types/analysis'
-import { withGeminiRetry } from '@/lib/gemini-retry'
+import { withGeminiRetry } from '@/lib/api-retry'
 import { nanComplete } from '@/lib/nan-client'
 
 // ─── Pass 1: scoring ──────────────────────────────────────────────────────────
