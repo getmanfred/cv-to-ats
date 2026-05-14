@@ -59,6 +59,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Modo desconocido.' }, { status: 400 })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error inesperado.'
+    if (msg.includes('context') || msg.includes('token') || msg.includes('too long') || msg.includes('maximum') || msg.includes('length')) {
+      return NextResponse.json({ error: 'El CV es demasiado extenso para procesarlo. Prueba con una versión más concisa.' }, { status: 422 })
+    }
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
