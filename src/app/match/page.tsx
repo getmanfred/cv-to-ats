@@ -8,6 +8,83 @@ import Header from '@/components/Header'
 
 type State = 'idle' | 'analyzing' | 'error'
 
+interface ManfredOffer {
+  id: number
+  position: string
+  slug: string
+  salaryFrom: number
+  salaryTo: number
+  currency: string
+  remotePercentage: number
+  isFreelance: boolean
+  feeRateFrom: number
+  feeRateTo: number
+  highlights: string[]
+  locations: string[]
+  company: { name: string; logoUrl: string }
+}
+
+function formatSalary(offer: ManfredOffer): string | null {
+  const { isFreelance, feeRateFrom, feeRateTo, salaryFrom, salaryTo, currency } = offer
+  if (isFreelance) {
+    if (!feeRateFrom && !feeRateTo) return null
+    if (feeRateFrom && feeRateTo && feeRateFrom !== feeRateTo) return `${feeRateFrom}–${feeRateTo} ${currency}/h`
+    return `${feeRateFrom || feeRateTo} ${currency}/h`
+  }
+  if (!salaryFrom && !salaryTo) return null
+  const k = (n: number) => `${Math.round(n / 1000)}k`
+  if (salaryFrom && salaryTo && salaryFrom !== salaryTo) return `${k(salaryFrom)}–${k(salaryTo)} ${currency}`
+  if (salaryFrom && !salaryTo) return `desde ${k(salaryFrom)} ${currency}`
+  return `hasta ${k(salaryTo)} ${currency}`
+}
+
+function formatLocation(remotePercentage: number, locations: string[]): string {
+  const city = locations[0] ?? ''
+  if (remotePercentage >= 100) return '100% remoto'
+  if (remotePercentage > 0) return city ? `Híbrido · ${city}` : 'Híbrido'
+  return city ? `Presencial · ${city}` : 'Presencial'
+}
+
+const TITLE_STOP = new Set(['and', 'the', 'for', 'with', 'de', 'of', 'en', 'a', 'an'])
+
+function titleWords(s: string): string[] {
+  // Min length 2 so acronyms like QA, AI, ML, UX are kept and not filtered out
+  return s.toLowerCase().split(/[\s/,\-]+/).filter(w => w.length >= 2 && !TITLE_STOP.has(w))
+}
+
+function skillInText(skill: string, text: string): boolean {
+  // Word-boundary match prevents 'R' or 'C' from matching inside 'engineer', 'architect', etc.
+  const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
+}
+
+function preScoreOffer(offer: ManfredOffer, skills: string[], cvRole: string): number {
+  const positionLower = offer.position.toLowerCase()
+
+  if (cvRole) {
+    // Primary signal (70 pts): bidirectional role-title matching
+    // highlights are company perks (emojis/benefits), not tech requirements — ignored
+    const offerWords = titleWords(offer.position)
+    const roleWords = titleWords(cvRole)
+    let roleScore = 0
+    if (offerWords.length > 0 && roleWords.length > 0) {
+      const offerInRole = offerWords.filter(w => cvRole.toLowerCase().includes(w)).length / offerWords.length
+      const roleInOffer = roleWords.filter(w => positionLower.includes(w)).length / roleWords.length
+      roleScore = Math.max(offerInRole, roleInOffer) * 70
+    }
+    // Secondary signal (30 pts): whole-word skill matches in offer title
+    const skillHits = skills.filter(s => skillInText(s, positionLower)).length
+    const skillScore = Math.min(skillHits / 3, 1) * 30
+    return Math.round(Math.min(roleScore + skillScore, 100))
+  }
+
+  // Fallback when no role info: skills vs position+highlights, capped denominator
+  const haystack = [offer.position, ...offer.highlights].join(' ').toLowerCase()
+  const hits = skills.filter(s => skillInText(s, haystack)).length
+  if (!hits) return 0
+  return Math.round(Math.min(hits / Math.min(skills.length, 8), 1) * 100)
+}
+
 const LOADING_MESSAGES = {
   es: [
     'Comparando perfiles...',
@@ -62,6 +139,9 @@ const LABELS = {
     batchCta: 'Compara todas a la vez →',
     noStorage: 'Tu CV no se almacena',
     fastAnalysis: 'Análisis en segundos',
+    checkingSkills: 'Revisando tu encaje con las ofertas de Manfred...',
+    locationWarningTitle: 'Residencia en España requerida',
+    locationWarningBody: (country: string) => `Hemos detectado que tu CV está vinculado a ${country}. Todas las ofertas de Manfred son en España y requieren residencia legal para formalizar contrato. Lamentablemente no podremos tener en cuenta tu candidatura.`,
     errNoJd: 'Pega el texto, una URL o sube la oferta de trabajo para continuar.',
     errShortJd: 'El texto de la oferta parece demasiado corto. Pega el contenido completo.',
     errNoCv: 'Sube tu CV para continuar.',
@@ -95,6 +175,9 @@ const LABELS = {
     batchCta: 'Compare them all at once →',
     noStorage: 'Your CV is not stored',
     fastAnalysis: 'Analysis in seconds',
+    checkingSkills: 'Checking your fit with Manfred offers...',
+    locationWarningTitle: 'Spanish residency required',
+    locationWarningBody: (country: string) => `We detected your CV is linked to ${country}. All Manfred offers are based in Spain and require legal residency to sign a contract. Unfortunately we won't be able to consider your application.`,
     errNoJd: 'Paste the text, a URL or upload the job offer to continue.',
     errShortJd: 'The job description seems too short. Paste the full content.',
     errNoCv: 'Upload your CV to continue.',
@@ -102,6 +185,26 @@ const LABELS = {
     errMatch: 'Error analysing the match.',
     errUnknown: 'Unexpected error. Please try again.',
   },
+}
+
+function OfferLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      {logoUrl && !failed ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={logoUrl} alt="" className="w-full h-full object-contain p-1" onError={() => setFailed(true)} />
+      ) : (
+        <span className="font-sans font-[900] text-xs text-gray-400">{name.slice(0, 2).toUpperCase()}</span>
+      )}
+    </div>
+  )
+}
+
+function matchBadgeStyle(pct: number) {
+  if (pct >= 80) return { bg: '#dcfce7', color: '#15803d', border: '#86efac' }
+  if (pct >= 40) return { bg: '#fef3c7', color: '#b45309', border: '#fcd34d' }
+  return              { bg: '#fee2e2', color: '#dc2626', border: '#fca5a5' }
 }
 
 export default function MatchPage() {
@@ -116,11 +219,20 @@ export default function MatchPage() {
   const [cachedCvName, setCachedCvName] = useState('')
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [hasCachedResult, setHasCachedResult] = useState(false)
+  const [isDraggingCv, setIsDraggingCv] = useState(false)
+  const [loadingSkills, setLoadingSkills] = useState(false)
+  const [locationWarning, setLocationWarning] = useState<string | null>(null)
+  const [cvRole, setCvRole] = useState('')
 
   // JD state
   const [jdText, setJdText] = useState('')
   const [jdFile, setJdFile] = useState<File | null>(null)
   const jdInputRef = useRef<HTMLInputElement>(null)
+
+  // Manfred offers
+  const [manfredOffers, setManfredOffers] = useState<ManfredOffer[]>([])
+  const [loadingOffers, setLoadingOffers] = useState(true)
+  const [skillsDetectadas, setSkillsDetectadas] = useState<string[]>([])
 
   const jdIsUrl = /^https?:\/\/\S+$/.test(jdText.trim())
 
@@ -141,12 +253,70 @@ export default function MatchPage() {
       }
     }
     setHasCachedResult(!!sessionStorage.getItem('matchResult'))
+
+    try {
+      const atsRaw = sessionStorage.getItem('atsResult')
+      if (atsRaw) {
+        const ats = JSON.parse(atsRaw)
+        if (Array.isArray(ats.skillsDetectadas)) setSkillsDetectadas(ats.skillsDetectadas)
+      } else {
+        const matchSkills = sessionStorage.getItem('matchSkills')
+        if (matchSkills) setSkillsDetectadas(JSON.parse(matchSkills))
+      }
+      const storedRole = sessionStorage.getItem('cvRole')
+      if (storedRole) setCvRole(storedRole)
+    } catch { /* ignore */ }
+
+    const pendingUrl = sessionStorage.getItem('pendingMatchUrl')
+    if (pendingUrl) {
+      setJdText(pendingUrl)
+      sessionStorage.removeItem('pendingMatchUrl')
+    }
   }, [])
 
   useEffect(() => {
     const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail)
     window.addEventListener('langchange', handler)
     return () => window.removeEventListener('langchange', handler)
+  }, [])
+
+  useEffect(() => {
+    if (!cvFile) {
+      setSkillsDetectadas([])
+      setLocationWarning(null)
+      return
+    }
+    setLoadingSkills(true)
+    setSkillsDetectadas([])
+    setCvRole('')
+    setLocationWarning(null)
+    const fd = new FormData()
+    fd.append('cvFile', cvFile)
+    fetch('/api/cv-preview', { method: 'POST', body: fd })
+      .then(r => r.ok ? r.json() : { role: '', skills: [], country: null })
+      .then(({ role, skills, country }: { role: string; skills: string[]; country: string | null }) => {
+        if (role) { setCvRole(role); sessionStorage.setItem('cvRole', role) }
+        if (Array.isArray(skills) && skills.length > 0) {
+          setSkillsDetectadas(skills)
+          sessionStorage.setItem('matchSkills', JSON.stringify(skills))
+        }
+        if (country && !/(spain|españa)/i.test(country)) {
+          setLocationWarning(country)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSkills(false))
+  }, [cvFile])
+
+  useEffect(() => {
+    fetch('/api/manfred-offers')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: ManfredOffer[]) => {
+        if (!Array.isArray(data)) return
+        setManfredOffers(data)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingOffers(false))
   }, [])
 
   useEffect(() => {
@@ -200,12 +370,24 @@ export default function MatchPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || L.errMatch)
 
-      sessionStorage.setItem('matchResult', JSON.stringify(data as MatchResult))
+      const matchResult = data as MatchResult
+      sessionStorage.setItem('matchResult', JSON.stringify(matchResult))
+      if (Array.isArray(matchResult.keywordsPresentes) && matchResult.keywordsPresentes.length > 0) {
+        sessionStorage.setItem('matchSkills', JSON.stringify(matchResult.keywordsPresentes))
+      }
+      if (jdIsUrl) sessionStorage.setItem('matchJdUrl', jdText.trim())
+      else sessionStorage.removeItem('matchJdUrl')
       router.push('/match/results')
     } catch (error) {
       setState('error')
       setErrorMsg(error instanceof Error ? error.message : L.errUnknown)
     }
+  }
+
+  const handleSelectOffer = (offer: ManfredOffer) => {
+    setJdText(`https://www.getmanfred.com/es/ofertas-empleo/${offer.id}/${offer.slug}`)
+    setJdFile(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const isAnalyzing = state === 'analyzing'
@@ -280,7 +462,7 @@ export default function MatchPage() {
                 </div>
               </div>
               <button
-                onClick={() => setHasCachedCv(false)}
+                onClick={() => { setHasCachedCv(false); setSkillsDetectadas([]); setCvRole(''); setLocationWarning(null); sessionStorage.removeItem('matchSkills'); sessionStorage.removeItem('cvRole') }}
                 className="font-sans text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2"
               >
                 {L.change}
@@ -290,7 +472,18 @@ export default function MatchPage() {
             <div>
               <label
                 className="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed cursor-pointer transition-colors duration-200"
-                style={{ borderColor: cvFile ? '#0DA1A4' : '#d1d5db', backgroundColor: cvFile ? '#e6f7f7' : 'transparent' }}
+                style={{
+                  borderColor: isDraggingCv || cvFile ? '#0DA1A4' : '#d1d5db',
+                  backgroundColor: isDraggingCv ? '#d0f4f4' : cvFile ? '#e6f7f7' : 'transparent',
+                }}
+                onDragOver={e => { e.preventDefault(); setIsDraggingCv(true) }}
+                onDragLeave={() => setIsDraggingCv(false)}
+                onDrop={e => {
+                  e.preventDefault()
+                  setIsDraggingCv(false)
+                  const file = e.dataTransfer.files?.[0]
+                  if (file) setCvFile(file)
+                }}
               >
                 <input
                   type="file"
@@ -302,6 +495,13 @@ export default function MatchPage() {
                   <div className="text-center">
                     <p className="font-sans font-[700] text-sm" style={{ color: '#0DA1A4' }}>{cvFile.name}</p>
                     <p className="font-sans text-xs text-gray-400 mt-1">{L.clickToChange}</p>
+                  </div>
+                ) : isDraggingCv ? (
+                  <div className="text-center">
+                    <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#0DA1A4' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p className="font-sans text-sm font-[700]" style={{ color: '#0DA1A4' }}>Suelta aquí tu CV</p>
                   </div>
                 ) : (
                   <div className="text-center">
@@ -315,6 +515,32 @@ export default function MatchPage() {
             </div>
           )}
         </div>
+
+        {/* Skills loading banner — shown right below CV so it's immediately visible */}
+        {loadingSkills && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ backgroundColor: '#e6f7f7', border: '1px solid #b2e8e8' }}>
+            <svg className="animate-spin h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" style={{ color: '#0DA1A4' }}>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            <p className="font-sans text-sm font-[600]" style={{ color: '#0DA1A4' }}>{L.checkingSkills}</p>
+          </div>
+        )}
+
+        {/* Location warning */}
+        {locationWarning && (
+          <div className="flex items-start gap-3 p-4 rounded-xl" style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}>
+            <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5" style={{ backgroundColor: '#ffedd5' }}>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#c2410c' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-sans font-[700] text-sm mb-0.5" style={{ color: '#c2410c' }}>{L.locationWarningTitle}</p>
+              <p className="font-sans text-sm leading-relaxed" style={{ color: '#9a3412' }}>{L.locationWarningBody(locationWarning)}</p>
+            </div>
+          </div>
+        )}
 
         {/* JD section */}
         <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
@@ -431,6 +657,95 @@ export default function MatchPage() {
             {L.submit}
           </button>
         )}
+
+        {/* Manfred offers */}
+        {(loadingOffers || manfredOffers.length > 0) && (() => {
+          const hasProfile = skillsDetectadas.length > 0 || cvRole.length > 0
+          const sorted = hasProfile
+            ? [...manfredOffers].sort((a, b) => preScoreOffer(b, skillsDetectadas, cvRole) - preScoreOffer(a, skillsDetectadas, cvRole))
+            : manfredOffers
+          return (
+            <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400 mb-4">
+                {hasProfile ? 'Ofertas activas en Manfred · ordenadas por afinidad' : 'Ofertas activas en Manfred'}
+              </p>
+              {loadingOffers ? (
+                <div className="flex items-center gap-2 py-4">
+                  <svg className="animate-spin h-4 w-4 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  <p className="font-sans text-sm text-gray-400">Cargando ofertas...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: '480px' }}>
+                    {sorted.map(offer => {
+                      const salary = formatSalary(offer)
+                      const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
+                      const matchPct = preScoreOffer(offer, skillsDetectadas, cvRole)
+                      const ms = matchBadgeStyle(matchPct)
+                      const offerHref = `https://www.getmanfred.com/ofertas-empleo/${offer.id}/${offer.slug}`
+                      return (
+                        <div
+                          key={offer.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleSelectOffer(offer)}
+                          onKeyDown={e => e.key === 'Enter' && handleSelectOffer(offer)}
+                          className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm cursor-pointer"
+                          style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 80 ? '#86efac' : '#ede9e3' }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <OfferLogo name={offer.company.name} logoUrl={offer.company.logoUrl} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-sans font-[700] text-sm text-navy leading-snug">{offer.position}</p>
+                                {hasProfile && (
+                                  <span className="font-sans font-[700] text-[10px] px-1.5 py-0.5 rounded-full"
+                                    style={{ backgroundColor: ms.bg, color: ms.color, border: `1px solid ${ms.border}` }}>
+                                    {matchPct}%
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-sans text-xs text-gray-400 mt-0.5">{offer.company.name}</p>
+                            </div>
+                            <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
+                              {salary && <p className="font-sans text-xs font-[700] text-teal">{salary}</p>}
+                              <p className="font-sans text-xs text-gray-400">{location}</p>
+                              <a
+                                href={offerHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="mt-1.5 inline-flex items-center gap-1 font-sans font-[700] text-[10px] px-2 py-0.5 rounded-full transition-opacity hover:opacity-75"
+                                style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4', border: '1px solid #b2e8e8' }}
+                              >
+                                Ver oferta
+                                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-3 text-center">
+                    <a
+                      href="https://www.getmanfred.com/ofertas-empleo"
+                      target="_blank" rel="noopener noreferrer"
+                      className="font-sans text-xs text-gray-400 hover:text-teal transition-colors duration-200"
+                    >
+                      Ver todas en getmanfred.com →
+                    </a>
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Batch mode link */}
         <div className="flex items-center justify-center">

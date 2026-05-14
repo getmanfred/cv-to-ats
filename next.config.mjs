@@ -9,6 +9,7 @@ const nextConfig = {
       '/api/analyze': ['./node_modules/pdf-parse/**'],
       '/api/match': ['./node_modules/pdf-parse/**'],
       '/api/anonymize': ['./node_modules/pdf-parse/**'],
+      '/api/cv-preview': ['./node_modules/pdf-parse/**'],
     },
   },
 
@@ -47,7 +48,7 @@ const nextConfig = {
               `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
               // Google Fonts CSS is loaded via <link>; font files come from gstatic
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data:",
+              "img-src 'self' data: https://media-asgard.s3.eu-west-1.amazonaws.com",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self'",
               "frame-ancestors 'none'",
