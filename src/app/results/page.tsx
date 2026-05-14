@@ -116,7 +116,7 @@ export default function ResultsPage() {
                 <span className="font-semibold" style={{ color: '#092c64' }}>borja.perez@getmanfred.com</span>{' '}
                 te mandamos un pack de merchandising chulo de Manfred y algún regalillo más.
               </p>
-              <p className="font-sans text-gray-500 text-xs leading-relaxed mt-3 italic">
+              <p className="font-sans text-sm leading-relaxed mt-3 font-medium" style={{ color: '#0DA1A4' }}>
                 P.D. Si lo publicas en Tw y me etiquetas @borjaperfra vas a ser la envidia de todo el mundo ^__^ Gracias por usar la herramienta.
               </p>
 
