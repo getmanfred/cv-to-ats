@@ -189,7 +189,6 @@ export default function MatchPage() {
   // Manfred offers
   const [manfredOffers, setManfredOffers] = useState<ManfredOffer[]>([])
   const [loadingOffers, setLoadingOffers] = useState(true)
-  const [showAllOffers, setShowAllOffers] = useState(false)
   const [skillsDetectadas, setSkillsDetectadas] = useState<string[]>([])
 
   const jdIsUrl = /^https?:\/\/\S+$/.test(jdText.trim())
@@ -484,91 +483,6 @@ export default function MatchPage() {
           </label>
         </div>
 
-        {/* Manfred offers */}
-        {(loadingOffers || manfredOffers.length > 0) && (() => {
-          const hasSkills = skillsDetectadas.length > 0
-          const sorted = hasSkills
-            ? [...manfredOffers].sort((a, b) => preScoreOffer(b, skillsDetectadas) - preScoreOffer(a, skillsDetectadas))
-            : manfredOffers
-          const VISIBLE = 5
-          const visible = showAllOffers ? sorted : sorted.slice(0, VISIBLE)
-          const remaining = sorted.length - VISIBLE
-          return (
-            <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-              <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400 mb-4">
-                {hasSkills ? 'Ofertas activas en Manfred · ordenadas por afinidad' : 'Ofertas activas en Manfred'}
-              </p>
-              {loadingOffers ? (
-                <div className="flex items-center gap-2 py-4">
-                  <svg className="animate-spin h-4 w-4 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  <p className="font-sans text-sm text-gray-400">Cargando ofertas...</p>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    {visible.map(offer => {
-                      const salary = formatSalary(offer)
-                      const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
-                      const matchPct = preScoreOffer(offer, skillsDetectadas)
-                      const ms = matchBadgeStyle(matchPct)
-                      return (
-                        <button
-                          key={offer.id}
-                          onClick={() => handleSelectOffer(offer)}
-                          className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm"
-                          style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 80 ? '#86efac' : '#ede9e3' }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <OfferLogo name={offer.company.name} logoUrl={offer.company.logoUrl} />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-sans font-[700] text-sm text-navy leading-snug">{offer.position}</p>
-                                {hasSkills && (
-                                  <span className="font-sans font-[700] text-[10px] px-1.5 py-0.5 rounded-full"
-                                    style={{ backgroundColor: ms.bg, color: ms.color, border: `1px solid ${ms.border}` }}>
-                                    {matchPct}%
-                                  </span>
-                                )}
-                              </div>
-                              <p className="font-sans text-xs text-gray-400 mt-0.5">{offer.company.name}</p>
-                            </div>
-                            <div className="flex-shrink-0 text-right">
-                              {salary && <p className="font-sans text-xs font-[700] text-teal">{salary}</p>}
-                              <p className="font-sans text-xs text-gray-400 mt-0.5">{location}</p>
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {!showAllOffers && remaining > 0 && (
-                    <button
-                      onClick={() => setShowAllOffers(true)}
-                      className="mt-3 w-full font-sans text-xs text-gray-400 hover:text-teal transition-colors duration-200 py-2"
-                    >
-                      Ver {remaining} ofertas más →
-                    </button>
-                  )}
-                  {showAllOffers && (
-                    <div className="mt-3 text-center">
-                      <a
-                        href="https://www.getmanfred.com/ofertas-empleo"
-                        target="_blank" rel="noopener noreferrer"
-                        className="font-sans text-xs text-gray-400 hover:text-teal transition-colors duration-200"
-                      >
-                        Ver todas en getmanfred.com →
-                      </a>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )
-        })()}
-
         {/* Error */}
         {(state === 'error' || errorMsg) && (
           <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
@@ -617,6 +531,78 @@ export default function MatchPage() {
             {L.submit}
           </button>
         )}
+
+        {/* Manfred offers */}
+        {(loadingOffers || manfredOffers.length > 0) && (() => {
+          const hasSkills = skillsDetectadas.length > 0
+          const sorted = hasSkills
+            ? [...manfredOffers].sort((a, b) => preScoreOffer(b, skillsDetectadas) - preScoreOffer(a, skillsDetectadas))
+            : manfredOffers
+          return (
+            <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400 mb-4">
+                {hasSkills ? 'Ofertas activas en Manfred · ordenadas por afinidad' : 'Ofertas activas en Manfred'}
+              </p>
+              {loadingOffers ? (
+                <div className="flex items-center gap-2 py-4">
+                  <svg className="animate-spin h-4 w-4 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  <p className="font-sans text-sm text-gray-400">Cargando ofertas...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: '480px' }}>
+                    {sorted.map(offer => {
+                      const salary = formatSalary(offer)
+                      const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
+                      const matchPct = preScoreOffer(offer, skillsDetectadas)
+                      const ms = matchBadgeStyle(matchPct)
+                      return (
+                        <button
+                          key={offer.id}
+                          onClick={() => handleSelectOffer(offer)}
+                          className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm"
+                          style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 80 ? '#86efac' : '#ede9e3' }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <OfferLogo name={offer.company.name} logoUrl={offer.company.logoUrl} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-sans font-[700] text-sm text-navy leading-snug">{offer.position}</p>
+                                {hasSkills && (
+                                  <span className="font-sans font-[700] text-[10px] px-1.5 py-0.5 rounded-full"
+                                    style={{ backgroundColor: ms.bg, color: ms.color, border: `1px solid ${ms.border}` }}>
+                                    {matchPct}%
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-sans text-xs text-gray-400 mt-0.5">{offer.company.name}</p>
+                            </div>
+                            <div className="flex-shrink-0 text-right">
+                              {salary && <p className="font-sans text-xs font-[700] text-teal">{salary}</p>}
+                              <p className="font-sans text-xs text-gray-400 mt-0.5">{location}</p>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-3 text-center">
+                    <a
+                      href="https://www.getmanfred.com/ofertas-empleo"
+                      target="_blank" rel="noopener noreferrer"
+                      className="font-sans text-xs text-gray-400 hover:text-teal transition-colors duration-200"
+                    >
+                      Ver todas en getmanfred.com →
+                    </a>
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Batch mode link */}
         <div className="flex items-center justify-center">
