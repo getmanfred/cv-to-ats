@@ -13,7 +13,7 @@ const sections = [
       <>
         <p>
           ATSKiller es una herramienta gratuita de <strong>Manfred Tech S.L.U.</strong> que permite analizar
-          currículums vitae (CV) mediante inteligencia artificial a través de la API de Gemini de Google.
+          currículums vitae (CV) mediante inteligencia artificial.
         </p>
         <p className="mt-3">
           La privacidad y seguridad de los datos personales es una prioridad. Esta herramienta ha sido diseñada
@@ -53,8 +53,7 @@ const sections = [
           único objetivo de mejorar la experiencia de uso (historial de análisis, preferencias de idioma).
         </li>
         <li>
-          El contenido del CV se envía temporalmente a la API de Gemini de Google para generar el análisis
-          mediante inteligencia artificial.
+          El contenido del CV se envía temporalmente a los proveedores de IA utilizados para generar el análisis.
         </li>
       </ul>
     ),
@@ -86,13 +85,9 @@ const sections = [
         <p>Para ofrecer el análisis del CV, esta herramienta utiliza los siguientes servicios de terceros:</p>
         <div className="mt-3 space-y-3">
           <div className="rounded-xl border border-gray-100 p-4">
-            <p className="font-sans font-[700] text-sm" style={{ color: '#092c64' }}>Google Gemini API</p>
+            <p className="font-sans font-[700] text-sm" style={{ color: '#092c64' }}>NaN API</p>
             <p className="font-sans text-xs text-gray-400 mt-1">
-              Procesamiento de IA para el análisis del CV. Consulta la{' '}
-              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer"
-                className="underline hover:opacity-70 transition-opacity" style={{ color: '#0DA1A4' }}>
-                política de privacidad de Google
-              </a>.
+              Procesamiento de IA para el análisis del CV.
             </p>
           </div>
           <div className="rounded-xl border border-gray-100 p-4">

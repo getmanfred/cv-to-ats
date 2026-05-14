@@ -44,3 +44,4 @@ next-env.d.ts
 # Local reference files (may contain personal data)
 /references/
 BETA_TESTERS.md
+PLAN_DE_PRUEBAS.txt

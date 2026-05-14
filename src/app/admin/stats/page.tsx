@@ -17,7 +17,6 @@ const ACTIONS = [
     key: 'cvs_analyzed' as keyof Stats,
     label: 'Analizar CV',
     description: 'Análisis ATS completo del CV',
-    gemini: true,
     color: '#0DA1A4',
     bg: '#e6f7f7',
   },
@@ -25,7 +24,6 @@ const ACTIONS = [
     key: 'match' as keyof Stats,
     label: 'CV vs Oferta',
     description: 'Comparación CV con una oferta de empleo',
-    gemini: true,
     color: '#092c64',
     bg: '#e8ecf5',
   },
@@ -33,7 +31,6 @@ const ACTIONS = [
     key: 'editor_parse' as keyof Stats,
     label: 'Cargar CV en editor',
     description: 'Parseo del CV para el editor Harvard',
-    gemini: true,
     color: '#7c3aed',
     bg: '#f5f3ff',
   },
@@ -41,7 +38,6 @@ const ACTIONS = [
     key: 'editor_improve' as keyof Stats,
     label: 'Mejorar CV con IA',
     description: 'Aplicar sugerencias ATS al editor',
-    gemini: true,
     color: '#d97706',
     bg: '#fffbeb',
   },
@@ -49,7 +45,6 @@ const ACTIONS = [
     key: 'editor_translate' as keyof Stats,
     label: 'Traducir CV',
     description: 'Traducción del CV a otro idioma',
-    gemini: true,
     color: '#059669',
     bg: '#f0fdf4',
   },
@@ -57,7 +52,6 @@ const ACTIONS = [
     key: 'anonymize' as keyof Stats,
     label: 'Anonimizar CV',
     description: 'Eliminación de datos personales del CV',
-    gemini: true,
     color: '#dc2626',
     bg: '#fff1f2',
   },
@@ -66,7 +60,6 @@ const ACTIONS = [
 const PDF_ACTION = {
   label: 'Generar PDF',
   description: 'Exportación del CV a PDF (generación local en el navegador)',
-  gemini: false,
 }
 
 export default function StatsPage() {
@@ -113,15 +106,6 @@ export default function StatsPage() {
             >
               Actualizar
             </button>
-            <a
-              href="https://aistudio.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-sans font-[700] text-xs px-3 py-1.5 rounded-lg text-white transition-opacity hover:opacity-80"
-              style={{ backgroundColor: '#0DA1A4' }}
-            >
-              Ver facturación →
-            </a>
           </div>
         </div>
       </div>
@@ -218,26 +202,14 @@ export default function StatsPage() {
         </div>
 
         {/* Billing note */}
-        <div className="rounded-xl border border-dashed p-5 flex flex-col sm:flex-row sm:items-center gap-4"
-          style={{ borderColor: '#d1d5db' }}>
-          <div className="flex-1">
-            <p className="font-sans font-[700] text-sm" style={{ color: '#1a2744' }}>
-              Facturación detallada
-            </p>
-            <p className="font-sans text-xs text-gray-400 mt-1">
-              Los contadores de arriba miden llamadas exitosas. Para ver tokens consumidos, coste exacto
-              y límites de cuota, accede a Google AI Studio con la cuenta de Manfred.
-            </p>
-          </div>
-          <a
-            href="https://aistudio.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 font-sans font-[700] text-xs px-4 py-2.5 rounded-xl text-white transition-opacity hover:opacity-80"
-            style={{ backgroundColor: '#092c64' }}
-          >
-            Abrir Google AI Studio →
-          </a>
+        <div className="rounded-xl border border-dashed p-5" style={{ borderColor: '#d1d5db' }}>
+          <p className="font-sans font-[700] text-sm" style={{ color: '#1a2744' }}>
+            Facturación detallada
+          </p>
+          <p className="font-sans text-xs text-gray-400 mt-1">
+            Los contadores de arriba miden llamadas exitosas a la API de IA. Para ver tokens consumidos y coste exacto,
+            consulta el panel de administración del proveedor de IA con las credenciales de Manfred.
+          </p>
         </div>
 
       </main>
