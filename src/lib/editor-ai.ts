@@ -26,75 +26,71 @@ const EMPTY_SKILLS: SkillCategories = { languages: [], frameworks: [], databases
 // ─── Parse raw CV text → structured CVData ───────────────────────────────────
 
 const PARSE_PROMPT = (cvText: string) => `
-You are a CV parser. Extract the structured data from the following CV text and return ONLY valid JSON — no markdown, no text outside the JSON.
+You are a CV data extractor. Your ONLY task is to extract what is explicitly written in the CV text below. Return ONLY valid JSON — no markdown, no text outside the JSON object.
+
+CRITICAL ANTI-HALLUCINATION RULES — NO EXCEPTIONS:
+- ONLY extract content that appears explicitly in the CV text. Never invent, infer, or complete missing information.
+- If a field is not present in the CV text, use "" for strings or [] for arrays. Never guess or fabricate.
+- Copy names, dates, companies, job titles, and bullets VERBATIM from the source text. Do not paraphrase or improve them.
+- Do NOT add skills, experience, education, or any other data that is not literally written in the CV.
+- If you are not certain a field appears in the text, leave it empty.
 
 Return exactly this structure:
 {
   "personalInfo": {
-    "nombre": "<full name>",
-    "cargo": "<current professional title or most recent role>",
-    "email": "<email>",
-    "telefono": "<phone>",
-    "linkedin": "<linkedin url or username>",
-    "ubicacion": "<city, country>",
-    "website": "<personal website or portfolio url>"
+    "nombre": "<full name as written in CV, or empty>",
+    "cargo": "<current professional title or most recent role as written, or empty>",
+    "email": "<email as written, or empty>",
+    "telefono": "<phone as written, or empty>",
+    "linkedin": "<linkedin url or username as written, or empty>",
+    "ubicacion": "<city, country as written, or empty>",
+    "website": "<personal website or portfolio url as written, or empty>"
   },
-  "resumen": "",
+  "resumen": "<summary or profile section verbatim, or empty string if not present>",
   "experiencia": [
     {
-      "empresa": "<company name>",
-      "cargo": "<job title>",
-      "ubicacion": "<location>",
-      "fechaInicio": "<start date, e.g. 'Jan 2022'>",
-      "fechaFin": "<end date or empty if current>",
+      "empresa": "<company name as written>",
+      "cargo": "<job title as written>",
+      "ubicacion": "<location as written, or empty>",
+      "fechaInicio": "<start date as written, e.g. 'Jan 2022'>",
+      "fechaFin": "<end date as written, or empty if current>",
       "actual": <true if current job, false otherwise>,
-      "bullets": ["<achievement or responsibility>", ...]
+      "bullets": ["<bullet or responsibility copied verbatim from CV>"]
     }
   ],
   "proyectos": [
     {
-      "nombre": "<project name>",
-      "descripcion": "<brief description of what you built and the impact>",
-      "url": "<url or empty string>"
+      "nombre": "<project name as written>",
+      "descripcion": "<description as written>",
+      "url": "<url as written, or empty string>"
     }
   ],
   "educacion": [
     {
-      "institucion": "<institution name>",
-      "titulo": "<degree name>",
-      "campo": "<field of study>",
-      "fechaInicio": "<start year>",
-      "fechaFin": "<end year>",
-      "logros": ["<notable achievement, if any>"]
+      "institucion": "<institution name as written>",
+      "titulo": "<degree name as written>",
+      "campo": "<field of study as written, or empty>",
+      "fechaInicio": "<start year as written, or empty>",
+      "fechaFin": "<end year as written, or empty>",
+      "logros": ["<achievement as written, if any>"]
     }
   ],
   "habilidades": {
-    "languages":  ["Java", "Python", "TypeScript", "SQL", "HTML", "CSS", ...],
-    "frameworks": ["Spring", "React", "Angular", "Django", "Node.js", ...],
-    "databases":  ["MySQL", "PostgreSQL", "MongoDB", "Redis", "Neo4j", ...],
-    "tools":      ["Docker", "Git", "Jenkins", "Kafka", "AWS", "Maven", "Terraform", ...],
-    "practices":  ["Agile", "Scrum", "TDD", "CI/CD", "SOLID Principles", "Code Reviews", ...]
+    "languages":  ["<programming/scripting/query languages found in CV>"],
+    "frameworks": ["<libraries, frameworks, runtimes found in CV>"],
+    "databases":  ["<database systems found in CV>"],
+    "tools":      ["<DevOps, cloud, build, testing tools found in CV>"],
+    "practices":  ["<methodologies and practices found in CV>"]
   },
   "idiomas": [
-    { "idioma": "<language>", "nivel": "<level, e.g. Native, B2, Advanced>" }
+    { "idioma": "<language as written>", "nivel": "<level as written>" }
   ]
 }
 
-Rules:
-- Use empty string "" for missing text fields, empty array [] for missing lists.
-- Keep the original language of the CV for names and descriptions.
-- For experience bullets: keep them as-is, extracted faithfully from the CV.
+Additional rules:
 - Order experience from most recent to oldest.
-- Projects: extract any personal, open-source or notable side projects. Leave array empty if none.
-- Skills categorization — assign EVERY skill to exactly one category, never leave any uncategorized:
-  * languages:  programming, scripting and query languages only — Java, Python, TypeScript, JavaScript, Go, Rust, C++, SQL, HTML, CSS, PHP, Swift, Kotlin, Scala, R, Bash...
-  * frameworks: libraries, frameworks and runtimes — Spring, React, Angular, Vue, Django, FastAPI, Express, Next.js, .NET, Laravel, Flutter, Rails, Hibernate...
-  * databases:  database systems and data stores — MySQL, PostgreSQL, MongoDB, Redis, Neo4j, SQLite, Oracle, Cassandra, DynamoDB, Elasticsearch, BigQuery...
-  * tools:      DevOps, cloud, build, messaging, testing and other tools — Docker, Kubernetes, Git, Jenkins, Kafka, RabbitMQ, AWS, GCP, Azure, Maven, Gradle, Terraform, SonarQube, Jira, Postman, Linux...
-  * practices:  methodologies, processes and engineering practices — Agile, Scrum, Kanban, TDD, BDD, CI/CD, SOLID, DDD, Microservices, REST, Code Reviews, Pair Programming...
-  - When a skill fits multiple categories, choose the most specific one (e.g. "Spring" → frameworks, not tools).
-  - Never put all skills into a single category — always spread them across the relevant ones.
-  - CRITICAL: preserve ALL characters exactly as they appear in the source text. Do NOT replace, omit, transliterate or escape accented letters (á, é, í, ó, ú, ü, à, è) or special characters (ñ, ç). Output them as real Unicode characters in the JSON, not as backslash-u escape sequences.
+- Skills categorization: assign each skill to exactly one category (languages=programming languages, frameworks=libraries/runtimes, databases=data stores, tools=DevOps/cloud/build, practices=methodologies). Never put all skills in one category.
+- CRITICAL: preserve ALL characters as they appear — accented letters (á, é, í, ó, ú, ñ, ç, etc.) must be output as real Unicode, not escape sequences.
 
 CV TEXT:
 ---
