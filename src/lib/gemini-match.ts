@@ -1,4 +1,4 @@
-import type { MatchResult, MatchSuggestion } from '@/types/match'
+import type { MatchResult } from '@/types/match'
 import { withGeminiRetry } from '@/lib/gemini-retry'
 import { nanComplete } from '@/lib/nan-client'
 
