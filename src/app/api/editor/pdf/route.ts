@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { existsSync } from 'fs'
 import type { CVData } from '@/types/cv'
 import type { CvLang } from '@/lib/cv-labels'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
@@ -8,7 +9,30 @@ import { join } from 'path'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const CHROMIUM_PATH = process.env.CHROMIUM_PATH ?? '/usr/bin/chromium-browser'
+async function getLaunchOptions(tmpDir: string) {
+  const systemPath = process.env.CHROMIUM_PATH ?? '/usr/bin/chromium-browser'
+  if (existsSync(systemPath)) {
+    return {
+      executablePath: systemPath,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        `--user-data-dir=${tmpDir}`,
+      ],
+    }
+  }
+  // Fallback: bundled Chromium from @sparticuz/chromium (works without system deps)
+  const { default: chromium } = await import('@sparticuz/chromium')
+  const executablePath = await chromium.executablePath()
+  return {
+    executablePath,
+    args: [...chromium.args, `--user-data-dir=${tmpDir}`],
+    headless: chromium.headless,
+  }
+}
 
 async function buildHtml(cvData: CVData, lang: CvLang): Promise<string> {
   const { renderToStaticMarkup } = await import('react-dom/server')
@@ -57,18 +81,11 @@ export async function POST(req: NextRequest) {
 
     tmpDir = mkdtempSync(join('/tmp', 'chromium-'))
 
+    const launchOptions = await getLaunchOptions(tmpDir)
     const puppeteer = await import('puppeteer-core')
     const browser = await puppeteer.default.launch({
-      executablePath: CHROMIUM_PATH,
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        `--user-data-dir=${tmpDir}`,
-      ],
+      ...launchOptions,
     })
 
     try {
@@ -95,20 +112,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[pdf] error:', msg)
-    const isChromiumMissing = (
-      msg.includes('ENOENT') ||
-      msg.includes('executablePath') ||
-      msg.includes('Failed to launch') ||
-      msg.includes('not found') ||
-      msg.includes('spawn') ||
-      msg.includes('No usable sandbox')
-    )
-    if (isChromiumMissing) {
-      return NextResponse.json(
-        { error: 'El generador de PDF no está disponible en este entorno.' },
-        { status: 503 }
-      )
-    }
     return NextResponse.json({ error: `Error al generar el PDF: ${msg}` }, { status: 500 })
   } finally {
     if (tmpDir) {

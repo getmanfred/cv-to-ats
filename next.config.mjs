@@ -10,7 +10,7 @@ const nextConfig = {
       '/api/match': ['./node_modules/pdf-parse/**'],
       '/api/anonymize': ['./node_modules/pdf-parse/**'],
       '/api/cv-preview': ['./node_modules/pdf-parse/**'],
-      '/api/editor/pdf': ['./node_modules/puppeteer-core/**'],
+      '/api/editor/pdf': ['./node_modules/puppeteer-core/**', './node_modules/@sparticuz/chromium/**'],
     },
   },
 
@@ -18,6 +18,7 @@ const nextConfig = {
     if (isServer) {
       config.externals.push({ 'pdf-parse': 'commonjs pdf-parse' })
       config.externals.push({ 'puppeteer-core': 'commonjs puppeteer-core' })
+      config.externals.push({ '@sparticuz/chromium': 'commonjs @sparticuz/chromium' })
     }
     return config
   },
