@@ -295,6 +295,8 @@ export default function MatchPage() {
       if (!response.ok) throw new Error(data.error || L.errMatch)
 
       sessionStorage.setItem('matchResult', JSON.stringify(data as MatchResult))
+      if (jdIsUrl) sessionStorage.setItem('matchJdUrl', jdText.trim())
+      else sessionStorage.removeItem('matchJdUrl')
       router.push('/match/results')
     } catch (error) {
       setState('error')
@@ -559,11 +561,15 @@ export default function MatchPage() {
                       const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
                       const matchPct = preScoreOffer(offer, skillsDetectadas)
                       const ms = matchBadgeStyle(matchPct)
+                      const offerHref = `https://www.getmanfred.com/ofertas-empleo/${offer.id}/${offer.slug}`
                       return (
-                        <button
+                        <div
                           key={offer.id}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => handleSelectOffer(offer)}
-                          className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm"
+                          onKeyDown={e => e.key === 'Enter' && handleSelectOffer(offer)}
+                          className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm cursor-pointer"
                           style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 80 ? '#86efac' : '#ede9e3' }}
                         >
                           <div className="flex items-center gap-3">
@@ -580,12 +586,24 @@ export default function MatchPage() {
                               </div>
                               <p className="font-sans text-xs text-gray-400 mt-0.5">{offer.company.name}</p>
                             </div>
-                            <div className="flex-shrink-0 text-right">
+                            <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
                               {salary && <p className="font-sans text-xs font-[700] text-teal">{salary}</p>}
-                              <p className="font-sans text-xs text-gray-400 mt-0.5">{location}</p>
+                              <p className="font-sans text-xs text-gray-400">{location}</p>
+                              <a
+                                href={offerHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={e => e.stopPropagation()}
+                                className="mt-1 flex items-center gap-0.5 font-sans text-[10px] text-gray-300 hover:text-teal transition-colors"
+                              >
+                                Ver oferta
+                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
                             </div>
                           </div>
-                        </button>
+                        </div>
                       )
                     })}
                   </div>
