@@ -8,6 +8,39 @@ import Header from '@/components/Header'
 
 type State = 'idle' | 'analyzing' | 'error'
 
+interface ManfredOffer {
+  id: number
+  position: string
+  slug: string
+  salaryFrom: number
+  salaryTo: number
+  currency: string
+  remotePercentage: number
+  highlights: string[]
+  locations: string[]
+  company: { name: string; logoUrl: string }
+}
+
+function formatSalary(from: number, to: number, currency: string): string | null {
+  if (!from) return null
+  const k = (n: number) => `${Math.round(n / 1000)}k`
+  return to && to !== from ? `${k(from)}–${k(to)} ${currency}` : `${k(from)} ${currency}`
+}
+
+function formatLocation(remotePercentage: number, locations: string[]): string {
+  const city = locations[0] ?? ''
+  if (remotePercentage >= 100) return '100% remoto'
+  if (remotePercentage > 0) return city ? `Híbrido · ${city}` : 'Híbrido'
+  return city ? `Presencial · ${city}` : 'Presencial'
+}
+
+function preScoreOffer(offer: ManfredOffer, skills: string[]): number {
+  if (!skills.length) return 0
+  const haystack = [offer.position, ...offer.highlights].join(' ').toLowerCase()
+  const hits = skills.filter(s => haystack.includes(s.toLowerCase())).length
+  return Math.round((hits / skills.length) * 100)
+}
+
 const LOADING_MESSAGES = {
   es: [
     'Comparando perfiles...',
@@ -104,6 +137,20 @@ const LABELS = {
   },
 }
 
+function OfferLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+      {logoUrl && !failed ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={logoUrl} alt="" className="w-full h-full object-contain p-0.5" onError={() => setFailed(true)} />
+      ) : (
+        <span className="font-sans font-[900] text-xs text-gray-400">{name.slice(0, 2).toUpperCase()}</span>
+      )}
+    </div>
+  )
+}
+
 export default function MatchPage() {
   const router = useRouter()
   const [state, setState] = useState<State>('idle')
@@ -121,6 +168,12 @@ export default function MatchPage() {
   const [jdText, setJdText] = useState('')
   const [jdFile, setJdFile] = useState<File | null>(null)
   const jdInputRef = useRef<HTMLInputElement>(null)
+
+  // Manfred offers panel
+  const [showOffers, setShowOffers] = useState(false)
+  const [manfredOffers, setManfredOffers] = useState<ManfredOffer[]>([])
+  const [loadingOffers, setLoadingOffers] = useState(false)
+  const [skillsDetectadas, setSkillsDetectadas] = useState<string[]>([])
 
   const jdIsUrl = /^https?:\/\/\S+$/.test(jdText.trim())
 
@@ -141,6 +194,20 @@ export default function MatchPage() {
       }
     }
     setHasCachedResult(!!sessionStorage.getItem('matchResult'))
+
+    try {
+      const atsRaw = sessionStorage.getItem('atsResult')
+      if (atsRaw) {
+        const ats = JSON.parse(atsRaw)
+        if (Array.isArray(ats.skillsDetectadas)) setSkillsDetectadas(ats.skillsDetectadas)
+      }
+    } catch { /* ignore */ }
+
+    const pendingUrl = sessionStorage.getItem('pendingMatchUrl')
+    if (pendingUrl) {
+      setJdText(pendingUrl)
+      sessionStorage.removeItem('pendingMatchUrl')
+    }
   }, [])
 
   useEffect(() => {
@@ -206,6 +273,30 @@ export default function MatchPage() {
       setState('error')
       setErrorMsg(error instanceof Error ? error.message : L.errUnknown)
     }
+  }
+
+  const handleToggleOffers = async () => {
+    if (!showOffers && manfredOffers.length === 0) {
+      setLoadingOffers(true)
+      try {
+        const r = await fetch('/api/manfred-offers')
+        const data: ManfredOffer[] = await r.json()
+        if (Array.isArray(data)) {
+          const sorted = skillsDetectadas.length
+            ? [...data].sort((a, b) => preScoreOffer(b, skillsDetectadas) - preScoreOffer(a, skillsDetectadas))
+            : data
+          setManfredOffers(sorted)
+        }
+      } catch {}
+      setLoadingOffers(false)
+    }
+    setShowOffers(v => !v)
+  }
+
+  const handleSelectOffer = (offer: ManfredOffer) => {
+    setJdText(`https://www.getmanfred.com/es/ofertas-empleo/${offer.id}/${offer.slug}`)
+    setJdFile(null)
+    setShowOffers(false)
   }
 
   const isAnalyzing = state === 'analyzing'
@@ -381,6 +472,88 @@ export default function MatchPage() {
               </button>
             )}
           </label>
+          <div className="flex items-center gap-3 mt-3">
+            <div className="flex-1 h-px bg-gray-100" />
+            <span className="font-sans text-xs text-gray-400">o explora ofertas</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+
+          <button
+            onClick={handleToggleOffers}
+            className="flex items-center justify-between w-full mt-3 px-4 py-2.5 rounded-xl font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-200"
+            style={{
+              backgroundColor: showOffers ? '#0DA1A4' : '#01FFC6',
+              color: showOffers ? '#ffffff' : '#092c64',
+            }}
+          >
+            <span>Explorar ofertas de Manfred</span>
+            <svg
+              className="w-4 h-4 transition-transform duration-200"
+              style={{ transform: showOffers ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showOffers && (
+            <div className="mt-3">
+              {loadingOffers ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="font-sans text-sm text-gray-400">Cargando ofertas...</p>
+                </div>
+              ) : manfredOffers.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="font-sans text-sm text-gray-400">No hay ofertas disponibles</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                  {manfredOffers.map(offer => {
+                    const salary = formatSalary(offer.salaryFrom, offer.salaryTo, offer.currency)
+                    const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
+                    const matchPct = preScoreOffer(offer, skillsDetectadas)
+                    const hasMatch = skillsDetectadas.length > 0
+                    const isGoodMatch = matchPct >= 25
+                    return (
+                      <button
+                        key={offer.id}
+                        onClick={() => handleSelectOffer(offer)}
+                        className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:border-teal/40 hover:shadow-sm group"
+                        style={{ backgroundColor: '#fafafa', borderColor: isGoodMatch ? '#b2e8e8' : '#f0ede8' }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <OfferLogo name={offer.company.name} logoUrl={offer.company.logoUrl} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-sans font-[700] text-sm text-navy leading-snug">{offer.position}</p>
+                              {hasMatch && (
+                                <span
+                                  className="flex-shrink-0 font-sans font-[700] text-[10px] px-1.5 py-0.5 rounded-full"
+                                  style={isGoodMatch
+                                    ? { backgroundColor: '#e6f7f7', color: '#0DA1A4' }
+                                    : { backgroundColor: '#f3f4f6', color: '#9ca3af' }
+                                  }
+                                >
+                                  {matchPct}% match
+                                </span>
+                              )}
+                            </div>
+                            <p className="font-sans text-xs text-gray-400 mt-0.5">{offer.company.name}</p>
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              {salary && (
+                                <span className="font-sans text-xs font-[700] text-teal">{salary}</span>
+                              )}
+                              <span className="font-sans text-xs text-gray-400">{location}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Error */}
