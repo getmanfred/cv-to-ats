@@ -669,15 +669,13 @@ export default function MatchPage() {
               <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400 mb-4">
                 {hasProfile ? 'Ofertas activas en Manfred · ordenadas por afinidad' : 'Ofertas activas en Manfred'}
               </p>
-              {loadingOffers || loadingSkills ? (
+              {loadingOffers ? (
                 <div className="flex items-center gap-2 py-4">
                   <svg className="animate-spin h-4 w-4 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                   </svg>
-                  <p className="font-sans text-sm text-gray-400">
-                    {loadingSkills ? L.checkingSkills : 'Cargando ofertas...'}
-                  </p>
+                  <p className="font-sans text-sm text-gray-400">Cargando ofertas...</p>
                 </div>
               ) : (
                 <>
