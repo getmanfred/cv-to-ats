@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import confetti from 'canvas-confetti'
 import type { ATSAnalysisResult, Suggestion } from '@/types/analysis'
 import Header from '@/components/Header'
 import { saveToHistory } from '@/lib/history'
@@ -18,6 +19,8 @@ const PRIORITY_ORDER: Record<string, number> = { alta: 0, media: 1, baja: 2 }
 export default function ResultsPage() {
   const router = useRouter()
   const [result, setResult] = useState<ATSAnalysisResult | null>(null)
+  const [showMilestone, setShowMilestone] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const raw = sessionStorage.getItem('atsResult')
@@ -26,10 +29,34 @@ export default function ResultsPage() {
       const parsed = JSON.parse(raw) as ATSAnalysisResult
       setResult(parsed)
       saveToHistory(parsed)
+      const isMilestone = parsed.milestone || process.env.NODE_ENV === 'development'
+      if (isMilestone) setShowMilestone(true)
     } catch {
       router.replace('/')
     }
   }, [router])
+
+  useEffect(() => {
+    if (!showMilestone) return
+    const base = {
+      particleCount: 120, spread: 80, startVelocity: 50,
+      colors: ['#0DA1A4', '#01FFC6', '#092c64', '#ffffff', '#f59e0b'],
+    }
+    const t = setTimeout(() => {
+      confetti({ ...base, origin: { x: 0.2, y: 0.6 } })
+      confetti({ ...base, origin: { x: 0.8, y: 0.6 } })
+      setTimeout(() => {
+        confetti({ ...base, particleCount: 60, origin: { x: 0.5, y: 0.4 } })
+      }, 400)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [showMilestone])
+
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText('borja.perez@getmanfred.com')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   if (!result) {
     return (
@@ -52,6 +79,83 @@ export default function ResultsPage() {
   return (
     <div className="min-h-screen bg-bg-light">
       <ScrollToTop />
+
+      {/* Milestone 10.000 popup */}
+      {showMilestone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 no-print" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+            {/* Close button */}
+            <button
+              onClick={() => setShowMilestone(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Cerrar"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Header strip */}
+            <div className="px-8 pt-8 pb-4" style={{ background: 'linear-gradient(135deg, #092c64 0%, #0DA1A4 100%)' }}>
+              <div className="text-center">
+                <div className="font-sans font-black text-6xl" style={{ color: '#01FFC6', fontVariantNumeric: 'tabular-nums' }}>10.000</div>
+                <div className="font-sans font-bold text-white text-xl mt-1">Eres el/la numero 10.000</div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-8 py-6">
+              <p className="font-sans text-gray-700 text-sm leading-relaxed">
+                <strong>Enhorabuena!</strong> Eres la persona numero 10.000 en analizar su CV con ATS Killer.
+              </p>
+              <p className="font-sans text-gray-700 text-sm leading-relaxed mt-3">
+                Te llevarias un coche y un apartamento en Torrevieja, pero la han conquistado los guiris y no nos da el presupuesto.
+              </p>
+              <p className="font-sans text-gray-700 text-sm leading-relaxed mt-3">
+                Pero si me escribes a{' '}
+                <span className="font-semibold" style={{ color: '#092c64' }}>borja.perez@getmanfred.com</span>{' '}
+                te mandamos un pack de merchandising chulo de Manfred y algún regalillo más.
+              </p>
+              <p className="font-sans text-sm leading-relaxed mt-3 font-medium" style={{ color: '#0DA1A4' }}>
+                P.D. Si lo publicas en Tw y me etiquetas @borjaperfra vas a ser la envidia de todo el mundo ^__^ Gracias por usar la herramienta.
+              </p>
+
+              {/* Actions */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handleCopyEmail}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-sans font-bold text-sm transition-all"
+                  style={{ backgroundColor: copied ? '#01FFC6' : '#092c64', color: copied ? '#092c64' : 'white' }}
+                >
+                  {copied ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copiar email de Borja
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowMilestone(false)}
+                  className="px-4 py-2.5 rounded-xl font-sans font-bold text-sm border-2 transition-all"
+                  style={{ borderColor: '#e5e7eb', color: '#6b7280' }}
+                >
+                  Ver mi resultado
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header — hidden on print */}
       <Header noPrint />
 

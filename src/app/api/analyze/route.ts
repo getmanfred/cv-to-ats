@@ -152,11 +152,18 @@ export async function POST(request: NextRequest) {
     const result = await withTimeout(analyzeWithGemini(cleanedCvText, lang), ANALYSIS_TIMEOUT_MS)
     result.analyzedAt = new Date().toISOString()
 
-    void (async () => {
-      try { await getSupabase().rpc('increment_stat', { stat_id: 'cvs_analyzed' }) } catch {}
-    })()
+    let milestone = false
+    try {
+      await getSupabase().rpc('increment_stat', { stat_id: 'cvs_analyzed' })
+      const { data } = await getSupabase()
+        .from('stats')
+        .select('value')
+        .eq('id', 'cvs_analyzed')
+        .single()
+      if (data && Number(data.value) === 10000) milestone = true
+    } catch {}
 
-    return NextResponse.json({ ...result, _cvText: cvText })
+    return NextResponse.json({ ...result, _cvText: cvText, milestone })
   } catch (error) {
     return NextResponse.json({ error: sanitizeError(error) }, { status: 500 })
   }
