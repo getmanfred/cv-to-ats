@@ -9,19 +9,22 @@ import { join } from 'path'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+const COMMON_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu',
+  '--disable-software-rasterizer',
+  '--disable-crash-reporter',
+  '--no-crashpad',
+]
+
 async function getLaunchOptions(tmpDir: string) {
   const systemPath = process.env.CHROMIUM_PATH ?? '/usr/bin/chromium-browser'
   if (existsSync(systemPath)) {
     return {
       executablePath: systemPath,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        `--user-data-dir=${tmpDir}`,
-      ],
+      args: [...COMMON_ARGS, `--user-data-dir=${tmpDir}`],
     }
   }
   // Fallback: bundled Chromium from @sparticuz/chromium (works without system deps)
@@ -29,7 +32,7 @@ async function getLaunchOptions(tmpDir: string) {
   const executablePath = await chromium.executablePath()
   return {
     executablePath,
-    args: [...chromium.args, `--user-data-dir=${tmpDir}`],
+    args: [...chromium.args, ...COMMON_ARGS, `--user-data-dir=${tmpDir}`],
   }
 }
 
