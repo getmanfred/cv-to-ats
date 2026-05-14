@@ -180,10 +180,10 @@ export default function MatchPage() {
   const [jdFile, setJdFile] = useState<File | null>(null)
   const jdInputRef = useRef<HTMLInputElement>(null)
 
-  // Manfred offers panel
-  const [showOffers, setShowOffers] = useState(false)
+  // Manfred offers
   const [manfredOffers, setManfredOffers] = useState<ManfredOffer[]>([])
-  const [loadingOffers, setLoadingOffers] = useState(false)
+  const [loadingOffers, setLoadingOffers] = useState(true)
+  const [showAllOffers, setShowAllOffers] = useState(false)
   const [skillsDetectadas, setSkillsDetectadas] = useState<string[]>([])
 
   const jdIsUrl = /^https?:\/\/\S+$/.test(jdText.trim())
@@ -225,6 +225,17 @@ export default function MatchPage() {
     const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail)
     window.addEventListener('langchange', handler)
     return () => window.removeEventListener('langchange', handler)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/manfred-offers')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: ManfredOffer[]) => {
+        if (!Array.isArray(data)) return
+        setManfredOffers(data)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingOffers(false))
   }, [])
 
   useEffect(() => {
@@ -286,28 +297,10 @@ export default function MatchPage() {
     }
   }
 
-  const handleToggleOffers = async () => {
-    if (!showOffers && manfredOffers.length === 0) {
-      setLoadingOffers(true)
-      try {
-        const r = await fetch('/api/manfred-offers')
-        const data: ManfredOffer[] = await r.json()
-        if (Array.isArray(data)) {
-          const sorted = skillsDetectadas.length
-            ? [...data].sort((a, b) => preScoreOffer(b, skillsDetectadas) - preScoreOffer(a, skillsDetectadas))
-            : data
-          setManfredOffers(sorted)
-        }
-      } catch {}
-      setLoadingOffers(false)
-    }
-    setShowOffers(v => !v)
-  }
-
   const handleSelectOffer = (offer: ManfredOffer) => {
     setJdText(`https://www.getmanfred.com/es/ofertas-empleo/${offer.id}/${offer.slug}`)
     setJdFile(null)
-    setShowOffers(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const isAnalyzing = state === 'analyzing'
@@ -483,90 +476,96 @@ export default function MatchPage() {
               </button>
             )}
           </label>
-          <div className="flex items-center gap-3 mt-3">
-            <div className="flex-1 h-px bg-gray-100" />
-            <span className="font-sans text-xs text-gray-400">o explora ofertas</span>
-            <div className="flex-1 h-px bg-gray-100" />
-          </div>
+        </div>
 
-          <button
-            onClick={handleToggleOffers}
-            className="flex items-center justify-between w-full mt-3 px-4 py-2.5 rounded-xl font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-200"
-            style={{
-              backgroundColor: showOffers ? '#0DA1A4' : '#01FFC6',
-              color: showOffers ? '#ffffff' : '#092c64',
-            }}
-          >
-            <span>Explorar ofertas de Manfred</span>
-            <svg
-              className="w-4 h-4 transition-transform duration-200"
-              style={{ transform: showOffers ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {showOffers && (
-            <div className="mt-3">
+        {/* Manfred offers */}
+        {(loadingOffers || manfredOffers.length > 0) && (() => {
+          const hasSkills = skillsDetectadas.length > 0
+          const sorted = hasSkills
+            ? [...manfredOffers].sort((a, b) => preScoreOffer(b, skillsDetectadas) - preScoreOffer(a, skillsDetectadas))
+            : manfredOffers
+          const VISIBLE = 5
+          const visible = showAllOffers ? sorted : sorted.slice(0, VISIBLE)
+          const remaining = sorted.length - VISIBLE
+          return (
+            <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400 mb-4">
+                {hasSkills ? 'Ofertas activas en Manfred · ordenadas por afinidad' : 'Ofertas activas en Manfred'}
+              </p>
               {loadingOffers ? (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex items-center gap-2 py-4">
+                  <svg className="animate-spin h-4 w-4 text-teal flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
                   <p className="font-sans text-sm text-gray-400">Cargando ofertas...</p>
                 </div>
-              ) : manfredOffers.length === 0 ? (
-                <div className="py-8 text-center">
-                  <p className="font-sans text-sm text-gray-400">No hay ofertas disponibles</p>
-                </div>
               ) : (
-                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                  {manfredOffers.map(offer => {
-                    const salary = formatSalary(offer)
-                    const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
-                    const matchPct = preScoreOffer(offer, skillsDetectadas)
-                    const hasMatch = skillsDetectadas.length > 0
-                    const matchStyle = matchPct >= 30
-                      ? { bg: '#e6f7f7', color: '#0DA1A4', border: '#b2e8e8' }
-                      : matchPct >= 15
-                      ? { bg: '#fffbeb', color: '#d97706', border: '#fde68a' }
-                      : { bg: '#f0ede8', color: '#6b7280', border: '#e5e7eb' }
-                    return (
-                      <button
-                        key={offer.id}
-                        onClick={() => handleSelectOffer(offer)}
-                        className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm"
-                        style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 30 ? '#b2e8e8' : '#ede9e3' }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <OfferLogo name={offer.company.name} logoUrl={offer.company.logoUrl} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-sans font-[700] text-sm text-navy leading-snug">{offer.position}</p>
-                              {hasMatch && (
-                                <span
-                                  className="font-sans font-[700] text-[10px] px-1.5 py-0.5 rounded-full"
-                                  style={{ backgroundColor: matchStyle.bg, color: matchStyle.color, border: `1px solid ${matchStyle.border}` }}
-                                >
-                                  {matchPct}% match
-                                </span>
-                              )}
+                <>
+                  <div className="space-y-2">
+                    {visible.map(offer => {
+                      const salary = formatSalary(offer)
+                      const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
+                      const matchPct = preScoreOffer(offer, skillsDetectadas)
+                      const matchStyle = matchPct >= 30
+                        ? { bg: '#e6f7f7', color: '#0DA1A4', border: '#b2e8e8' }
+                        : matchPct >= 15
+                        ? { bg: '#fffbeb', color: '#d97706', border: '#fde68a' }
+                        : { bg: '#f0ede8', color: '#6b7280', border: '#e5e7eb' }
+                      return (
+                        <button
+                          key={offer.id}
+                          onClick={() => handleSelectOffer(offer)}
+                          className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm"
+                          style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 30 ? '#b2e8e8' : '#ede9e3' }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <OfferLogo name={offer.company.name} logoUrl={offer.company.logoUrl} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-sans font-[700] text-sm text-navy leading-snug">{offer.position}</p>
+                                {hasSkills && (
+                                  <span className="font-sans font-[700] text-[10px] px-1.5 py-0.5 rounded-full"
+                                    style={{ backgroundColor: matchStyle.bg, color: matchStyle.color, border: `1px solid ${matchStyle.border}` }}>
+                                    {matchPct}% match
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-sans text-xs text-gray-400 mt-0.5">{offer.company.name}</p>
                             </div>
-                            <p className="font-sans text-xs text-gray-400 mt-0.5">{offer.company.name}</p>
+                            <div className="flex-shrink-0 text-right">
+                              {salary && <p className="font-sans text-xs font-[700] text-teal">{salary}</p>}
+                              <p className="font-sans text-xs text-gray-400 mt-0.5">{location}</p>
+                            </div>
                           </div>
-                          <div className="flex-shrink-0 text-right">
-                            {salary && (
-                              <p className="font-sans text-xs font-[700] text-teal">{salary}</p>
-                            )}
-                            <p className="font-sans text-xs text-gray-400 mt-0.5">{location}</p>
-                          </div>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {!showAllOffers && remaining > 0 && (
+                    <button
+                      onClick={() => setShowAllOffers(true)}
+                      className="mt-3 w-full font-sans text-xs text-gray-400 hover:text-teal transition-colors duration-200 py-2"
+                    >
+                      Ver {remaining} ofertas más →
+                    </button>
+                  )}
+                  {showAllOffers && (
+                    <div className="mt-3 text-center">
+                      <a
+                        href="https://www.getmanfred.com/ofertas-empleo"
+                        target="_blank" rel="noopener noreferrer"
+                        className="font-sans text-xs text-gray-400 hover:text-teal transition-colors duration-200"
+                      >
+                        Ver todas en getmanfred.com →
+                      </a>
+                    </div>
+                  )}
+                </>
               )}
             </div>
-          )}
-        </div>
+          )
+        })()}
 
         {/* Error */}
         {(state === 'error' || errorMsg) && (
