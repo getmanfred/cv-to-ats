@@ -45,10 +45,17 @@ function formatLocation(remotePercentage: number, locations: string[]): string {
   return city ? `Presencial · ${city}` : 'Presencial'
 }
 
-const TITLE_STOP = new Set(['and', 'the', 'for', 'with', 'lead', 'head'])
+const TITLE_STOP = new Set(['and', 'the', 'for', 'with', 'de', 'of', 'en', 'a', 'an'])
 
 function titleWords(s: string): string[] {
-  return s.toLowerCase().split(/[\s/,\-]+/).filter(w => w.length >= 4 && !TITLE_STOP.has(w))
+  // Min length 2 so acronyms like QA, AI, ML, UX are kept and not filtered out
+  return s.toLowerCase().split(/[\s/,\-]+/).filter(w => w.length >= 2 && !TITLE_STOP.has(w))
+}
+
+function skillInText(skill: string, text: string): boolean {
+  // Word-boundary match prevents 'R' or 'C' from matching inside 'engineer', 'architect', etc.
+  const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(text)
 }
 
 function preScoreOffer(offer: ManfredOffer, skills: string[], cvRole: string): number {
@@ -56,7 +63,7 @@ function preScoreOffer(offer: ManfredOffer, skills: string[], cvRole: string): n
 
   if (cvRole) {
     // Primary signal (70 pts): bidirectional role-title matching
-    // The highlights are company perks (emojis/benefits), not tech requirements — ignore them
+    // highlights are company perks (emojis/benefits), not tech requirements — ignored
     const offerWords = titleWords(offer.position)
     const roleWords = titleWords(cvRole)
     let roleScore = 0
@@ -65,15 +72,15 @@ function preScoreOffer(offer: ManfredOffer, skills: string[], cvRole: string): n
       const roleInOffer = roleWords.filter(w => positionLower.includes(w)).length / roleWords.length
       roleScore = Math.max(offerInRole, roleInOffer) * 70
     }
-    // Secondary signal (30 pts): skills that appear verbatim in the offer title
-    const skillHits = skills.filter(s => positionLower.includes(s.toLowerCase())).length
+    // Secondary signal (30 pts): whole-word skill matches in offer title
+    const skillHits = skills.filter(s => skillInText(s, positionLower)).length
     const skillScore = Math.min(skillHits / 3, 1) * 30
     return Math.round(Math.min(roleScore + skillScore, 100))
   }
 
   // Fallback when no role info: skills vs position+highlights, capped denominator
   const haystack = [offer.position, ...offer.highlights].join(' ').toLowerCase()
-  const hits = skills.filter(s => haystack.includes(s.toLowerCase())).length
+  const hits = skills.filter(s => skillInText(s, haystack)).length
   if (!hits) return 0
   return Math.round(Math.min(hits / Math.min(skills.length, 8), 1) * 100)
 }
@@ -508,6 +515,17 @@ export default function MatchPage() {
             </div>
           )}
         </div>
+
+        {/* Skills loading banner — shown right below CV so it's immediately visible */}
+        {loadingSkills && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ backgroundColor: '#e6f7f7', border: '1px solid #b2e8e8' }}>
+            <svg className="animate-spin h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" style={{ color: '#0DA1A4' }}>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            <p className="font-sans text-sm font-[600]" style={{ color: '#0DA1A4' }}>{L.checkingSkills}</p>
+          </div>
+        )}
 
         {/* Location warning */}
         {locationWarning && (
