@@ -29,32 +29,29 @@ Required fields:
 
 - "headline": short technical phrase (max 15 words) about the ATS state of the CV. in the specified language.
 
-- "overallScore": number 0-100. Calculate as the exact weighted average of the 6 category scores using these fixed weights: Keywords & skills 30%, Format & parseability 25%, Work experience structure 20%, Education & certifications 10%, Contact information 10%, Length & file optimization 5%. Round to the nearest integer.
+  Do NOT include an "overallScore" field — it is calculated automatically from category scores.
 
-  Score calibration — apply these objective, measurable anchors:
-  - 85–100: ATS-ready: 12+ distinct technical skills, clean single-column structure, all roles have company+title+dates+description, full contact info.
-  - 70–84: Good CV: 7–11 skills, readable format with minor issues, most roles complete, contact info mostly present.
-  - 50–69: Functional but improvable: <7 skills OR structural issues, some incomplete roles, some contact info missing.
-  - 35–49: Significant gaps in 2+ categories: very few keywords, missing sections, multiple incomplete roles.
-  - Below 35: Severe problems — nearly no keywords, unparseable format, or critical information missing.
+  Per-category scoring criteria — apply each rule mechanically, count exactly, do not estimate:
 
-  Per-category scoring criteria (apply mechanically):
-
-  Keywords & skills: count unique technical skills, tools, technologies, and methodologies explicitly named.
+  Keywords & skills: count each unique, explicitly named technology, programming language, framework, library, database, cloud platform, DevOps/MLOps tool, named methodology (e.g. Scrum, Kanban), or professional certification. Each item counts once regardless of how often it appears. Do NOT count generic soft skills ("communication", "leadership"), job titles, industry names, or vague phrases ("web technologies", "cloud experience").
   - 85–100: 15+ distinct items | 70–84: 10–14 | 55–69: 6–9 | 35–54: 3–5 | <35: 0–2
 
-  Format & parseability: penalise ONLY for confirmed parsing obstacles (multi-column layout, merged-cell tables, embedded images, decorative special characters as bullets, text-as-image). A clean, well-structured CV with standard section headers scores 85–100. Do NOT deduct for professional formatting, clear typography, or organised layout.
-  - 85–100: clean single-column, standard headers | 65–84: minor issues | 45–64: some obstacles | <45: severe or unparseable
+  Format & parseability: start at 90. Apply deductions only for confirmed, unambiguous issues. When in doubt, do NOT deduct.
+  - Two or more text columns running side by side (not a simple two-cell table): −35
+  - Main content inside merged-cell tables (not simple bordered boxes): −25
+  - CV text exists only as embedded images (no selectable text at all): −60
+  - Non-standard decorative characters used as the sole bullet style (★, ⬛, custom glyphs — not "•" or "-"): −10
+  If none of the above apply, score exactly 90. Do not invent penalties.
 
-  Work experience structure: for each role, check: company name present? Job title present? Dates (start/end) present? Description present?
-  - 85–100: all 4 elements in every role | 70–84: 1–2 minor omissions | 50–69: several roles missing 1–2 elements | <50: many incomplete roles
+  Work experience structure: for each role, check four binary elements: company name present? Job title present? Start date present? End date or "present" present? Description (at least one line) present? Count total omissions across all roles.
+  - 85–100: 0 omissions | 70–84: 1–2 omissions | 50–69: 3–5 omissions | <50: 6+ omissions
 
   Education & certifications: institution name + degree/qualification + year = complete entry.
   - 85–100: ≥1 complete entry + certifications if listed | 65–84: complete entry, no certs | 50–64: partial entries | <50: sparse or absent
 
-  Contact information: email (+25 pts), phone (+25 pts), city/country (+25 pts), LinkedIn or portfolio URL (+25 pts). Total = sum of present elements.
+  Contact information: email (+25 pts), phone (+25 pts), city/country (+25 pts), LinkedIn or portfolio URL (+25 pts). Score = sum of present elements × 25. Apply mechanically.
 
-  Length & file optimization: based on estimated page count.
+  Length & file optimization: based on estimated page count only.
   - 90–100: 1–2 pages | 70–84: 3 pages | 45–69: 4 pages | <45: 5+ pages or under 200 words
 
 - "categories": evaluate these 6 categories (name them in the specified language):
@@ -96,7 +93,6 @@ JSON structure:
   "saludo": "<string>",
   "saludoTerminos": ["<substring>", ...],
   "headline": "<string>",
-  "overallScore": <number>,
   "categories": [
     {
       "category": "<string>",
@@ -207,12 +203,14 @@ ${cvText}
 
 // ─── Types for intermediate results ──────────────────────────────────────────
 
+// Weights must match the category order in buildScoringPrompt (keywords, format, experience, education, contact, length)
+const CATEGORY_WEIGHTS = [0.30, 0.25, 0.20, 0.10, 0.10, 0.05]
+
 interface ScoringResult {
   nombre:           string
   saludo:           string
   saludoTerminos:   string[]
   headline:         string
-  overallScore:     number
   categories:       Array<{ category: string; score: number; status: string; summary: string }>
   skillsDetectadas: string[]
   metricas:         { palabras: number; paginasEstimadas: number; densidadKeywords: number }
@@ -246,9 +244,15 @@ export async function analyzeWithGemini(cvText: string, lang: 'es' | 'en' = 'es'
     throw new Error('Error al procesar la respuesta. Por favor, inténtalo de nuevo.')
   }
 
-  if (typeof scoring.overallScore !== 'number' || !Array.isArray(scoring.categories)) {
+  if (!Array.isArray(scoring.categories) || scoring.categories.length === 0) {
     throw new Error('La respuesta no tenía los campos necesarios. Por favor, inténtalo de nuevo.')
   }
+
+  const overallScore = Math.round(
+    scoring.categories
+      .slice(0, 6)
+      .reduce((sum, cat, i) => sum + (cat.score ?? 0) * (CATEGORY_WEIGHTS[i] ?? 0), 0)
+  )
 
   // Pass 2: suggestions (runs after scoring so it has the category scores)
   const suggestionsText = await withGeminiRetry(() =>
@@ -280,7 +284,7 @@ export async function analyzeWithGemini(cvText: string, lang: 'es' | 'en' = 'es'
   }))
 
   return {
-    overallScore:     scoring.overallScore,
+    overallScore,
     nombre:           scoring.nombre ?? '',
     saludo:           scoring.saludo ?? scoring.headline ?? '',
     saludoTerminos:   scoring.saludoTerminos ?? [],
