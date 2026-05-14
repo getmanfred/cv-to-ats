@@ -180,6 +180,7 @@ export default function MatchPage() {
   const [cachedCvName, setCachedCvName] = useState('')
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [hasCachedResult, setHasCachedResult] = useState(false)
+  const [isDraggingCv, setIsDraggingCv] = useState(false)
 
   // JD state
   const [jdText, setJdText] = useState('')
@@ -382,7 +383,7 @@ export default function MatchPage() {
                 </div>
               </div>
               <button
-                onClick={() => setHasCachedCv(false)}
+                onClick={() => { setHasCachedCv(false); setSkillsDetectadas([]) }}
                 className="font-sans text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2"
               >
                 {L.change}
@@ -392,7 +393,18 @@ export default function MatchPage() {
             <div>
               <label
                 className="flex flex-col items-center justify-center w-full h-28 rounded-xl border-2 border-dashed cursor-pointer transition-colors duration-200"
-                style={{ borderColor: cvFile ? '#0DA1A4' : '#d1d5db', backgroundColor: cvFile ? '#e6f7f7' : 'transparent' }}
+                style={{
+                  borderColor: isDraggingCv || cvFile ? '#0DA1A4' : '#d1d5db',
+                  backgroundColor: isDraggingCv ? '#d0f4f4' : cvFile ? '#e6f7f7' : 'transparent',
+                }}
+                onDragOver={e => { e.preventDefault(); setIsDraggingCv(true) }}
+                onDragLeave={() => setIsDraggingCv(false)}
+                onDrop={e => {
+                  e.preventDefault()
+                  setIsDraggingCv(false)
+                  const file = e.dataTransfer.files?.[0]
+                  if (file) setCvFile(file)
+                }}
               >
                 <input
                   type="file"
@@ -404,6 +416,13 @@ export default function MatchPage() {
                   <div className="text-center">
                     <p className="font-sans font-[700] text-sm" style={{ color: '#0DA1A4' }}>{cvFile.name}</p>
                     <p className="font-sans text-xs text-gray-400 mt-1">{L.clickToChange}</p>
+                  </div>
+                ) : isDraggingCv ? (
+                  <div className="text-center">
+                    <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#0DA1A4' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p className="font-sans text-sm font-[700]" style={{ color: '#0DA1A4' }}>Suelta aquí tu CV</p>
                   </div>
                 ) : (
                   <div className="text-center">
@@ -594,10 +613,11 @@ export default function MatchPage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={e => e.stopPropagation()}
-                                className="mt-1 flex items-center gap-0.5 font-sans text-[10px] text-gray-300 hover:text-teal transition-colors"
+                                className="mt-1.5 inline-flex items-center gap-1 font-sans font-[700] text-[10px] px-2 py-0.5 rounded-full transition-opacity hover:opacity-75"
+                                style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4', border: '1px solid #b2e8e8' }}
                               >
                                 Ver oferta
-                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                 </svg>
                               </a>
