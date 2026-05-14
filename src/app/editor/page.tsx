@@ -453,28 +453,34 @@ export default function EditorPage() {
     const cvToExport = translatedCv[cvLang] ?? cv
     const nombre = cvToExport.personalInfo.nombre || 'cv'
     try {
-      const res = await fetch('/api/editor/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cvData: cvToExport,
-          lang: cvLang,
-          filename: nombre.replace(/\s+/g, '_').toLowerCase(),
-        }),
+      const element = document.getElementById('harvard-template')
+      if (!element) throw new Error('No se encontró el elemento del CV.')
+
+      const html2canvas = (await import('html2canvas')).default
+      const { jsPDF } = await import('jspdf')
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
       })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string }
-        throw new Error(err.error || 'Error al generar el PDF')
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95)
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = pageWidth
+      const imgHeight = (canvas.height * pageWidth) / canvas.width
+
+      let y = 0
+      while (y < imgHeight) {
+        if (y > 0) pdf.addPage()
+        pdf.addImage(imgData, 'JPEG', 0, -y, imgWidth, imgHeight)
+        y += pageHeight
       }
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${nombre.replace(/\s+/g, '_').toLowerCase()}_cv.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+
+      const safeFilename = nombre.replace(/\s+/g, '_').toLowerCase()
+      pdf.save(`${safeFilename}_cv.pdf`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al generar el PDF.'
       setLoadError(msg)
