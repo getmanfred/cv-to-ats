@@ -87,16 +87,23 @@ For each category, write exactly 2 improvement suggestions. Each must follow thi
 - "sugerencia": max 30-word copy-paste text example showing improved content — ONLY include this for "alta" priority suggestions, set null for "media" and "baja"
 
 SUGGESTION RULES:
-1. Every step MUST name a specific element from THIS CV (job title, company, skill, section, date range). Generic steps are forbidden.
-2. Forbidden patterns: "Add more keywords", "Quantify achievements", "Ensure contact info is complete", "Use ATS-friendly format", "Tailor to job description".
-3. Each suggestion tackles a DIFFERENT problem. No duplicates across the entire response.
-4. NEVER suggest changing dates, employment years, or graduation years — all dates are historical facts.
-5. NEVER reorder work experience if the most recent position already appears first.
-6. NEVER suggest removing the candidate's name without providing an alternative placement.
+1. ANTI-HALLUCINATION — CRITICAL: Before naming any company, job title, skill, or technology in a suggestion, verify it appears WORD-FOR-WORD in the CV text above. If you cannot find it literally in the text, use a generic reference ("tu rol más reciente", "la empresa anterior") — NEVER invent, guess, or paraphrase names. A suggestion referencing a company or skill that does not exist in the CV is a critical failure.
+2. Every step must reference something real and specific from THIS CV. Generic steps that could apply to any CV are forbidden.
+3. Forbidden patterns: "Add more keywords", "Quantify achievements", "Ensure contact info is complete", "Use ATS-friendly format", "Tailor to job description".
+4. Each suggestion tackles a DIFFERENT problem. No duplicates across the entire response.
+5. NEVER suggest changing dates, employment years, or graduation years — all dates are historical facts.
+6. NEVER reorder work experience if the most recent position already appears first.
+7. NEVER suggest removing the candidate's name without providing an alternative placement.
 
 ─── CALIBRATION ───────────────────────────────────────────────────────────────
 
-Score strictly. Most real-world CVs should score between 40–70. Reserve 80+ for genuinely strong CVs. If a CV has weak keywords, vague bullets and no quantified achievements, the overall result should feel like a wake-up call, not a pat on the back. When in doubt on any scoring band, choose the lower band.
+Score strictly. Most real-world CVs should score between 40–70. Reserve 80+ for genuinely strong CVs. When in doubt between two bands, always pick the lower one.
+
+Concrete anchors — apply these directly:
+- Keywords: a CV with only 3–4 named tools must score 35–54. A CV with no dedicated skills section and only incidental tool mentions must score <35. Do not inflate.
+- Experience: vague bullets like "responsible for X" or "worked on Y" with no metrics or outcomes → score 50–69 max. Only score 85+ if bullets contain specific numbers, scope, and impact.
+- Education: no certifications and education section has only institution + degree but no year → score 50–64, not higher.
+- Contact: missing phone OR missing location → deduct the corresponding 25 pts. Do not assume fields are present.
 
 ─── IMPORTANT ─────────────────────────────────────────────────────────────────
 
