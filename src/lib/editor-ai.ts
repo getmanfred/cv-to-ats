@@ -156,11 +156,46 @@ function hydrateCVData(raw: RawCVData): CVData {
 }
 
 function decodeUnicodeEscapes(s: string): string {
-  // If the model emits literal \uXXXX sequences as text (double-escaped),
-  // decode them before JSON.parse so accents and ñ are restored correctly.
   return s.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
     String.fromCharCode(parseInt(hex, 16))
   )
+}
+
+function fixMojibake(s: string): string {
+  // Fix common UTF-8 bytes decoded as Latin-1/Windows-1252 (pdf-parse encoding mismatch)
+  return s
+    .replace(/â€™/g, '’') // right single quote
+    .replace(/â€˜/g, '‘') // left single quote
+    .replace(/â€œ/g, '“') // left double quote
+    .replace(/â€/g, '”') // right double quote
+    .replace(/â€“/g, '–') // en dash
+    .replace(/â€”/g, '—') // em dash
+    .replace(/Ã /g, 'à') // à
+    .replace(/Ã¡/g, 'á') // á
+    .replace(/Ã¢/g, 'â') // â
+    .replace(/Ã¤/g, 'ä') // ä
+    .replace(/Ã¦/g, 'æ') // æ
+    .replace(/Ã§/g, 'ç') // ç
+    .replace(/Ã¨/g, 'è') // è
+    .replace(/Ã©/g, 'é') // é
+    .replace(/Ã­/g, 'í') // í
+    .replace(/Ã®/g, 'î') // î
+    .replace(/Ã¯/g, 'ï') // ï
+    .replace(/Ã±/g, 'ñ') // ñ
+    .replace(/Ã²/g, 'ò') // ò
+    .replace(/Ã³/g, 'ó') // ó
+    .replace(/Ã´/g, 'ô') // ô
+    .replace(/Ã¶/g, 'ö') // ö
+    .replace(/Ã¹/g, 'ù') // ù
+    .replace(/Ãº/g, 'ú') // ú
+    .replace(/Ã»/g, 'û') // û
+    .replace(/Ã¼/g, 'ü') // ü
+    .replace(/Ã/g, 'Á') // Á
+    .replace(/Ã/g, 'É') // É
+    .replace(/Ã/g, 'Í') // Í
+    .replace(/Ã/g, 'Ó') // Ó
+    .replace(/Ã/g, 'Ú') // Ú
+    .replace(/Ã/g, 'Ñ') // Ñ
 }
 
 function parseNaNJson(text: string): RawCVData {
@@ -176,38 +211,31 @@ function parseNaNJson(text: string): RawCVData {
 
 // ─── Translate CV content ─────────────────────────────────────────────────────
 
-const TRANSLATE_PROMPT = (cvData: RawCVData, targetLang: CvLang) => `
-You are a professional CV translator. Translate the CV content below to ${targetLang === 'en' ? 'English' : 'Spanish'}.
+interface TranslatableSlice {
+  cargo: string
+  experiencia: Array<{ cargo: string; bullets: string[] }>
+  proyectos: Array<{ descripcion: string }>
+  educacion: Array<{ titulo: string; campo: string; logros: string[] }>
+}
 
-STRICT RULES — translate ONLY these fields:
-- personalInfo.cargo
-- experiencia[].cargo
-- experiencia[].bullets[] (every bullet string)
-- proyectos[].descripcion
-- educacion[].titulo
-- educacion[].campo
-- educacion[].logros[] (every achievement string)
+const TRANSLATE_PROMPT = (slice: TranslatableSlice, targetLang: CvLang) => `
+You are a professional CV translator. Translate the fields below to ${targetLang === 'en' ? 'English' : 'Spanish'}.
 
-DO NOT translate (keep byte-for-byte identical):
-- personalInfo.nombre, email, telefono, linkedin, ubicacion, website
-- experiencia[].empresa, experiencia[].ubicacion, experiencia[].fechaInicio, experiencia[].fechaFin, experiencia[].actual
-- educacion[].institucion, educacion[].fechaInicio, educacion[].fechaFin
-- proyectos[].nombre, proyectos[].url
-- habilidades (all skill arrays — technology names are universal)
-- idiomas (language names and levels)
-- resumen
+STRICT RULES:
+- Translate every string value in the JSON below.
+- Keep proper nouns (product names, framework names, company names, acronyms) unchanged.
+- Return ONLY valid JSON with the exact same structure as the input — no markdown, no extra text.
+- Preserve accented characters as real Unicode (á, é, í, ó, ú, ñ, ç, etc.), not escape sequences.
 
-Keep proper nouns (product names, framework names, acronyms) unchanged even inside translated strings.
-Return ONLY valid JSON with the exact same structure as the input — no markdown, no extra text.
-
-CV JSON:
-${JSON.stringify(cvData, null, 2)}
+FIELDS TO TRANSLATE:
+${JSON.stringify(slice, null, 2)}
 `.trim()
 
 // ─── Public functions ─────────────────────────────────────────────────────────
 
 export async function parseCVToEditor(cvText: string): Promise<CVData> {
-  const text = await withGeminiRetry(() => nanComplete(PARSE_PROMPT(cvText)))
+  const cleanText = fixMojibake(cvText)
+  const text = await withGeminiRetry(() => nanComplete(PARSE_PROMPT(cleanText)))
   const raw = parseNaNJson(text)
   return hydrateCVData(raw)
 }
@@ -241,10 +269,44 @@ export async function translateCVContent(cvData: CVData, targetLang: CvLang): Pr
     habilidades:  cvData.habilidades,
     idiomas:      cvData.idiomas.map(({ id: _id, ...rest }) => rest),
   }
-  const text = await withGeminiRetry(() => nanComplete(TRANSLATE_PROMPT(raw, targetLang)))
-  const translated = parseNaNJson(text)
-  translated.personalInfo = raw.personalInfo
-  translated.habilidades = raw.habilidades
-  translated.idiomas = raw.idiomas
-  return hydrateCVData(translated)
+
+  const slice: TranslatableSlice = {
+    cargo:       raw.personalInfo.cargo,
+    experiencia: raw.experiencia.map(e => ({ cargo: e.cargo, bullets: e.bullets })),
+    proyectos:   raw.proyectos.map(p => ({ descripcion: p.descripcion })),
+    educacion:   raw.educacion.map(e => ({ titulo: e.titulo, campo: e.campo ?? '', logros: e.logros ?? [] })),
+  }
+
+  const text = await withGeminiRetry(() => nanComplete(TRANSLATE_PROMPT(slice, targetLang)))
+
+  const cleanedText = decodeUnicodeEscapes(
+    text
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim()
+  )
+  const translated = JSON.parse(cleanedText) as TranslatableSlice
+
+  const merged: RawCVData = {
+    ...raw,
+    personalInfo: { ...raw.personalInfo, cargo: translated.cargo ?? raw.personalInfo.cargo },
+    experiencia: raw.experiencia.map((e, i) => ({
+      ...e,
+      cargo:   translated.experiencia[i]?.cargo   ?? e.cargo,
+      bullets: translated.experiencia[i]?.bullets ?? e.bullets,
+    })),
+    proyectos: raw.proyectos.map((p, i) => ({
+      ...p,
+      descripcion: translated.proyectos[i]?.descripcion ?? p.descripcion,
+    })),
+    educacion: raw.educacion.map((e, i) => ({
+      ...e,
+      titulo: translated.educacion[i]?.titulo ?? e.titulo,
+      campo:  translated.educacion[i]?.campo  ?? e.campo,
+      logros: translated.educacion[i]?.logros ?? e.logros,
+    })),
+  }
+
+  return hydrateCVData(merged)
 }

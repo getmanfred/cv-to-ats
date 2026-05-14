@@ -59,6 +59,7 @@ Required fields:
 
 IMPORTANT:
 - This is a LinkedIn profile analysis. Do NOT give CV or résumé advice. Do not comment on CV formatting, CV sections, or CV structure.
+- NEVER use the words "CV", "résumé", "curriculum vitae", "currículum", "hoja de vida" (in any language or capitalisation) in any field — this is a LinkedIn profile review, not a document review.
 - Only flag real issues found in the provided text. Do not invent problems or sections.
 - NEVER mention, suggest moving, or recommend adding a section that does not appear explicitly in the provided profile text. If there is no "Hobbies", "Interests", "Volunteer", or any other section in the text — do not mention it at all.
 - When flagging an issue, always include a direct quote (in quotes) from the profile text that supports the finding. Never make generic recommendations without citing specific text from the profile.

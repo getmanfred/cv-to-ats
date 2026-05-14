@@ -9,6 +9,23 @@ export const maxDuration = 90
 const MIN_LENGTH = 200
 const MAX_LENGTH = 50_000
 
+function looksLikeCV(text: string): boolean {
+  const sample = text.slice(0, 3000).toLowerCase()
+  const cvSignals = [
+    'curriculum vitae', 'currículum vitae', 'hoja de vida',
+    'datos personales', 'formación académica', 'experiencia laboral',
+    'objective:', 'work history', 'references available',
+  ]
+  const linkedinSignals = [
+    'conexiones', 'seguidores', 'followers', 'connections',
+    'linkedin.com', 'publicaciones', 'actividad', 'recomienda',
+    'recomendación', 'recommendation', 'premio', 'award', 'volunteer',
+  ]
+  const cvHits = cvSignals.filter(s => sample.includes(s)).length
+  const liHits = linkedinSignals.filter(s => sample.includes(s)).length
+  return cvHits >= 2 && liHits === 0
+}
+
 function sanitizeError(error: unknown): string {
   if (error instanceof Error) {
     const msg = error.message
@@ -62,6 +79,13 @@ export async function POST(request: NextRequest) {
     if (profileText.length > MAX_LENGTH) {
       return NextResponse.json(
         { error: 'El texto del perfil es demasiado largo. Por favor, pega solo el contenido principal.' },
+        { status: 422 }
+      )
+    }
+
+    if (looksLikeCV(profileText)) {
+      return NextResponse.json(
+        { error: 'El texto parece un CV, no un perfil de LinkedIn. Por favor, copia el contenido directamente desde tu perfil de LinkedIn.' },
         { status: 422 }
       )
     }
