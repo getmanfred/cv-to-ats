@@ -39,4 +39,5 @@ export interface ATSAnalysisResult {
   categories:       CategoryAnalysis[]
   topPriorities:    string[]
   analyzedAt:       string
+  milestone?:       boolean
 }
