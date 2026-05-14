@@ -241,7 +241,7 @@ export default function EditorPage() {
       try { setTranslatedCv(JSON.parse(translated) as Partial<Record<CvLang, CVData>>) } catch { /* ignore */ }
     }
 
-    const cvText = sessionStorage.getItem('atsCvText')
+    const cvText = sessionStorage.getItem('atsCvText') || localStorage.getItem('atsCvText')
     const resultRaw = sessionStorage.getItem('atsResult')
     if (cvText && cvText.length > 100) {
       setDetectedCvText(cvText)
