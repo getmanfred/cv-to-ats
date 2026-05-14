@@ -1,31 +1,5 @@
 // Server-side only — never import from client components
 
-const OCR_TIMEOUT_MS = 30_000
-
-async function extractFromPDFWithOCR(buffer: Buffer): Promise<string> {
-  const { GoogleGenerativeAI } = await import('@google/generative-ai')
-  const { withGeminiRetry } = await import('@/lib/gemini-retry')
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview', generationConfig: { temperature: 0 } })
-
-  const ocrCall = withGeminiRetry(() => model.generateContent([
-    {
-      inlineData: {
-        mimeType: 'application/pdf',
-        data: buffer.toString('base64'),
-      },
-    },
-    'Extract all the text from this PDF document exactly as it appears. Return only the extracted text, no commentary.',
-  ]))
-
-  const timeoutGuard = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('El PDF tardó demasiado en procesarse. Inténtalo de nuevo.')), OCR_TIMEOUT_MS)
-  )
-
-  const result = await Promise.race([ocrCall, timeoutGuard])
-  return result.response.text()
-}
-
 export async function extractFromPDF(buffer: Buffer, maxPages?: number): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const pdfParse = require('pdf-parse')
@@ -37,8 +11,8 @@ export async function extractFromPDF(buffer: Buffer, maxPages?: number): Promise
 
   if (data.text.trim().length >= 100) return data.text
 
-  // Fallback: PDF is image-based (e.g. Canva exports) — use Gemini OCR
-  return extractFromPDFWithOCR(buffer)
+  // PDF is image-based (scanned or Canva export) — no OCR available
+  throw new Error('Este PDF parece ser una imagen escaneada o un diseño sin texto seleccionable (ej: Canva). Por favor, expórtalo como PDF con texto o sube una versión en DOCX.')
 }
 
 export async function extractFromDOCX(buffer: Buffer): Promise<string> {

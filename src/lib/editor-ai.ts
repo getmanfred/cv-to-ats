@@ -1,7 +1,7 @@
 import type { CVData, SkillCategories } from '@/types/cv'
 import type { Suggestion } from '@/types/analysis'
 import type { CvLang } from '@/lib/cv-labels'
-import { withGeminiRetry } from '@/lib/gemini-retry'
+import { withGeminiRetry } from '@/lib/api-retry'
 import { nanComplete } from '@/lib/nan-client'
 
 // ─── Types returned by NaN (no IDs) ──────────────────────────────────────────

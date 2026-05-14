@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { parseCVToEditor, improveCVWithSuggestions, translateCVContent } from '@/lib/gemini-editor'
+import { parseCVToEditor, improveCVWithSuggestions, translateCVContent } from '@/lib/editor-ai'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getSupabase } from '@/lib/supabase'
 import type { CVData } from '@/types/cv'

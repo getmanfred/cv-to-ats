@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractCVText } from '@/lib/extractors'
 import { nanComplete } from '@/lib/nan-client'
-import { withGeminiRetry } from '@/lib/gemini-retry'
+import { withGeminiRetry } from '@/lib/api-retry'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
