@@ -9,8 +9,8 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 10,
     lineHeight: 1.45,
-    paddingTop: pt(18),
-    paddingBottom: pt(20),
+    paddingTop: pt(20),
+    paddingBottom: pt(23),
     paddingLeft: pt(20),
     paddingRight: pt(20),
     backgroundColor: '#ffffff',
@@ -19,7 +19,7 @@ const s = StyleSheet.create({
 
   // ── Header ──────────────────────────────────────────────
   headerCenter: { alignItems: 'center', marginBottom: pt(4) },
-  nameRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 3 },
+  nameRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 8 },
   firstName: { fontSize: 22, fontFamily: 'Helvetica', letterSpacing: -0.3 },
   lastName:  { fontSize: 22, fontFamily: 'Helvetica-Bold', letterSpacing: -0.3 },
   namePlaceholder: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: '#cccccc' },
@@ -27,7 +27,7 @@ const s = StyleSheet.create({
   contact: { fontSize: 8.5, color: '#666666' },
 
   // ── Section header ───────────────────────────────────────
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginTop: pt(16), marginBottom: pt(6) },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginTop: pt(12), marginBottom: pt(6) },
   sectionTitle:  { fontFamily: 'Helvetica-Bold', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: '#111111', marginRight: 8 },
   sectionLine:   { flex: 1, borderBottomWidth: 0.5, borderBottomColor: '#aaaaaa' },
 

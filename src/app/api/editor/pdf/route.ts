@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
-import { createElement } from 'react'
+import { createElement, type ReactElement } from 'react'
+import type { DocumentProps } from '@react-pdf/renderer'
 import HarvardTemplatePdf from '@/components/editor/HarvardTemplatePdf'
 import type { CVData } from '@/types/cv'
 import type { CvLang } from '@/lib/cv-labels'
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Faltan datos del CV.' }, { status: 400 })
     }
 
-    const element = createElement(HarvardTemplatePdf, { data: cvData, lang })
+    const element = createElement(HarvardTemplatePdf, { data: cvData, lang }) as ReactElement<DocumentProps>
     const buffer = await renderToBuffer(element)
 
     const safeFilename = (filename as string).replace(/[^a-z0-9_\-]/gi, '_').toLowerCase()
