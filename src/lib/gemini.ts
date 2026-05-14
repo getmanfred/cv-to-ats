@@ -172,6 +172,9 @@ MANDATORY RULES — NO EXCEPTIONS:
 7. NEVER suggest changing, correcting, or updating date ranges, employment years, graduation years, or any other temporal information. All dates in the CV are facts from the candidate's history — do not flag them as wrong, future, outdated, or in need of updating.
 8. NEVER describe experience as "outdated" based on the year it occurred. Do not suggest that any listed experience is in the future or needs its dates corrected.
 9. Each suggestion MUST include a "sugerencia" field: a short (max 50 words), copy-paste ready text example showing what the improved content looks like. Write only the specific text to add or replace — not an instruction. For example: if adding skills, write the updated skills line ("Figma, Design Thinking, Wireframing"); if rewriting a bullet, write the improved bullet. If no concrete text rewrite is possible, set to null.
+10. NEVER suggest reordering work experience chronologically if the most recent position already appears first. A role listed as "Actualidad", "actual", "Present", or paired with the most recent year is already correctly positioned at the top. Assume reverse chronological order is correct unless you find a concrete violation (an older date appearing before a newer date).
+11. Do NOT duplicate advice across suggestions. Each suggestion in this entire response must address a unique, distinct problem — if you have already addressed moving content, removing a section, or adding a skill in another suggestion, do not repeat it in a different one.
+12. NEVER suggest removing or eliminating the candidate's name from the CV without specifying exactly where it should appear instead. If the name appears in an unexpected place, suggest moving it to the header — never suggest deleting it without providing an alternative placement in the same step.
 
 Return ONLY valid JSON — no markdown, no text outside the JSON object:
 {
