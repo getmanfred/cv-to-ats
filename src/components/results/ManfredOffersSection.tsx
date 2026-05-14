@@ -15,22 +15,22 @@ interface ScoredOffer {
 
 function CompanyLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
   const [failed, setFailed] = useState(false)
-  const initials = name.slice(0, 2).toUpperCase()
   return (
-    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
       {logoUrl && !failed ? (
         /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={logoUrl}
-          alt=""
-          className="w-full h-full object-contain p-1"
-          onError={() => setFailed(true)}
-        />
+        <img src={logoUrl} alt="" className="w-full h-full object-contain p-1" onError={() => setFailed(true)} />
       ) : (
-        <span className="font-sans font-[900] text-xs text-gray-400">{initials}</span>
+        <span className="font-sans font-[900] text-xs text-gray-400">{name.slice(0, 2).toUpperCase()}</span>
       )}
     </div>
   )
+}
+
+function matchBadgeStyle(pct: number) {
+  if (pct >= 80) return { bg: '#dcfce7', color: '#15803d', border: '#86efac' }
+  if (pct >= 40) return { bg: '#fef3c7', color: '#b45309', border: '#fcd34d' }
+  return              { bg: '#fee2e2', color: '#dc2626', border: '#fca5a5' }
 }
 
 function offerUrl(offer: ManfredOffer) {
@@ -156,17 +156,14 @@ export default function ManfredOffersSection({ skillsDetectadas }: Props) {
 
                 {matched.length > 0 && (
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    <span
-                      className="font-sans font-[700] text-xs px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4' }}
-                    >
-                      {pct}% match
-                    </span>
+                    {(() => { const ms = matchBadgeStyle(pct); return (
+                      <span className="font-sans font-[700] text-xs px-1.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: ms.bg, color: ms.color, border: `1px solid ${ms.border}` }}>
+                        {pct}%
+                      </span>
+                    )})()}
                     {matched.slice(0, 4).map(skill => (
-                      <span
-                        key={skill}
-                        className="font-sans text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500"
-                      >
+                      <span key={skill} className="font-sans text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
                         {skill}
                       </span>
                     ))}

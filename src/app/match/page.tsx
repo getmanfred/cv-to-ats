@@ -151,15 +151,21 @@ const LABELS = {
 function OfferLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
   const [failed, setFailed] = useState(false)
   return (
-    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
       {logoUrl && !failed ? (
         /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={logoUrl} alt="" className="w-full h-full object-contain p-0.5" onError={() => setFailed(true)} />
+        <img src={logoUrl} alt="" className="w-full h-full object-contain p-1" onError={() => setFailed(true)} />
       ) : (
         <span className="font-sans font-[900] text-xs text-gray-400">{name.slice(0, 2).toUpperCase()}</span>
       )}
     </div>
   )
+}
+
+function matchBadgeStyle(pct: number) {
+  if (pct >= 80) return { bg: '#dcfce7', color: '#15803d', border: '#86efac' }
+  if (pct >= 40) return { bg: '#fef3c7', color: '#b45309', border: '#fcd34d' }
+  return              { bg: '#fee2e2', color: '#dc2626', border: '#fca5a5' }
 }
 
 export default function MatchPage() {
@@ -507,17 +513,13 @@ export default function MatchPage() {
                       const salary = formatSalary(offer)
                       const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
                       const matchPct = preScoreOffer(offer, skillsDetectadas)
-                      const matchStyle = matchPct >= 30
-                        ? { bg: '#e6f7f7', color: '#0DA1A4', border: '#b2e8e8' }
-                        : matchPct >= 15
-                        ? { bg: '#fffbeb', color: '#d97706', border: '#fde68a' }
-                        : { bg: '#f0ede8', color: '#6b7280', border: '#e5e7eb' }
+                      const ms = matchBadgeStyle(matchPct)
                       return (
                         <button
                           key={offer.id}
                           onClick={() => handleSelectOffer(offer)}
                           className="w-full text-left rounded-xl border p-3 transition-all duration-150 hover:shadow-sm"
-                          style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 30 ? '#b2e8e8' : '#ede9e3' }}
+                          style={{ backgroundColor: '#fafafa', borderColor: matchPct >= 80 ? '#86efac' : '#ede9e3' }}
                         >
                           <div className="flex items-center gap-3">
                             <OfferLogo name={offer.company.name} logoUrl={offer.company.logoUrl} />
@@ -526,8 +528,8 @@ export default function MatchPage() {
                                 <p className="font-sans font-[700] text-sm text-navy leading-snug">{offer.position}</p>
                                 {hasSkills && (
                                   <span className="font-sans font-[700] text-[10px] px-1.5 py-0.5 rounded-full"
-                                    style={{ backgroundColor: matchStyle.bg, color: matchStyle.color, border: `1px solid ${matchStyle.border}` }}>
-                                    {matchPct}% match
+                                    style={{ backgroundColor: ms.bg, color: ms.color, border: `1px solid ${ms.border}` }}>
+                                    {matchPct}%
                                   </span>
                                 )}
                               </div>
