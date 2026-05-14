@@ -93,15 +93,23 @@ export async function POST(req: NextRequest) {
       await browser.close()
     }
   } catch (err) {
-    console.error('[pdf]', err)
-    const msg = err instanceof Error ? err.message : 'Error al generar el PDF.'
-    if (msg.includes('ENOENT') || msg.includes('executablePath')) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[pdf] error:', msg)
+    const isChromiumMissing = (
+      msg.includes('ENOENT') ||
+      msg.includes('executablePath') ||
+      msg.includes('Failed to launch') ||
+      msg.includes('not found') ||
+      msg.includes('spawn') ||
+      msg.includes('No usable sandbox')
+    )
+    if (isChromiumMissing) {
       return NextResponse.json(
         { error: 'El generador de PDF no está disponible en este entorno.' },
         { status: 503 }
       )
     }
-    return NextResponse.json({ error: 'Error al generar el PDF.' }, { status: 500 })
+    return NextResponse.json({ error: `Error al generar el PDF: ${msg}` }, { status: 500 })
   } finally {
     if (tmpDir) {
       try { rmdirSync(tmpDir, { recursive: true }) } catch { /* ignore */ }
