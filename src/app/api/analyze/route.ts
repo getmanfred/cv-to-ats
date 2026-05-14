@@ -28,29 +28,33 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ])
 }
 
+function stripDiacritics(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
 function looksLikeCV(text: string): boolean {
-  const sample = text.slice(0, 10_000).toLowerCase()
+  const sample = stripDiacritics(text.slice(0, 10_000).toLowerCase())
   const keywords = [
     // ES
-    'experiencia', 'formación', 'estudios', 'habilidades', 'competencias',
+    'experiencia', 'formacion', 'estudios', 'habilidades', 'competencias',
     'trabajo', 'empresa', 'empleado', 'cargo', 'puesto', 'universidad',
-    'titulación', 'curriculum', 'perfil', 'objetivo', 'referencias',
+    'titulacion', 'curriculum', 'perfil', 'objetivo', 'referencias',
     // EN
     'experience', 'education', 'skills', 'resume', 'work history',
     'company', 'employed', 'position', 'role', 'university', 'degree',
     'profile', 'summary', 'references', 'volunteer', 'achievements',
     // FR
-    'expérience', 'formation', 'compétences', 'diplôme', 'entreprise',
+    'experience', 'formation', 'competences', 'diplome', 'entreprise',
     // DE
     'erfahrung', 'ausbildung', 'kenntnisse', 'lebenslauf', 'berufserfahrung',
     // IT
     'esperienza', 'istruzione', 'competenze', 'curriculum vitae',
     // PT
-    'experiência', 'formação', 'habilidades',
+    'experiencia', 'formacao', 'habilidades',
     // Universal
     'linkedin', 'github', 'portfolio',
   ]
-  return keywords.filter(kw => sample.includes(kw)).length >= 2
+  return [...new Set(keywords)].filter(kw => sample.includes(kw)).length >= 2
 }
 
 
