@@ -15,15 +15,21 @@ const ALLOWED_TYPES = [
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
+    const cvTextParam = formData.get('cvText') as string | null
     const file = formData.get('cvFile') as File | null
-    if (!file || !ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ skills: [], country: null })
+
+    let cvText: string
+    if (cvTextParam && cvTextParam.trim().length >= 50) {
+      cvText = cvTextParam
+    } else if (file && ALLOWED_TYPES.includes(file.type)) {
+      const buffer = Buffer.from(await file.arrayBuffer())
+      cvText = await extractCVText(buffer, file.name, 3)
+    } else {
+      return NextResponse.json({ role: '', skills: [], country: null })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const cvText = await extractCVText(buffer, file.name, 3)
     if (cvText.trim().length < 50) {
-      return NextResponse.json({ skills: [], country: null })
+      return NextResponse.json({ role: '', skills: [], country: null })
     }
 
     const prompt = `Extract three things from this CV text:

@@ -263,8 +263,26 @@ export default function MatchPage() {
         const matchSkills = sessionStorage.getItem('matchSkills')
         if (matchSkills) setSkillsDetectadas(JSON.parse(matchSkills))
       }
+
       const storedRole = sessionStorage.getItem('cvRole')
-      if (storedRole) setCvRole(storedRole)
+      if (storedRole) {
+        setCvRole(storedRole)
+      } else if (atsRaw) {
+        // ATS result exists but no role cached — extract role from cached CV text silently
+        const cachedCvText = sessionStorage.getItem('atsCvText') || localStorage.getItem('atsCvText')
+        if (cachedCvText && cachedCvText.length > 100) {
+          setLoadingSkills(true)
+          const fd = new FormData()
+          fd.append('cvText', cachedCvText.slice(0, 6000))
+          fetch('/api/cv-preview', { method: 'POST', body: fd })
+            .then(r => r.ok ? r.json() : { role: '' })
+            .then(({ role }: { role: string }) => {
+              if (role) { setCvRole(role); sessionStorage.setItem('cvRole', role) }
+            })
+            .catch(() => {})
+            .finally(() => setLoadingSkills(false))
+        }
+      }
     } catch { /* ignore */ }
 
     const pendingUrl = sessionStorage.getItem('pendingMatchUrl')
