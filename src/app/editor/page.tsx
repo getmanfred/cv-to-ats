@@ -490,9 +490,15 @@ export default function EditorPage() {
 
   // ─ PDF Export ─
   const handlePdfExport = async () => {
-    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    // Open window synchronously before any await — preserves user gesture on iOS
-    const preOpenedWin = isMobileDevice ? window.open('', '_blank') : null
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      document.body.classList.add('editor-print')
+      const cleanup = () => document.body.classList.remove('editor-print')
+      window.addEventListener('afterprint', cleanup, { once: true })
+      setTimeout(cleanup, 30000)
+      window.print()
+      return
+    }
+
     setExportingPdf(true)
     const cvToExport = translatedCv[cvLang] ?? cv
     const nombre = cvToExport.personalInfo.nombre || 'cv'
@@ -578,17 +584,7 @@ export default function EditorPage() {
       }
 
       const filename = `${nombre.replace(/\s+/g, '_').toLowerCase()}_cv.pdf`
-      if (preOpenedWin) {
-        const blob = pdf.output('blob')
-        const url = URL.createObjectURL(blob)
-        preOpenedWin.location.href = url
-        setTimeout(() => URL.revokeObjectURL(url), 60000)
-      } else {
-        pdf.save(filename)
-      }
-    } catch (err) {
-      if (preOpenedWin) preOpenedWin.close()
-      throw err
+      pdf.save(filename)
     } finally {
       setExportingPdf(false)
     }
