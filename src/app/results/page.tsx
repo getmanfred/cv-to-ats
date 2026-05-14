@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { ATSAnalysisResult, Suggestion } from '@/types/analysis'
 import Header from '@/components/Header'
 import { saveToHistory } from '@/lib/history'
@@ -85,6 +86,17 @@ export default function ResultsPage() {
               skillsDetectadas={result.skillsDetectadas}
               metricas={result.metricas}
             />
+          </div>
+
+          {/* Methodology link */}
+          <div className="no-print text-center">
+            <Link
+              href="/como-funciona"
+              className="font-sans text-xs transition-opacity hover:opacity-70"
+              style={{ color: '#0DA1A4' }}
+            >
+              ¿Cómo se calcula esta puntuación? →
+            </Link>
           </div>
 
           {/* Critical alerts banner */}
