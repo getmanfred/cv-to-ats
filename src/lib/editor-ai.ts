@@ -156,11 +156,46 @@ function hydrateCVData(raw: RawCVData): CVData {
 }
 
 function decodeUnicodeEscapes(s: string): string {
-  // If the model emits literal \uXXXX sequences as text (double-escaped),
-  // decode them before JSON.parse so accents and ñ are restored correctly.
   return s.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
     String.fromCharCode(parseInt(hex, 16))
   )
+}
+
+function fixMojibake(s: string): string {
+  // Fix common UTF-8 bytes decoded as Latin-1/Windows-1252 (pdf-parse encoding mismatch)
+  return s
+    .replace(/â€™/g, '’') // right single quote
+    .replace(/â€˜/g, '‘') // left single quote
+    .replace(/â€œ/g, '“') // left double quote
+    .replace(/â€/g, '”')  // right double quote
+    .replace(/â€"/g, '–') // en dash
+    .replace(/â€"/g, '—') // em dash
+    .replace(/Ã /g, 'à')  // à
+    .replace(/Ã¡/g, 'á')  // á
+    .replace(/Ã¢/g, 'â')  // â
+    .replace(/Ã¤/g, 'ä')  // ä
+    .replace(/Ã¦/g, 'æ')  // æ
+    .replace(/Ã§/g, 'ç')  // ç
+    .replace(/Ã¨/g, 'è')  // è
+    .replace(/Ã©/g, 'é')  // é
+    .replace(/Ã­/g, 'í')  // í
+    .replace(/Ã®/g, 'î')  // î
+    .replace(/Ã¯/g, 'ï')  // ï
+    .replace(/Ã±/g, 'ñ')  // ñ
+    .replace(/Ã²/g, 'ò')  // ò
+    .replace(/Ã³/g, 'ó')  // ó
+    .replace(/Ã´/g, 'ô')  // ô
+    .replace(/Ã¶/g, 'ö')  // ö
+    .replace(/Ã¹/g, 'ù')  // ù
+    .replace(/Ãº/g, 'ú')  // ú
+    .replace(/Ã»/g, 'û')  // û
+    .replace(/Ã¼/g, 'ü')  // ü
+    .replace(/Ã/g, 'Á') // Á
+    .replace(/Ã/g, 'É') // É
+    .replace(/Ã/g, 'Í') // Í
+    .replace(/Ã/g, 'Ó') // Ó
+    .replace(/Ã/g, 'Ú') // Ú
+    .replace(/Ã/g, 'Ñ') // Ñ
 }
 
 function parseNaNJson(text: string): RawCVData {
@@ -181,8 +216,10 @@ You are a professional CV translator. Translate the CV content below to ${target
 
 STRICT RULES — translate ONLY these fields:
 - personalInfo.cargo
+- resumen
 - experiencia[].cargo
 - experiencia[].bullets[] (every bullet string)
+- proyectos[].nombre
 - proyectos[].descripcion
 - educacion[].titulo
 - educacion[].campo
@@ -192,22 +229,25 @@ DO NOT translate (keep byte-for-byte identical):
 - personalInfo.nombre, email, telefono, linkedin, ubicacion, website
 - experiencia[].empresa, experiencia[].ubicacion, experiencia[].fechaInicio, experiencia[].fechaFin, experiencia[].actual
 - educacion[].institucion, educacion[].fechaInicio, educacion[].fechaFin
-- proyectos[].nombre, proyectos[].url
+- proyectos[].url
 - habilidades (all skill arrays — technology names are universal)
 - idiomas (language names and levels)
-- resumen
 
-Keep proper nouns (product names, framework names, acronyms) unchanged even inside translated strings.
+Keep proper nouns (product names, framework names, company names, acronyms) unchanged even inside translated strings.
+Preserve accented characters as real Unicode (á, é, í, ó, ú, ñ, ç, etc.), not escape sequences.
 Return ONLY valid JSON with the exact same structure as the input — no markdown, no extra text.
 
 CV JSON:
 ${JSON.stringify(cvData, null, 2)}
 `.trim()
 
+const TRANSLATE_TIMEOUT_MS = 160_000
+
 // ─── Public functions ─────────────────────────────────────────────────────────
 
 export async function parseCVToEditor(cvText: string): Promise<CVData> {
-  const text = await withGeminiRetry(() => nanComplete(PARSE_PROMPT(cvText)))
+  const cleanText = fixMojibake(cvText)
+  const text = await withGeminiRetry(() => nanComplete(PARSE_PROMPT(cleanText)))
   const raw = parseNaNJson(text)
   return hydrateCVData(raw)
 }
@@ -241,8 +281,8 @@ export async function translateCVContent(cvData: CVData, targetLang: CvLang): Pr
     habilidades:  cvData.habilidades,
     idiomas:      cvData.idiomas.map(({ id: _id, ...rest }) => rest),
   }
-  const text = await withGeminiRetry(() => nanComplete(TRANSLATE_PROMPT(raw, targetLang)))
-  const translated = parseNaNJson(text)
+  const text = await nanComplete(TRANSLATE_PROMPT(raw, targetLang), TRANSLATE_TIMEOUT_MS)
+  const translated = parseNaNJson(text) as RawCVData
   translated.personalInfo = raw.personalInfo
   translated.habilidades = raw.habilidades
   translated.idiomas = raw.idiomas

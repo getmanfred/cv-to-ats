@@ -165,6 +165,12 @@ export async function POST(request: NextRequest) {
       if (jdUrl) {
         jdText = await fetchJdFromUrl(jdUrl)
         if (jdText.length > MAX_JD_CHARS) jdText = jdText.slice(0, MAX_JD_CHARS)
+        if (jdText.trim().length < 300) {
+          return NextResponse.json(
+            { error: 'La URL no devolvió suficiente contenido de la oferta. Es posible que la página use JavaScript o requiera autenticación. Prueba a pegar el texto directamente.' },
+            { status: 422 }
+          )
+        }
       } else {
         const jdFile = formData.get('jdFile') as File | null
         if (!jdFile) {
