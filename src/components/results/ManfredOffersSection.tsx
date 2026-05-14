@@ -37,13 +37,18 @@ function offerUrl(offer: ManfredOffer) {
   return `https://www.getmanfred.com/ofertas-empleo/${offer.id}/${offer.slug}`
 }
 
-function formatSalary(from: number, to: number, currency: string) {
-  if (!from && !to) return null
+function formatSalary(offer: ManfredOffer) {
+  const { isFreelance, feeRateFrom, feeRateTo, salaryFrom, salaryTo, currency } = offer
+  if (isFreelance) {
+    if (!feeRateFrom && !feeRateTo) return null
+    if (feeRateFrom && feeRateTo && feeRateFrom !== feeRateTo) return `${feeRateFrom}–${feeRateTo} ${currency}/h`
+    return `${feeRateFrom || feeRateTo} ${currency}/h`
+  }
+  if (!salaryFrom && !salaryTo) return null
   const k = (n: number) => `${Math.round(n / 1000)}k`
-  if (from && to && from !== to) return `${k(from)}–${k(to)} ${currency}`
-  if (from && !to) return `desde ${k(from)} ${currency}`
-  if (!from && to) return `hasta ${k(to)} ${currency}`
-  return `${k(from)} ${currency}`
+  if (salaryFrom && salaryTo && salaryFrom !== salaryTo) return `${k(salaryFrom)}–${k(salaryTo)} ${currency}`
+  if (salaryFrom && !salaryTo) return `desde ${k(salaryFrom)} ${currency}`
+  return `hasta ${k(salaryTo)} ${currency}`
 }
 
 function formatLocation(remotePercentage: number, locations: string[]): string {
@@ -121,7 +126,7 @@ export default function ManfredOffersSection({ skillsDetectadas }: Props) {
 
       <div className="space-y-2">
         {scored.map(({ offer, matched }) => {
-          const salary = formatSalary(offer.salaryFrom, offer.salaryTo, offer.currency)
+          const salary = formatSalary(offer)
           const pct = skillsDetectadas.length > 0
             ? Math.round((matched.length / skillsDetectadas.length) * 100)
             : 0

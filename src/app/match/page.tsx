@@ -16,18 +16,26 @@ interface ManfredOffer {
   salaryTo: number
   currency: string
   remotePercentage: number
+  isFreelance: boolean
+  feeRateFrom: number
+  feeRateTo: number
   highlights: string[]
   locations: string[]
   company: { name: string; logoUrl: string }
 }
 
-function formatSalary(from: number, to: number, currency: string): string | null {
-  if (!from && !to) return null
+function formatSalary(offer: ManfredOffer): string | null {
+  const { isFreelance, feeRateFrom, feeRateTo, salaryFrom, salaryTo, currency } = offer
+  if (isFreelance) {
+    if (!feeRateFrom && !feeRateTo) return null
+    if (feeRateFrom && feeRateTo && feeRateFrom !== feeRateTo) return `${feeRateFrom}–${feeRateTo} ${currency}/h`
+    return `${feeRateFrom || feeRateTo} ${currency}/h`
+  }
+  if (!salaryFrom && !salaryTo) return null
   const k = (n: number) => `${Math.round(n / 1000)}k`
-  if (from && to && from !== to) return `${k(from)}–${k(to)} ${currency}`
-  if (from && !to) return `desde ${k(from)} ${currency}`
-  if (!from && to) return `hasta ${k(to)} ${currency}`
-  return `${k(from)} ${currency}`
+  if (salaryFrom && salaryTo && salaryFrom !== salaryTo) return `${k(salaryFrom)}–${k(salaryTo)} ${currency}`
+  if (salaryFrom && !salaryTo) return `desde ${k(salaryFrom)} ${currency}`
+  return `hasta ${k(salaryTo)} ${currency}`
 }
 
 function formatLocation(remotePercentage: number, locations: string[]): string {
@@ -512,7 +520,7 @@ export default function MatchPage() {
               ) : (
                 <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
                   {manfredOffers.map(offer => {
-                    const salary = formatSalary(offer.salaryFrom, offer.salaryTo, offer.currency)
+                    const salary = formatSalary(offer)
                     const location = formatLocation(offer.remotePercentage, offer.locations ?? [])
                     const matchPct = preScoreOffer(offer, skillsDetectadas)
                     const hasMatch = skillsDetectadas.length > 0
