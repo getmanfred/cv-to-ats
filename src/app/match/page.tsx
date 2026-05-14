@@ -217,6 +217,9 @@ export default function MatchPage() {
       if (atsRaw) {
         const ats = JSON.parse(atsRaw)
         if (Array.isArray(ats.skillsDetectadas)) setSkillsDetectadas(ats.skillsDetectadas)
+      } else {
+        const matchSkills = sessionStorage.getItem('matchSkills')
+        if (matchSkills) setSkillsDetectadas(JSON.parse(matchSkills))
       }
     } catch { /* ignore */ }
 
@@ -295,7 +298,11 @@ export default function MatchPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || L.errMatch)
 
-      sessionStorage.setItem('matchResult', JSON.stringify(data as MatchResult))
+      const matchResult = data as MatchResult
+      sessionStorage.setItem('matchResult', JSON.stringify(matchResult))
+      if (Array.isArray(matchResult.keywordsPresentes) && matchResult.keywordsPresentes.length > 0) {
+        sessionStorage.setItem('matchSkills', JSON.stringify(matchResult.keywordsPresentes))
+      }
       if (jdIsUrl) sessionStorage.setItem('matchJdUrl', jdText.trim())
       else sessionStorage.removeItem('matchJdUrl')
       router.push('/match/results')
@@ -383,7 +390,7 @@ export default function MatchPage() {
                 </div>
               </div>
               <button
-                onClick={() => { setHasCachedCv(false); setSkillsDetectadas([]) }}
+                onClick={() => { setHasCachedCv(false); setSkillsDetectadas([]); sessionStorage.removeItem('matchSkills') }}
                 className="font-sans text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2"
               >
                 {L.change}

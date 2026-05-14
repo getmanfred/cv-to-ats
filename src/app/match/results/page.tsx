@@ -306,28 +306,16 @@ export default function MatchResultsPage() {
                 )}
               </div>
               <div className="no-print flex items-center gap-2 flex-shrink-0">
-                {offerUrl && (
-                  result.matchScore >= 75 ? (
-                    <a
-                      href={offerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-300 hover:opacity-80"
-                      style={{ backgroundColor: '#092c64', color: '#01FFC6' }}
-                    >
-                      {L.applyOffer}
-                    </a>
-                  ) : (
-                    <a
-                      href={offerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] font-sans font-[700] text-xs uppercase tracking-wider border transition-all duration-300 hover:opacity-80"
-                      style={{ borderColor: '#0DA1A4', color: '#0DA1A4' }}
-                    >
-                      {L.viewOffer}
-                    </a>
-                  )
+                {offerUrl && result.matchScore > 75 && (
+                  <a
+                    href={offerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] font-sans font-[700] text-xs uppercase tracking-wider transition-all duration-300 hover:opacity-80"
+                    style={{ backgroundColor: '#01FFC6', color: '#092c64' }}
+                  >
+                    {L.applyOffer}
+                  </a>
                 )}
                 <button
                   onClick={() => window.print()}
