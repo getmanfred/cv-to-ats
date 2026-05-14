@@ -268,7 +268,13 @@ export default function EditorPage() {
   }, [translatedCv])
 
   const allSuggestions: Suggestion[] = detectedResult
-    ? detectedResult.categories.flatMap(c => c.suggestions ?? [])
+    ? (() => {
+        const all = detectedResult.categories.flatMap(c => c.suggestions ?? [])
+        const alta  = all.filter(s => s.prioridad === 'alta')
+        const media = all.filter(s => s.prioridad === 'media')
+        const combined = [...alta, ...media]
+        return combined.length >= 4 ? combined.slice(0, 8) : all.slice(0, 8)
+      })()
     : []
 
   const handleLoadCv = async () => {

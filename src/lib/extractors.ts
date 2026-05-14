@@ -9,10 +9,10 @@ export async function extractFromPDF(buffer: Buffer, maxPages?: number): Promise
     throw new Error(`El CV no puede tener más de ${maxPages} páginas. El tuyo tiene ${data.numpages}.`)
   }
 
-  if (data.text.trim().length >= 100) return data.text
+  if (data.text.trim().length >= 30) return data.text
 
-  // PDF is image-based (scanned or Canva export) — no OCR available
-  throw new Error('Este PDF parece ser una imagen escaneada o un diseño sin texto seleccionable (ej: Canva). Por favor, expórtalo como PDF con texto o sube una versión en DOCX.')
+  // PDF has no extractable text — likely image-based (scanned or design export)
+  throw new Error('No se pudo extraer texto de este PDF. Puede ser un escaneado o un diseño exportado como imagen (ej: Canva). Prueba a exportarlo de nuevo como PDF con texto, o sube una copia en DOCX o TXT.')
 }
 
 export async function extractFromDOCX(buffer: Buffer): Promise<string> {
