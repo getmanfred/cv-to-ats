@@ -41,7 +41,14 @@ Required top-level fields:
 
 - "alertasCriticas": array of strings in the specified language describing severe issues that can cause ATS parsing failures. Only include real problems detected in the text (e.g. photo detected, multiple columns, complex tables, decorative special characters, URLs with spaces). Empty array [] if no critical alerts.
 
-- "gapsCarrera": array of strings in the specified language describing detected employment gaps of 6 months or more. A gap exists ONLY when there is a period with NO employment at all. CRITICAL: overlapping date ranges between two or more roles are NOT a gap — they represent simultaneous employment (e.g. a freelance/autonomous role running in parallel with a full-time job). Before flagging any gap, verify that no other role's date range covers that period. Each string must name the specific gap (e.g. "8 meses sin actividad laboral entre Empresa X (mar 2021) y Empresa Y (nov 2021)"). Return empty array [] if no significant gaps found. This is informational only — do NOT alter category scores because of gaps.
+- "gapsCarrera": array of strings in the specified language describing detected employment gaps of 6 months or more. Rules:
+  1. A gap exists ONLY when there is a period with NO employment at all between two consecutive roles.
+  2. CURRENT ROLES: any role whose end date is "Present", "Actual", "Actualidad", "Current", "Hoy", "a la actualidad", or equivalent means the person is STILL employed there — treat it as active through TODAY. Never flag a gap leading up to a current role.
+  3. MISSING END DATE ≠ GAP: if a role has no end date listed but is clearly the most recent or current role, do NOT flag a gap — assume it is ongoing.
+  4. OVERLAPPING ROLES: overlapping date ranges between two or more roles are NOT a gap — they represent simultaneous employment (e.g. a freelance role running in parallel with a full-time job).
+  5. Before flagging any gap, verify that no other role's date range covers that period.
+  6. Each string must name the specific gap period (e.g. "8 meses sin actividad laboral entre Empresa X (mar 2021) y Empresa Y (nov 2021)").
+  Return empty array [] if no significant gaps are clearly confirmed. When in doubt, return []. This is informational only — do NOT alter category scores because of gaps.
 
 - "topPriorities": array of 3 concrete actions in the specified language (infinitive phrases, gender-neutral). Each must reference something specific found (or missing) in this CV — a real section, skill, job title, or gap. Never write a priority that could apply to any CV.
 
