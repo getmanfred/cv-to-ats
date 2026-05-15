@@ -6,6 +6,14 @@ const pt = (mm: number) => mm * 2.835
 const toHref = (url: string) => /^https?:\/\//.test(url) ? url : `https://${url}`
 const stripMarkdown = (t: string) => t.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')
 
+function contactHref(value: string, p: { email?: string; telefono?: string; linkedin?: string; website?: string }): string | null {
+  if (value === p.email && value) return `mailto:${value}`
+  if (value === p.telefono && value) return `tel:${value.replace(/\s+/g, '')}`
+  if (value === p.linkedin && value) return toHref(value)
+  if (value === p.website && value) return toHref(value)
+  return null
+}
+
 const C = {
   text:     '#333333',
   darktext: '#414141',
@@ -126,12 +134,12 @@ export default function HarvardTemplatePdf({ data, lang = 'en' }: { data: CVData
           {contactParts.length > 0 && (
             <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
               {contactParts.flatMap((part, idx) => {
-                const isLink = part === p.linkedin || part === p.website
+                const href = contactHref(part, p)
                 const sep = idx < contactParts.length - 1
                   ? [<Text key={`sep-${idx}`} style={s.contact}>{'  |  '}</Text>]
                   : []
-                const el = isLink
-                  ? <Link key={idx} src={toHref(part)} style={s.contactLink}>{part}</Link>
+                const el = href
+                  ? <Link key={idx} src={href} style={s.contactLink}>{part}</Link>
                   : <Text key={idx} style={s.contact}>{part}</Text>
                 return [el, ...sep]
               })}
