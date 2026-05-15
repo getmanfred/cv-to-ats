@@ -1,5 +1,76 @@
 // Server-side only — never import from client components
 
+function extractJpegsFromPDF(buffer: Buffer): Buffer[] {
+  const jpegs: Buffer[] = []
+  let pos = 0
+  while (pos < buffer.length - 1) {
+    if (buffer[pos] === 0xFF && buffer[pos + 1] === 0xD8) {
+      let end = pos + 2
+      while (end < buffer.length - 1) {
+        if (buffer[end] === 0xFF && buffer[end + 1] === 0xD9) {
+          end += 2
+          const jpeg = buffer.slice(pos, end)
+          if (jpeg.length > 1024) jpegs.push(jpeg)
+          pos = end
+          break
+        }
+        end++
+      }
+      if (end >= buffer.length - 1) break
+    } else {
+      pos++
+    }
+  }
+  return jpegs
+}
+
+async function extractFromImagePDF(buffer: Buffer): Promise<string> {
+  if (!process.env.NAN_API_KEY) throw new Error('NAN_API_KEY not set')
+
+  const jpegs = extractJpegsFromPDF(buffer)
+  if (jpegs.length === 0) throw new Error('no images found in PDF')
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 60_000)
+
+  try {
+    const res = await fetch('https://api.nan.builders/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NAN_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gemma4',
+        temperature: 0,
+        messages: [{
+          role: 'user',
+          content: [
+            ...jpegs.map(jpeg => ({
+              type: 'image_url',
+              image_url: { url: `data:image/jpeg;base64,${jpeg.toString('base64')}` },
+            })),
+            { type: 'text', text: 'Extract ALL text from these CV pages verbatim. Return only the raw text, no markdown, no formatting.' },
+          ],
+        }],
+      }),
+    })
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      throw new Error(`NaN API error ${res.status}: ${body}`)
+    }
+
+    const data = await res.json() as { choices: Array<{ message: { content: string } }> }
+    const text = data.choices[0].message.content.trim()
+    if (text.length < 30) throw new Error('OCR returned no usable text')
+    return text
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function extractFromPDF(buffer: Buffer, maxPages?: number): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const pdfParse = require('pdf-parse')
@@ -11,8 +82,12 @@ export async function extractFromPDF(buffer: Buffer, maxPages?: number): Promise
 
   if (data.text.trim().length >= 30) return data.text
 
-  // PDF has no extractable text — likely image-based (scanned or design export)
-  throw new Error('No se pudo extraer texto de este PDF. Puede ser un escaneado o un diseño exportado como imagen (ej: Canva). Prueba a exportarlo de nuevo como PDF con texto, o sube una copia en DOCX o TXT.')
+  // Fallback: image-based PDF — extract embedded JPEGs and OCR via Gemma4
+  try {
+    return await extractFromImagePDF(buffer)
+  } catch {
+    throw new Error('No se pudo extraer texto de este PDF. Puede ser un escaneado o un diseño exportado como imagen (ej: Canva). Prueba a exportarlo de nuevo como PDF con texto, o sube una copia en DOCX o TXT.')
+  }
 }
 
 export async function extractFromDOCX(buffer: Buffer): Promise<string> {
