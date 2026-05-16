@@ -81,7 +81,7 @@ function extractLinksFromPdfBuffer(buffer: Buffer): string[] {
     const url = match[1].replace(/\\\)/g, ')').trim()
     if (/^https?:\/\//i.test(url)) urls.push(url)
   }
-  return [...new Set(urls)]
+  return Array.from(new Set(urls))
 }
 
 export async function extractFromPDF(buffer: Buffer, maxPages?: number): Promise<string> {
