@@ -889,7 +889,14 @@ export default function EditorPage() {
               </div>
               <Field label={LABELS[lang].email} value={cv.personalInfo.email} onChange={v => setP('email', v)} placeholder="juan@email.com" />
               <Field label={LABELS[lang].telefono} value={cv.personalInfo.telefono} onChange={v => setP('telefono', v)} placeholder="+34 600 000 000" />
-              <Field label={LABELS[lang].linkedin} value={cv.personalInfo.linkedin} onChange={v => setP('linkedin', v)} placeholder="linkedin.com/in/juan" />
+              <div>
+                <Field label={LABELS[lang].linkedin} value={cv.personalInfo.linkedin} onChange={v => setP('linkedin', v)} placeholder="linkedin.com/in/juan" />
+                {cvLoaded && !cv.personalInfo.linkedin.trim() && (
+                  <p className="font-sans text-xs mt-1" style={{ color: '#d97706' }}>
+                    El campo LinkedIn está vacío. Rellénalo antes de exportar.
+                  </p>
+                )}
+              </div>
               <Field label={LABELS[lang].ubicacion} value={cv.personalInfo.ubicacion} onChange={v => setP('ubicacion', v)} placeholder="Madrid, España" />
               <div className="col-span-2">
                 <Field label={LABELS[lang].website} value={cv.personalInfo.website} onChange={v => setP('website', v)} placeholder="juangarcia.dev" />
@@ -1060,7 +1067,14 @@ export default function EditorPage() {
                 <Field label={LABELS[lang].proyectoNombre} value={proj.nombre} onChange={v => updateProyecto(proj.id, { nombre: v })} placeholder="Open Toponym" />
                 <Field label={LABELS[lang].proyectoDesc} value={proj.descripcion} onChange={v => updateProyecto(proj.id, { descripcion: v })}
                   placeholder="Brief description of what you built and the impact..." multiline rows={3} />
-                <Field label={LABELS[lang].proyectoUrl} value={proj.url} onChange={v => updateProyecto(proj.id, { url: v })} placeholder="github.com/user/project" />
+                <div>
+                  <Field label={LABELS[lang].proyectoUrl} value={proj.url} onChange={v => updateProyecto(proj.id, { url: v })} placeholder="github.com/user/project" />
+                  {cvLoaded && !proj.url.trim() && proj.nombre.trim() && (
+                    <p className="font-sans text-xs mt-1" style={{ color: '#d97706' }}>
+                      Revisa y rellena las URLs de tus proyectos.
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
             <AddButton label={LABELS[lang].addProyecto} onClick={addProyecto} />
