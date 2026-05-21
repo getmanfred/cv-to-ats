@@ -2,13 +2,17 @@ import type { JobAnalysisResult } from '@/types/job'
 import { withGeminiRetry } from '@/lib/api-retry'
 import { nanComplete } from '@/lib/nan-client'
 
-function buildJobPrompt(jdText: string, lang: 'es' | 'en'): string {
+function buildJobPrompt(jdText: string, lang: 'es' | 'en', isManfred: boolean): string {
   const langInstruction = lang === 'en'
     ? 'Respond in English. Write ALL text values in English.'
     : 'Respond in Spanish (Castilian). Write ALL text values in Spanish.'
 
-  return `You are an expert recruiter and career advisor. Your tone is direct, honest, and has a slight sense of humor when warranted. You analyze job offers and tell candidates what the offer really says — and what it conspicuously does not say.
+  const manfredContext = isManfred
+    ? `\nMANFRED OFFER (IMPORTANT): This offer comes from getmanfred.com. Manfred is a curated tech job marketplace where a real human recruiter reads every application and personally responds to every candidate. This is a significant quality signal — it must appear as the FIRST item in "senalesPositivas" with titulo "Manfredo Certified" and a description explaining that this is a vetted offer from Manfred: a human will read the application and respond personally.\n`
+    : ''
 
+  return `You are an expert recruiter and career advisor. Your tone is direct, honest, and has a slight sense of humor when warranted. You analyze job offers and tell candidates what the offer really says — and what it conspicuously does not say.
+${manfredContext}
 LANGUAGE: ${langInstruction}
 
 Analyze the job offer below. Return ONLY valid JSON — no markdown, no text outside the JSON object.
@@ -75,8 +79,8 @@ ${jdText}
 ---`
 }
 
-export async function analyzeJobWithAI(jdText: string, lang: 'es' | 'en' = 'es'): Promise<JobAnalysisResult> {
-  const prompt = buildJobPrompt(jdText, lang)
+export async function analyzeJobWithAI(jdText: string, lang: 'es' | 'en' = 'es', isManfred = false): Promise<JobAnalysisResult> {
+  const prompt = buildJobPrompt(jdText, lang, isManfred)
   const text = await withGeminiRetry(() => nanComplete(prompt))
 
   const cleaned = text

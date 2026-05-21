@@ -156,7 +156,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await analyzeJobWithAI(jdText, lang)
+    const isManfred = (formData.get('isManfred') as string | null) === 'true'
+    const result = await analyzeJobWithAI(jdText, lang, isManfred)
+    result.isManfredOffer = isManfred
     result.analyzedAt = new Date().toISOString()
 
     return NextResponse.json(result)

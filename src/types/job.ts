@@ -12,5 +12,6 @@ export interface JobAnalysisResult {
   senalesPositivas: JobSignal[]
   senalesAlerta: JobSignal[]
   loQueNoDice: string[]
+  isManfredOffer?: boolean
   analyzedAt?: string
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import Button from '@/components/ui/Button'
 import { getLang, type Lang } from '@/components/LanguageSelector'
 
 const LABELS = {
@@ -61,6 +62,7 @@ export default function OfertaPage() {
   const jdInputRef = useRef<HTMLInputElement>(null)
 
   const jdIsUrl = /^https?:\/\/\S+$/.test(jdText.trim())
+  const isManfred = jdIsUrl && jdText.toLowerCase().includes('getmanfred.com')
 
   useEffect(() => {
     setLang(getLang())
@@ -102,6 +104,7 @@ export default function OfertaPage() {
         formData.append('jdFile', jdFile)
       }
       formData.append('lang', lang)
+      formData.append('isManfred', String(isManfred))
 
       const res = await fetch('/api/job-analyze', { method: 'POST', body: formData })
       const data = await res.json()
@@ -151,11 +154,22 @@ export default function OfertaPage() {
             />
             {jdIsUrl && (
               <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                style={{ backgroundColor: '#e6f7f7' }}>
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#0DA1A4' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                <span className="font-sans font-[700] text-xs" style={{ color: '#0DA1A4' }}>{L.urlDetected}</span>
+                style={{ backgroundColor: isManfred ? '#f0fdf4' : '#e6f7f7' }}>
+                {isManfred ? (
+                  <>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#16a34a' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                    <span className="font-sans font-[700] text-xs" style={{ color: '#16a34a' }}>Manfredo Certified</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#0DA1A4' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <span className="font-sans font-[700] text-xs" style={{ color: '#0DA1A4' }}>{L.urlDetected}</span>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -230,19 +244,23 @@ export default function OfertaPage() {
             <p className="font-sans text-gray-400 text-xs">{L.loadingHint}</p>
           </div>
         ) : (
-          <button
-            onClick={handleAnalyze}
-            disabled={!hasInput}
-            className="w-full font-sans font-[700] text-sm uppercase tracking-wider py-3.5 rounded-xl transition-all duration-200"
-            style={!hasInput
-              ? { backgroundColor: '#e5e7eb', color: '#9ca3af', cursor: 'not-allowed' }
-              : { backgroundColor: '#092c64', color: '#ffffff' }}
-          >
+          <Button variant="primary" size="lg" disabled={!hasInput} onClick={handleAnalyze} className="w-full">
             {L.analyze}
-          </button>
+          </Button>
         )}
 
       </main>
+
+      <style jsx>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+          40% { transform: translateY(-8px); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }
