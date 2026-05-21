@@ -28,6 +28,8 @@ const montserrat = Montserrat({
 })
 
 function getBaseUrl(): string {
+  // Prefer env vars — more reliable than headers behind Railway's reverse proxy
+  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL.replace(/\/$/, '')
   const headersList = headers()
   const host = headersList.get('x-forwarded-host') ?? headersList.get('host') ?? 'localhost:3000'
   const proto = headersList.get('x-forwarded-proto') ?? 'https'
@@ -47,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: 'ATSKiller by Manfred',
       images: [
         {
-          url: `${BASE_URL}/api/og`,
+          url: '/api/og',
           width: 1200,
           height: 630,
           alt: 'ATSKiller — Analiza tu CV y prepáralo para los ATS',
@@ -62,7 +64,7 @@ export async function generateMetadata(): Promise<Metadata> {
       creator: '@borjaperfra',
       title: 'ATSKiller — Manfred',
       description: 'Analiza tu CV. Prepáralo para los ATS.',
-      images: [`${BASE_URL}/api/og`],
+      images: ['/api/og'],
     },
   }
 }
