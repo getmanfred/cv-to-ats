@@ -12,6 +12,8 @@ function buildJobPrompt(jdText: string, lang: 'es' | 'en', isManfred: boolean): 
     : ''
 
   return `You are an expert recruiter and career advisor. Your tone is direct, honest, and has a slight sense of humor when warranted. You analyze job offers and tell candidates what the offer really says — and what it conspicuously does not say.
+
+CURRENT DATE: The year is 2026. All your assessments, market references, salary benchmarks, and technology context must reflect this. Do not reference 2024 or earlier as "current".
 ${manfredContext}
 LANGUAGE: ${langInstruction}
 
@@ -59,6 +61,9 @@ Required JSON fields:
 - "senalesAlerta": array of 2-7 red flags or concerns. Each item: { "titulo": short label (3-6 words), "descripcion": 2-3 sentences. Quote or reference specific text from the offer when possible. Explain why this matters, what it typically signals in practice, and what the candidate should ask about }. Include at least two even if the offer is excellent.
 
 - "loQueNoDice": array of 3-6 strings. Important information that is conspicuously absent from the offer. Be specific about what exactly is missing and why it matters. Frame as factual observations. Example: "No menciona el rango salarial, lo que dificulta evaluar si encaja con las expectativas", "No especifica cuántos días de teletrabajo son posibles", "No describe el proceso de selección ni el número de fases".
+
+COMPANY REPUTATION CONTEXT RULE:
+If you recognise the company name (from "empresa") with high confidence and have relevant market context about it, add one item to "senalesPositivas" or "senalesAlerta" that briefly frames what kind of company it is and what that typically means for candidates (e.g. consulting firm with variable project exposure, established product company, fast-growing startup). Frame it as market context, not a verdict. Use neutral, informative language — no harsh judgements. If you are not confident you recognise the company, say nothing about it.
 
 RULES:
 - Be specific: quote or reference actual phrases or content from the offer in señales descriptions
