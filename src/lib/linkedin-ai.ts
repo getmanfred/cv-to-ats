@@ -48,12 +48,13 @@ Required fields:
   - "score": number 0-100
   - "status": "good" (≥75), "needs-work" (50-74) or "critical" (<50)
   - "summary": one direct sentence about the state of this area in the specified language
-  - "suggestions": array of exactly 3 objects with:
+  - "suggestions": array of exactly 2 improvement suggestions for this category. Each:
     - "titulo": short actionable title in the specified language
-    - "pasos": array of exactly 3 concrete steps, each with:
-      - "texto": specific action in the specified language
+    - "pasos": array of exactly 2 concrete steps, each with:
+      - "texto": specific action referencing actual content from this profile
       - "terminos": array of 1-3 exact substrings from "texto" to bold
-    - "prioridad": "alta", "media" or "baja"
+    - "prioridad": "alta" if score < 60, "media" if 60-74, "baja" if ≥ 75
+    - "sugerencia": max 40-word copy-paste text example showing the improved content (e.g. a rewritten headline, an improved About opening sentence, or a bullet with a quantified achievement). ONLY include for "alta" priority — set null for "media" and "baja".
 
 - "topPriorities": array of 3 concrete actions in the specified language (infinitive, gender-neutral).
 
@@ -87,7 +88,8 @@ JSON structure:
         {
           "titulo": "<string>",
           "pasos": [{ "texto": "<string>", "terminos": ["<substring>", ...] }],
-          "prioridad": "<alta|media|baja>"
+          "prioridad": "<alta|media|baja>",
+          "sugerencia": "<string or null — only for alta>"
         }
       ]
     }
