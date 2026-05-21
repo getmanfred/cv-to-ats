@@ -10,7 +10,7 @@ const LABELS = {
     cvEditor: 'Editor CV',
     matchCv: 'CV vs Oferta',
     analyzeJob: 'Analizar Oferta',
-    analyzeLinkedIn: 'LinkedIn',
+    analyzeLinkedIn: 'Analizar LinkedIn',
     cvsAnalyzed: (n: string) => `${n} CVs analizados`,
     language: 'Idioma',
     openMenu: 'Abrir menú',
@@ -21,7 +21,7 @@ const LABELS = {
     cvEditor: 'CV Editor',
     matchCv: 'CV vs Job',
     analyzeJob: 'Analyse Job',
-    analyzeLinkedIn: 'LinkedIn',
+    analyzeLinkedIn: 'Analyse LinkedIn',
     cvsAnalyzed: (n: string) => `${n} CVs analysed`,
     language: 'Language',
     openMenu: 'Open menu',
@@ -60,21 +60,27 @@ export default function Header({ noPrint = false }: HeaderProps) {
 
   const L = LABELS[lang]
 
-  const navLinks = [
-    { href: '/',          label: L.analyzeCV },
-    { href: '/editor',    label: L.cvEditor },
-    { href: '/match',     label: L.matchCv },
-    { href: '/oferta',    label: L.analyzeJob },
-    { href: '/linkedin',  label: L.analyzeLinkedIn },
+  const navGroups = [
+    [
+      { href: '/',       label: L.analyzeCV,       isNew: false },
+      { href: '/editor', label: L.cvEditor,         isNew: false },
+    ],
+    [
+      { href: '/linkedin', label: L.analyzeLinkedIn, isNew: true  },
+      { href: '/match',    label: L.matchCv,          isNew: false },
+      { href: '/oferta',   label: L.analyzeJob,       isNew: true  },
+    ],
   ]
 
   return (
     <header className={`bg-white border-b sticky top-0 z-10${noPrint ? ' no-print' : ''}`}
       style={{ borderColor: '#e5e0d8' }}>
-      <div className="max-w-container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
 
-        {/* Logo */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+      {/* Top bar: logo | counter (centered) | language */}
+      <div className="max-w-container mx-auto px-4 sm:px-6 py-3 grid grid-cols-3 items-center">
+
+        {/* Left: logo */}
+        <div className="flex items-center gap-2">
           <a href="https://getmanfred.com" target="_blank" rel="noopener noreferrer"
             className="hover:opacity-70 transition-opacity duration-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -92,34 +98,29 @@ export default function Header({ noPrint = false }: HeaderProps) {
           </a>
         </div>
 
-        {/* CVs analyzed counter */}
-        {cvsAnalyzed !== null && (
-          <span className="hidden sm:flex items-center gap-1.5 font-sans text-xs" style={{ color: '#9ca3af' }}>
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#01FFC6' }} />
-            {L.cvsAnalyzed(cvsAnalyzed.toLocaleString('es-ES'))}
-          </span>
-        )}
+        {/* Center: CVs analyzed */}
+        <div className="hidden sm:flex justify-center">
+          {cvsAnalyzed !== null && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+              style={{ backgroundColor: '#f0ede8' }}>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#01FFC6' }} />
+              <span className="font-sans font-[600] text-xs" style={{ color: '#092c64' }}>
+                {L.cvsAnalyzed(cvsAnalyzed.toLocaleString('es-ES'))}
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* Desktop nav */}
-        <nav className="hidden sm:flex items-center gap-1">
-          {navLinks.map(link => (
-            <a key={link.href} href={link.href}
-              className="font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
-              style={isActive(link.href, pathname)
-                ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
-                : { color: '#9ca3af' }}
-            >
-              {link.label}
-            </a>
-          ))}
-          <LanguageSelector showHint />
-        </nav>
+        {/* Right: language + hamburger */}
+        <div className="flex items-center justify-end gap-3">
+          <div className="hidden sm:block">
+            <LanguageSelector showHint />
+          </div>
 
-        {/* Mobile: hamburger */}
-        <div className="flex sm:hidden items-center">
+          {/* Mobile: hamburger */}
           <button
             onClick={() => setMenuOpen(v => !v)}
-            className="p-2 rounded-lg transition-colors duration-200"
+            className="sm:hidden p-2 rounded-lg transition-colors duration-200"
             style={{ color: menuOpen ? '#0DA1A4' : '#9ca3af' }}
             aria-label={menuOpen ? L.closeMenu : L.openMenu}
           >
@@ -136,23 +137,75 @@ export default function Header({ noPrint = false }: HeaderProps) {
         </div>
       </div>
 
+      {/* Bottom nav bar — desktop only */}
+      <nav className="hidden sm:block border-t" style={{ borderColor: '#f0ede8', backgroundColor: '#faf9f7' }}>
+        <div className="max-w-container mx-auto px-4 sm:px-6 py-1.5 flex items-center justify-end gap-1">
+          {navGroups.map((group, gi) => (
+            <div key={gi} className="flex items-center">
+              {gi > 0 && (
+                <span className="w-px h-4 mx-2 flex-shrink-0" style={{ backgroundColor: '#e5e0d8' }} />
+              )}
+              {group.map(link => {
+                const active = isActive(link.href, pathname)
+                return (
+                  <a key={link.href} href={link.href}
+                    className="flex items-center gap-1.5 font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
+                    style={active
+                      ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
+                      : { color: '#9ca3af' }}
+                  >
+                    {link.label}
+                    {link.isNew && (
+                      <span
+                        className="font-sans font-[700] text-[8px] uppercase tracking-wider px-1 py-0.5 rounded-full"
+                        style={{ backgroundColor: '#01FFC6', color: '#092c64' }}
+                      >
+                        NEW!
+                      </span>
+                    )}
+                  </a>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </nav>
+
       {/* Mobile dropdown */}
       {menuOpen && (
-        <div className="sm:hidden bg-white border-t px-4 py-2 space-y-1" style={{ borderColor: '#f3f4f6' }}>
-          {navLinks.map(link => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"
-              style={isActive(link.href, pathname)
-                ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
-                : { color: '#374151' }}
-            >
-              {link.label}
-            </a>
+        <div className="sm:hidden bg-white border-t px-4 py-2" style={{ borderColor: '#f3f4f6' }}>
+          {navGroups.map((group, gi) => (
+            <div key={gi}>
+              {gi > 0 && <div className="h-px my-1.5" style={{ backgroundColor: '#f0ede8' }} />}
+              <div className="space-y-0.5">
+                {group.map(link => {
+                  const active = isActive(link.href, pathname)
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"
+                      style={active
+                        ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
+                        : { color: '#374151' }}
+                    >
+                      {link.label}
+                      {link.isNew && (
+                        <span
+                          className="font-sans font-[700] text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                          style={{ backgroundColor: '#01FFC6', color: '#092c64' }}
+                        >
+                          NEW!
+                        </span>
+                      )}
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
           ))}
-          <div className="px-3 py-3 flex items-center gap-3">
+          <div className="px-3 py-3 mt-1.5 border-t flex items-center gap-3" style={{ borderColor: '#f0ede8' }}>
             <span className="font-sans font-[700] text-xs uppercase tracking-wider text-gray-400">{L.language}</span>
             <LanguageSelector showHint />
           </div>

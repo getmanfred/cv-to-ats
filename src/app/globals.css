@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
 @keyframes score-flash {
   0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(1, 255, 198, 0); }
   20%  { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(1, 255, 198, 0.25); }
