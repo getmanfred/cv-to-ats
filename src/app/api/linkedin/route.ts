@@ -4,7 +4,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { getSupabase } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
-export const maxDuration = 90
+export const maxDuration = 180
 
 const MIN_LENGTH = 200
 const MAX_LENGTH = 50_000

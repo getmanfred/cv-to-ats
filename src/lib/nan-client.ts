@@ -1,6 +1,6 @@
 const NAN_BASE = 'https://api.nan.builders/v1'
-const NAN_MODEL = 'gemma4'
-const FETCH_TIMEOUT_MS = 80_000
+const NAN_MODEL = process.env.NAN_MODEL ?? 'gemma4'
+const FETCH_TIMEOUT_MS = 150_000
 
 export async function nanComplete(prompt: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<string> {
   if (!process.env.NAN_API_KEY) {

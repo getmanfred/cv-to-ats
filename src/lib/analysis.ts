@@ -49,7 +49,8 @@ Required top-level fields:
   5. Before flagging any gap, verify that no other role's date range covers that period.
   6. EDUCATION PERIODS: if the apparent gap between two roles coincides (fully or partially) with an education entry (university, master, bootcamp, etc.), it is NOT a gap — the person was studying.
   7. SAME-MONTH TRANSITIONS: if one role ends and the next begins in the same month (e.g. both "Mar 2022"), there is zero gap — do NOT flag it.
-  8. Each string must name the specific gap period (e.g. "8 meses sin actividad laboral entre Empresa X (mar 2021) y Empresa Y (nov 2021)").
+  8. MINIMUM GAP THRESHOLD — CRITICAL: Only flag gaps of 6 full calendar months or more. A gap of 1, 2, 3, 4, or 5 months must NEVER be flagged — it is too short to be significant. Count months precisely before flagging. If you cannot determine the gap is at least 6 months with certainty, do NOT flag it.
+  9. Each string must name the specific gap period (e.g. "8 meses sin actividad laboral entre Empresa X (mar 2021) y Empresa Y (nov 2021)").
   Return empty array [] if no significant gaps are clearly confirmed. When in doubt, return []. This is informational only — do NOT alter category scores because of gaps.
 
 - "topPriorities": array of 3 concrete actions in the specified language (infinitive phrases, gender-neutral). Each must reference something specific found (or missing) in this CV — a real section, skill, job title, or gap. Never write a priority that could apply to any CV.
@@ -117,7 +118,7 @@ For each category, write exactly 2 improvement suggestions. Each must follow thi
 SUGGESTION RULES:
 1. ANTI-HALLUCINATION — CRITICAL: Before naming any company, job title, skill, or technology in a suggestion, verify it appears WORD-FOR-WORD in the CV text above. If you cannot find it literally in the text, use a generic reference ("tu rol más reciente", "la empresa anterior") — NEVER invent, guess, or paraphrase names. A suggestion referencing a company or skill that does not exist in the CV is a critical failure.
 2. SPECIFICITY — MANDATORY AT ALL PRIORITY LEVELS: Every suggestion title and every step must name a specific section, company, role, skill, or piece of content found in THIS CV. A reader who has never seen this CV must be able to tell it was written for this specific person. Generic steps ("improve your descriptions", "add relevant keywords", "make it clearer") are forbidden regardless of priority. "Baja" priority suggestions must be equally specific — if you cannot write a specific "baja" suggestion, invent nothing; instead pick a different real problem from this CV.
-3. QUANTIFICATION LIMIT: Suggestions about adding numbers, metrics, percentages, team sizes, or measurable outcomes to job descriptions may appear AT MOST ONCE across the entire response, and never as the first suggestion in any category. If a quantification suggestion already appears in a previous category, it must not appear again.
+3. QUANTIFICATION: Only suggest adding numbers, metrics, percentages, team sizes, or measurable outcomes if you have read the CV's job descriptions and judged them genuinely vague or metric-free for THIS specific person. If the CV already has quantified achievements, do NOT suggest adding more. When it is warranted, this suggestion may appear AT MOST ONCE across the entire response and never as the first suggestion in any category.
 4. Forbidden patterns: "Add more keywords", "Ensure contact info is complete", "Use ATS-friendly format", "Tailor to job description".
 5. Each suggestion tackles a DIFFERENT problem. No duplicates across the entire response.
 6. NEVER suggest changing dates, employment years, or graduation years — all dates are historical facts.

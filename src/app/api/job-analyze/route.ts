@@ -4,7 +4,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { extractCVText } from '@/lib/extractors'
 
 export const runtime = 'nodejs'
-export const maxDuration = 90
+export const maxDuration = 180
 
 const ALLOWED_TYPES  = ['application/pdf']
 const MAX_SIZE_BYTES = 3 * 1024 * 1024
