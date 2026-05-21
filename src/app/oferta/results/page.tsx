@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { JobAnalysisResult, SalarioMercado, TraduccionFrase, ProcesoEstimado } from '@/types/job'
+import type { JobAnalysisResult, SalarioMercado, TraduccionFrase, ProcesoEstimado, AlertaCurso } from '@/types/job'
 import Header from '@/components/Header'
 import { getLang, type Lang } from '@/components/LanguageSelector'
 
@@ -19,6 +19,8 @@ const LABELS = {
     salaryTitle: 'Salario estimado de mercado',
     salaryPeriod: 'bruto / año',
     salaryDisclaimer: 'Estimación del modelo — no es dato oficial',
+    cursoTitle: '⚠️ Ojo: esto podría no ser una oferta de trabajo real',
+    cursoDisclaimer: 'Esta publicación parece describir un programa de formación o curso con posibilidad de empleo posterior — no un puesto garantizado. Esto no te asegura un contrato de trabajo.',
     traduccionTitle: 'Lo que realmente quiere decir',
     procesoTitle: 'Proceso de selección estimado',
     procesoFases: (n: number) => `~${n} fase${n === 1 ? '' : 's'}`,
@@ -38,6 +40,8 @@ const LABELS = {
     salaryTitle: 'Estimated market salary',
     salaryPeriod: 'gross / year',
     salaryDisclaimer: 'AI estimate — not official data',
+    cursoTitle: '⚠️ Watch out: this may not be a real job offer',
+    cursoDisclaimer: 'This listing appears to describe a training programme or course with a possibility of employment afterwards — not a guaranteed job. This does not assure you a work contract.',
     traduccionTitle: 'What it really means',
     procesoTitle: 'Estimated hiring process',
     procesoFases: (n: number) => `~${n} stage${n === 1 ? '' : 's'}`,
@@ -125,6 +129,34 @@ function formatSalary(n: number, moneda: string): string {
   const symbol = moneda === 'USD' ? '$' : moneda === 'GBP' ? '£' : '€'
   const formatted = n.toLocaleString('es-ES')
   return moneda === 'USD' || moneda === 'GBP' ? `${symbol}${formatted}` : `${formatted} ${symbol}`
+}
+
+function CursoWarning({ alerta, labels }: { alerta: AlertaCurso; labels: typeof LABELS['es'] }) {
+  return (
+    <div className="rounded-2xl p-5 border-2" style={{ backgroundColor: '#fff7ed', borderColor: '#f97316' }}>
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: '#ffedd5' }}>
+          <svg className="w-5 h-5" fill="none" stroke="#ea580c" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-sans font-[800] text-base mb-1" style={{ color: '#c2410c' }}>
+            {labels.cursoTitle}
+          </p>
+          <p className="font-sans text-sm leading-relaxed mb-2" style={{ color: '#9a3412' }}>
+            {labels.cursoDisclaimer}
+          </p>
+          {alerta.razon && (
+            <p className="font-sans text-sm leading-relaxed" style={{ color: '#7c2d12' }}>
+              {alerta.razon}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function TraduccionCard({ items, labels }: { items: TraduccionFrase[]; labels: typeof LABELS['es'] }) {
@@ -272,6 +304,11 @@ export default function JobResultsPage() {
       <Header />
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-5">
+
+        {/* Course / scam warning — shown before everything else */}
+        {result.alertaCurso?.detectado && (
+          <CursoWarning alerta={result.alertaCurso} labels={L} />
+        )}
 
         {/* Score card */}
         <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
