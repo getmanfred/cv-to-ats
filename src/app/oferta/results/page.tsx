@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { JobAnalysisResult, SalarioMercado } from '@/types/job'
+import type { JobAnalysisResult, SalarioMercado, TraduccionFrase, ProcesoEstimado } from '@/types/job'
 import Header from '@/components/Header'
 import { getLang, type Lang } from '@/components/LanguageSelector'
 
@@ -19,6 +19,12 @@ const LABELS = {
     salaryTitle: 'Salario estimado de mercado',
     salaryPeriod: 'bruto / año',
     salaryDisclaimer: 'Estimación del modelo — no es dato oficial',
+    traduccionTitle: 'Lo que realmente quiere decir',
+    procesoTitle: 'Proceso de selección estimado',
+    procesoFases: (n: number) => `~${n} fase${n === 1 ? '' : 's'}`,
+    confianzaAlta: 'Proceso descrito en la oferta',
+    confianzaMedia: 'Estimación basada en el contexto',
+    confianzaBaja: 'Estimación con poca información',
   },
   en: {
     loading: 'Loading results...',
@@ -32,6 +38,12 @@ const LABELS = {
     salaryTitle: 'Estimated market salary',
     salaryPeriod: 'gross / year',
     salaryDisclaimer: 'AI estimate — not official data',
+    traduccionTitle: 'What it really means',
+    procesoTitle: 'Estimated hiring process',
+    procesoFases: (n: number) => `~${n} stage${n === 1 ? '' : 's'}`,
+    confianzaAlta: 'Process described in the offer',
+    confianzaMedia: 'Estimate based on context',
+    confianzaBaja: 'Estimate with limited information',
   },
 }
 
@@ -113,6 +125,76 @@ function formatSalary(n: number, moneda: string): string {
   const symbol = moneda === 'USD' ? '$' : moneda === 'GBP' ? '£' : '€'
   const formatted = n.toLocaleString('es-ES')
   return moneda === 'USD' || moneda === 'GBP' ? `${symbol}${formatted}` : `${formatted} ${symbol}`
+}
+
+function TraduccionCard({ items, labels }: { items: TraduccionFrase[]; labels: typeof LABELS['es'] }) {
+  return (
+    <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: '#fdf4ff' }}>
+          <svg className="w-4 h-4" fill="none" stroke="#9333ea" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h2 className="font-sans font-[700] text-sm uppercase tracking-widest" style={{ color: '#9333ea' }}>
+          {labels.traduccionTitle}
+        </h2>
+      </div>
+      <div className="space-y-3">
+        {items.map((item, i) => (
+          <div key={i} className="rounded-xl p-3.5" style={{ backgroundColor: '#fdf4ff' }}>
+            <p className="font-sans font-[600] text-sm mb-1" style={{ color: '#6b21a8' }}>
+              &ldquo;{item.frase}&rdquo;
+            </p>
+            <p className="font-sans text-sm" style={{ color: '#7e22ce' }}>
+              → {item.traduccion}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProcesoCard({ proceso, labels }: { proceso: ProcesoEstimado; labels: typeof LABELS['es'] }) {
+  const confianzaLabel = proceso.confianza === 'alta'
+    ? labels.confianzaAlta
+    : proceso.confianza === 'media'
+      ? labels.confianzaMedia
+      : labels.confianzaBaja
+
+  const confianzaColor = proceso.confianza === 'alta' ? '#0DA1A4' : proceso.confianza === 'media' ? '#d97706' : '#9ca3af'
+  const confianzaBg    = proceso.confianza === 'alta' ? '#e6f7f7' : proceso.confianza === 'media' ? '#fffbeb' : '#f3f4f6'
+
+  return (
+    <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: '#eff6ff' }}>
+            <svg className="w-4 h-4" fill="none" stroke="#2563eb" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <h2 className="font-sans font-[700] text-sm uppercase tracking-widest" style={{ color: '#2563eb' }}>
+            {labels.procesoTitle}
+          </h2>
+        </div>
+        <span className="font-sans font-[700] text-xs px-2.5 py-1 rounded-full"
+          style={{ backgroundColor: confianzaBg, color: confianzaColor }}>
+          {confianzaLabel}
+        </span>
+      </div>
+
+      <p className="font-sans font-[900] text-3xl text-navy leading-none mb-3"
+        style={{ fontFamily: 'var(--font-display)' }}>
+        {labels.procesoFases(proceso.fases)}
+      </p>
+
+      <p className="font-sans text-sm text-gray-500 leading-relaxed">{proceso.descripcion}</p>
+    </div>
+  )
 }
 
 function SalaryCard({ salary, labels }: { salary: SalarioMercado; labels: typeof LABELS['es'] }) {
@@ -259,6 +341,16 @@ export default function JobResultsPage() {
         {/* Salary estimate */}
         {result.salarioMercado && (
           <SalaryCard salary={result.salarioMercado} labels={L} />
+        )}
+
+        {/* Traducción real */}
+        {result.traduccionReal && result.traduccionReal.length > 0 && (
+          <TraduccionCard items={result.traduccionReal} labels={L} />
+        )}
+
+        {/* Proceso estimado */}
+        {result.procesoEstimado && (
+          <ProcesoCard proceso={result.procesoEstimado} labels={L} />
         )}
 
         {/* Signals — alerts first if they outnumber positives */}
