@@ -215,57 +215,64 @@ export default function JobResultsPage() {
           </div>
         )}
 
-        {/* Positive signals */}
-        {result.senalesPositivas.length > 0 && (
-          <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
-            <h2 className="font-sans font-[700] text-sm uppercase tracking-widest mb-4"
-              style={{ color: '#0DA1A4' }}>
-              {L.positiveSignals}
-            </h2>
-            <div className="space-y-3">
-              {result.senalesPositivas.map((signal, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-                    style={{ backgroundColor: '#e6f7f7' }}>
-                    <svg className="w-3 h-3" fill="none" stroke="#0DA1A4" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-sans font-[600] text-sm text-purple-dark">{signal.titulo}</p>
-                    <p className="font-sans text-sm text-gray-500 leading-relaxed mt-0.5">{signal.descripcion}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Signals — alerts first if they outnumber positives */}
+        {(() => {
+          const alertsFirst = result.senalesAlerta.length > result.senalesPositivas.length
 
-        {/* Alert signals */}
-        {result.senalesAlerta.length > 0 && (
-          <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
-            <h2 className="font-sans font-[700] text-sm uppercase tracking-widest mb-4"
-              style={{ color: '#d97706' }}>
-              {L.alertSignals}
-            </h2>
-            <div className="space-y-3">
-              {result.senalesAlerta.map((signal, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
-                    style={{ backgroundColor: '#fffbeb' }}>
-                    <svg className="w-3 h-3" fill="none" stroke="#d97706" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                    </svg>
+          const positiveBlock = result.senalesPositivas.length > 0 && (
+            <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+              <h2 className="font-sans font-[700] text-sm uppercase tracking-widest mb-4"
+                style={{ color: '#0DA1A4' }}>
+                {L.positiveSignals}
+              </h2>
+              <div className="space-y-3">
+                {result.senalesPositivas.map((signal, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
+                      style={{ backgroundColor: '#e6f7f7' }}>
+                      <svg className="w-3 h-3" fill="none" stroke="#0DA1A4" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-sans font-[600] text-sm text-purple-dark">{signal.titulo}</p>
+                      <p className="font-sans text-sm text-gray-500 leading-relaxed mt-0.5">{signal.descripcion}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-sans font-[600] text-sm text-purple-dark">{signal.titulo}</p>
-                    <p className="font-sans text-sm text-gray-500 leading-relaxed mt-0.5">{signal.descripcion}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+
+          const alertBlock = result.senalesAlerta.length > 0 && (
+            <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+              <h2 className="font-sans font-[700] text-sm uppercase tracking-widest mb-4"
+                style={{ color: '#d97706' }}>
+                {L.alertSignals}
+              </h2>
+              <div className="space-y-3">
+                {result.senalesAlerta.map((signal, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
+                      style={{ backgroundColor: '#fffbeb' }}>
+                      <svg className="w-3 h-3" fill="none" stroke="#d97706" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-sans font-[600] text-sm text-purple-dark">{signal.titulo}</p>
+                      <p className="font-sans text-sm text-gray-500 leading-relaxed mt-0.5">{signal.descripcion}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+
+          return alertsFirst
+            ? <>{alertBlock}{positiveBlock}</>
+            : <>{positiveBlock}{alertBlock}</>
+        })()}
 
         {/* Lo que no dice */}
         {result.loQueNoDice.length > 0 && (

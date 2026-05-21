@@ -42,8 +42,8 @@ const LABELS = {
 }
 
 const LOADING_MESSAGES = [
-  'Contando tecnologías del stack... van 47...',
-  'Buscando el salario... sigue sin aparecer...',
+  'Contando tecnologías del stack... Van 47...',
+  'Buscando el salario... Sigue sin aparecer...',
   'Evaluando si el futbolín cuenta como beneficio...',
   'Comprobando si los años de experiencia son físicamente posibles...',
   'Leyendo entre líneas (y entre líneas de las líneas)...',

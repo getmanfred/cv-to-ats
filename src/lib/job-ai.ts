@@ -36,6 +36,12 @@ Analyze these dimensions to form your score and findings:
 9. Salary-requirements coherence — if a salary is mentioned, does it match the seniority and number of requirements?
 10. Team and project context — is there any information about the team size, project stage, or company context?
 
+MANDATORY SCORE ADJUSTMENTS — apply these on top of the base score before returning the final value:
+- Free fruit, free snacks, coffee machine, or similar trivial in-office perks mentioned as if they were a meaningful benefit: subtract 5 points AND add a señalAlerta about it.
+- Hybrid work (some days remote, some days in office): subtract 10 points from the score.
+- Fully on-site / presencial with no remote option whatsoever: subtract 25 points from the score.
+These adjustments are cumulative. Clamp the final score to the 0-100 range.
+
 Required JSON fields:
 
 - "score": number 0-100
