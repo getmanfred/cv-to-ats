@@ -75,11 +75,18 @@ Required JSON fields:
 
 - "loQueNoDice": array of 3-6 strings. Important information that is conspicuously absent from the offer. Be specific about what exactly is missing and why it matters. Frame as factual observations. Example: "No menciona el rango salarial, lo que dificulta evaluar si encaja con las expectativas", "No especifica cuántos días de teletrabajo son posibles", "No describe el proceso de selección ni el número de fases".
 
-- "traduccionReal": scan the FULL offer text for coded or toxic language — phrases whose implied meaning in practice differs from their literal reading. For each detected phrase:
+- "traduccionReal": scan the FULL offer text for corporate jargon, buzzwords, or vague phrases whose practical meaning is not obvious from their literal reading. For each detected phrase:
   - "frase": the exact phrase or close paraphrase as it appears in the offer
-  - "traduccion": what it really implies in practice (max 25 words, direct, slightly ironic)
+  - "traduccion": a balanced, honest explanation of what it typically implies in practice (max 25 words). Acknowledge the legitimate meaning first, then note any practical implication worth knowing. Do NOT be cynical or alarmist — many of these phrases have valid meanings; just make them concrete and clear.
   Return an array of 0-4 items. Return null if none detected. Only include phrases that genuinely appear in the offer — do NOT invent them.
-  Patterns to look for (non-exhaustive): "somos una familia" / "we're like a family" (blurred work-life boundaries); "buen rollo" / "buen ambiente" (unverifiable vague promise); "rockstar" / "ninja" / "wizard" (unclear seniority, informal title); "entorno fast-paced" / "fast-paced environment" (high workload, possible rotation); "autonomía total" without context (no management support); "startup mindset" / "mentalidad startup" (long hours expected); "apasionado/a" / "passionate" as a requirement (subjective gatekeeping); "incorporación inmediata" alone without explanation (rotation indicator); "empresa líder" without evidence (empty phrase); "salario según valía" / "competitive salary" (no transparent range); "posibilidad de teletrabajo" vague and unspecified (may not materialise).
+  Tone calibration — examples of good vs bad translations:
+  BAD (too harsh): "accountability of assets" → "Si algo se rompe en producción a las 3am, es tu problema."
+  GOOD (balanced): "accountability of assets" → "Eres responsable del código o sistemas que gestionas; si algo falla, se espera que seas quien lo resuelva."
+  BAD: "tolerancia a la incertidumbre" → "Los requisitos cambian de la noche a la mañana."
+  GOOD: "tolerancia a la incertidumbre" → "Las prioridades pueden cambiar con frecuencia; valoran quien sabe pivotar sin paralizarse."
+  BAD: "somos una familia" → "Esperan que trabajes de noche y los fines de semana."
+  GOOD: "somos una familia" → "Cultura cercana e informal; conviene preguntar qué implica en la práctica en cuanto a disponibilidad."
+  Patterns to look for (non-exhaustive): "somos una familia" / "we're like a family"; "buen rollo" / "buen ambiente"; "rockstar" / "ninja" / "wizard"; "entorno fast-paced" / "fast-paced environment"; "autonomía total" without context; "startup mindset" / "mentalidad startup"; "apasionado/a" / "passionate" as a requirement; "incorporación inmediata" alone without explanation; "empresa líder" without evidence; "salario según valía" / "competitive salary"; "posibilidad de teletrabajo" vague and unspecified.
 
 - "procesoEstimado": your estimate of the hiring process for this role, based on: role seniority, inferred company type (startup, consultancy, product company, enterprise), tech stack, and any process information explicitly mentioned in the offer.
   - "fases": estimated number of interview stages (integer, typically 2-5)
