@@ -141,6 +141,8 @@ const LABELS = {
     batchCta: 'Compara todas a la vez →',
     noStorage: 'Tu CV no se almacena',
     fastAnalysis: 'Análisis en segundos',
+    aiNotice: 'El texto se envía a un modelo de IA local y no se almacena.',
+    privacyPolicy: 'Política de privacidad',
     checkingSkills: 'Revisando tu encaje con las ofertas de Manfred...',
     batchMatchCta: 'Ver mi match con las mejores ofertas de Manfred',
     batchMatchSubtext: 'Analizaremos tu encaje con las 5 ofertas más afines a tu perfil',
@@ -183,6 +185,8 @@ const LABELS = {
     batchCta: 'Compare them all at once →',
     noStorage: 'Your CV is not stored',
     fastAnalysis: 'Analysis in seconds',
+    aiNotice: 'The text is sent to a local AI model and is not stored.',
+    privacyPolicy: 'Privacy policy',
     checkingSkills: 'Checking your fit with Manfred offers...',
     batchMatchCta: 'See my match with the best Manfred offers',
     batchMatchSubtext: 'We will analyse your fit with the 5 offers most aligned to your profile',
@@ -732,9 +736,15 @@ export default function MatchPage() {
 
         {/* Submit */}
         {!isAnalyzing && (
-          <Button variant="primary" size="lg" disabled={!canSubmit} onClick={handleAnalyze} className="w-full">
-            {L.submit}
-          </Button>
+          <>
+            <Button variant="primary" size="lg" disabled={!canSubmit} onClick={handleAnalyze} className="w-full">
+              {L.submit}
+            </Button>
+            <p className="font-sans text-xs text-center" style={{ color: '#b0b8c4' }}>
+              {L.aiNotice}{' '}
+              <a href="/privacidad" className="underline underline-offset-2 hover:opacity-70 transition-opacity">{L.privacyPolicy}</a>.
+            </p>
+          </>
         )}
 
         {/* Batch match */}

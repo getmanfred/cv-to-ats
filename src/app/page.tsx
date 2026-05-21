@@ -93,6 +93,8 @@ const LABELS = {
     noStorage: 'Tu CV no se almacena',
     fastAnalysis: 'Análisis en segundos',
     exportPdf: 'Exporta a PDF',
+    aiNotice: 'El texto se envía a un modelo de IA local y no se almacena.',
+    privacyPolicy: 'Política de privacidad',
     loadingFooter: 'La IA está haciendo su magia',
     historyTitle: 'Tus análisis recientes',
     historySubtitle: 'Guardados solo en este dispositivo · se borran al limpiar el navegador',
@@ -160,6 +162,8 @@ const LABELS = {
     noStorage: 'Your CV is not stored',
     fastAnalysis: 'Analysis in seconds',
     exportPdf: 'Export to PDF',
+    aiNotice: 'The text is sent to a local AI model and is not stored.',
+    privacyPolicy: 'Privacy policy',
     loadingFooter: 'AI is doing its magic',
     historyTitle: 'Your recent analyses',
     historySubtitle: 'Saved on this device only · cleared when you clear the browser',
@@ -524,6 +528,10 @@ export default function UploadPage() {
               <Button variant="primary" size="lg" disabled={!file} onClick={handleAnalyze} className="w-full">
                 {L.analyzeBtn}
               </Button>
+              <p className="font-sans text-xs text-center" style={{ color: '#b0b8c4' }}>
+                {L.aiNotice}{' '}
+                <a href="/privacidad" className="underline underline-offset-2 hover:opacity-70 transition-opacity">{L.privacyPolicy}</a>.
+              </p>
               <div className="flex items-center justify-center">
                 <button
                   onClick={handleDemo}
