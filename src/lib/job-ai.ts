@@ -39,10 +39,17 @@ Analyze these dimensions to form your score and findings:
 10. Team and project context — is there any information about the team size, project stage, or company context?
 
 MANDATORY SCORE ADJUSTMENTS — apply these on top of the base score before returning the final value:
-- Free fruit, free snacks, coffee machine, or similar trivial in-office perks mentioned as if they were a meaningful benefit: subtract 5 points AND add a señalAlerta about it.
-- Hybrid work (some days remote, some days in office): subtract 10 points from the score.
-- Fully on-site / presencial with no remote option whatsoever: subtract 25 points from the score.
-These adjustments are cumulative. Clamp the final score to the 0-100 range.
+
+PRESENCIALIDAD — context-aware rules (evaluate the role before applying any penalty):
+- HARDWARE / PHYSICAL ROLES: If the role involves hardware, electronics, embedded systems, IoT, robotics, mechatronics, lab work, manufacturing, or any work that physically requires being on-site with equipment or machinery — apply ZERO penalty for on-site requirements. Do NOT add a señalAlerta about remote being unavailable. It is expected and appropriate for the role. You may mention it neutrally in the resumen if relevant.
+- C-LEVEL AND COMMERCIAL ROLES: If the role is C-level (CEO, CTO, COO, CFO, VP, Director, Head of) or commercial/client-facing (Sales, Account Executive, BDR, SDR, Account Manager, Customer Success, Business Development) — apply only -5 for fully on-site. No penalty for hybrid. Physical presence is standard and expected for leadership and client-facing work.
+- ALL OTHER ROLES: Hybrid work (some days remote, some days in office): subtract 5 points. Fully on-site / presencial with no remote option whatsoever: subtract 15 points AND add a señalAlerta about it.
+
+SALARY BOOST: If the offer explicitly states a salary (range or fixed number) AND your independent market estimate (salarioMercado) indicates the offered salary is above the market median for this role — add +10 points. If the offer is 20% or more above your market estimate — add +15 points instead. Only apply this bonus when a concrete salary figure is stated in the offer and your estimate is confident.
+
+OTHER: Free fruit, free snacks, coffee machine, or similar trivial in-office perks mentioned as if they were a meaningful benefit: subtract 5 points AND add a señalAlerta about it.
+
+All adjustments are cumulative. Clamp the final score to the 0-100 range.
 
 Required JSON fields:
 
