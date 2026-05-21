@@ -285,18 +285,24 @@ export default function LinkedInPage() {
 
         {/* Submit */}
         {!isAnalyzing && (
-          <button
-            onClick={handleAnalyze}
-            disabled={!canSubmit}
-            className="w-full py-3.5 rounded-xl font-sans font-[900] text-sm uppercase tracking-wider transition-all duration-300"
-            style={{
-              backgroundColor: canSubmit ? '#092c64' : '#e5e7eb',
-              color: canSubmit ? '#ffffff' : '#9ca3af',
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-            }}
-          >
-            Analizar perfil de LinkedIn
-          </button>
+          <>
+            <button
+              onClick={handleAnalyze}
+              disabled={!canSubmit}
+              className="w-full py-3.5 rounded-xl font-sans font-[900] text-sm uppercase tracking-wider transition-all duration-300"
+              style={{
+                backgroundColor: canSubmit ? '#092c64' : '#e5e7eb',
+                color: canSubmit ? '#ffffff' : '#9ca3af',
+                cursor: canSubmit ? 'pointer' : 'not-allowed',
+              }}
+            >
+              Analizar perfil de LinkedIn
+            </button>
+            <p className="font-sans text-xs text-center" style={{ color: '#b0b8c4' }}>
+              El texto se envía a un modelo de IA local y no se almacena.{' '}
+              <a href="/privacidad" className="underline underline-offset-2 hover:opacity-70 transition-opacity">Política de privacidad</a>.
+            </p>
+          </>
         )}
 
         <div className="flex items-center justify-center gap-6 text-xs text-gray-400 font-sans">
