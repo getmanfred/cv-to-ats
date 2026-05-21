@@ -272,7 +272,11 @@ export default function EditorPage() {
       const { width, height } = entries[0].contentRect
       const h = width * (297 / 210)
       setA4HeightPx(h)
-      setA4Pages(Math.max(1, Math.ceil(height / h)))
+      // Only count a new page if the overflow exceeds 60px (≈16mm) — avoids
+      // false positives from template bottom padding or rounding.
+      const overflow = height % h
+      const pages = Math.floor(height / h) + (overflow > 60 ? 1 : 0)
+      setA4Pages(Math.max(1, pages) || 1)
     })
     ro.observe(previewRef.current)
     return () => ro.disconnect()
