@@ -10,7 +10,7 @@ const LABELS = {
     cvEditor: 'Editor CV',
     matchCv: 'CV vs Oferta',
     analyzeJob: 'Analizar Oferta',
-    analyzeLinkedIn: 'LinkedIn',
+    analyzeLinkedIn: 'Analizar LinkedIn',
     cvsAnalyzed: (n: string) => `${n} CVs analizados`,
     language: 'Idioma',
     openMenu: 'Abrir menú',
@@ -21,7 +21,7 @@ const LABELS = {
     cvEditor: 'CV Editor',
     matchCv: 'CV vs Job',
     analyzeJob: 'Analyse Job',
-    analyzeLinkedIn: 'LinkedIn',
+    analyzeLinkedIn: 'Analyse LinkedIn',
     cvsAnalyzed: (n: string) => `${n} CVs analysed`,
     language: 'Language',
     openMenu: 'Open menu',
@@ -61,11 +61,11 @@ export default function Header({ noPrint = false }: HeaderProps) {
   const L = LABELS[lang]
 
   const navLinks = [
-    { href: '/',          label: L.analyzeCV },
-    { href: '/editor',    label: L.cvEditor },
-    { href: '/match',     label: L.matchCv },
-    { href: '/oferta',    label: L.analyzeJob },
-    { href: '/linkedin',  label: L.analyzeLinkedIn },
+    { href: '/',          label: L.analyzeCV,        isNew: false },
+    { href: '/editor',    label: L.cvEditor,          isNew: false },
+    { href: '/linkedin',  label: L.analyzeLinkedIn,   isNew: true  },
+    { href: '/match',     label: L.matchCv,           isNew: false },
+    { href: '/oferta',    label: L.analyzeJob,        isNew: false },
   ]
 
   return (
@@ -104,12 +104,18 @@ export default function Header({ noPrint = false }: HeaderProps) {
         <nav className="hidden sm:flex items-center gap-1">
           {navLinks.map(link => (
             <a key={link.href} href={link.href}
-              className="font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
+              className="flex items-center gap-1.5 font-sans font-[700] text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors duration-200"
               style={isActive(link.href, pathname)
                 ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
                 : { color: '#9ca3af' }}
             >
               {link.label}
+              {link.isNew && (
+                <span className="font-sans font-[700] text-[8px] uppercase tracking-wider px-1 py-0.5 rounded-full"
+                  style={{ backgroundColor: '#01FFC6', color: '#092c64', animation: 'blink 1.4s step-start infinite' }}>
+                  NEW!
+                </span>
+              )}
             </a>
           ))}
           <LanguageSelector showHint />
@@ -144,12 +150,18 @@ export default function Header({ noPrint = false }: HeaderProps) {
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="flex items-center font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"
+              className="flex items-center gap-2 font-sans font-[700] text-sm uppercase tracking-wider px-3 py-3 rounded-xl transition-colors duration-200"
               style={isActive(link.href, pathname)
                 ? { color: '#0DA1A4', backgroundColor: '#e6f7f7' }
                 : { color: '#374151' }}
             >
               {link.label}
+              {link.isNew && (
+                <span className="font-sans font-[700] text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                  style={{ backgroundColor: '#01FFC6', color: '#092c64', animation: 'blink 1.4s step-start infinite' }}>
+                  NEW!
+                </span>
+              )}
             </a>
           ))}
           <div className="px-3 py-3 flex items-center gap-3">
