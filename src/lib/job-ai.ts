@@ -62,6 +62,18 @@ Required JSON fields:
 
 - "loQueNoDice": array of 3-6 strings. Important information that is conspicuously absent from the offer. Be specific about what exactly is missing and why it matters. Frame as factual observations. Example: "No menciona el rango salarial, lo que dificulta evaluar si encaja con las expectativas", "No especifica cuántos días de teletrabajo son posibles", "No describe el proceso de selección ni el número de fases".
 
+- "salarioMercado": your independent market salary estimate for this specific role. Base it on: job title, seniority inferred from the requirements, location (use Spain/EUR as default if not stated), and tech stack. Rules:
+  1. This is your own estimate — do NOT copy the salary stated in the offer. Estimate independently from market knowledge.
+  2. If a salary IS mentioned in the offer, compare it against your estimate in the "nota" field (e.g. "La oferta está un 15% por debajo de la media de mercado para este perfil").
+  3. If the role is too vague to estimate reliably (no title, no requirements, no tech), return null.
+  4. "nota": one sentence explaining the main factors used (seniority assumed, location assumed, stack weight) and any notable gap vs. the offer's stated salary if applicable.
+  {
+    "min": <number — annual gross, full number e.g. 42000>,
+    "max": <number — annual gross, full number e.g. 60000>,
+    "moneda": "<EUR | USD | GBP>",
+    "nota": "<string>"
+  }
+
 COMPANY REPUTATION CONTEXT RULE:
 If you recognise the company name (from "empresa") with high confidence and have relevant market context about it, add one item to "senalesPositivas" or "senalesAlerta" that briefly frames what kind of company it is and what that typically means for candidates (e.g. consulting firm with variable project exposure, established product company, fast-growing startup). Frame it as market context, not a verdict. Use neutral, informative language — no harsh judgements. If you are not confident you recognise the company, say nothing about it.
 
@@ -81,7 +93,8 @@ JSON structure:
   "veredicto": "<string>",
   "senalesPositivas": [{ "titulo": "<string>", "descripcion": "<string>" }],
   "senalesAlerta": [{ "titulo": "<string>", "descripcion": "<string>" }],
-  "loQueNoDice": ["<string>", ...]
+  "loQueNoDice": ["<string>", ...],
+  "salarioMercado": { "min": <number>, "max": <number>, "moneda": "<string>", "nota": "<string>" } | null
 }
 
 JOB OFFER:
@@ -118,6 +131,7 @@ export async function analyzeJobWithAI(jdText: string, lang: 'es' | 'en' = 'es',
   parsed.senalesPositivas  = parsed.senalesPositivas ?? []
   parsed.senalesAlerta     = parsed.senalesAlerta ?? []
   parsed.loQueNoDice       = parsed.loQueNoDice ?? []
+  parsed.salarioMercado    = parsed.salarioMercado ?? null
 
   return parsed
 }

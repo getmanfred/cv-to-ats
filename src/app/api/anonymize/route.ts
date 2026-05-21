@@ -4,7 +4,7 @@ import type { CVData } from '@/types/cv'
 import { EMPTY_CV } from '@/types/cv'
 import { getSupabase } from '@/lib/supabase'
 
-export const maxDuration = 90
+export const maxDuration = 180
 
 const FIELD_LABELS: Record<string, string> = {
   nombre:     'nombre completo de la persona',

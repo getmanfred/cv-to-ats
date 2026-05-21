@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { JobAnalysisResult } from '@/types/job'
+import type { JobAnalysisResult, SalarioMercado } from '@/types/job'
 import Header from '@/components/Header'
 import { getLang, type Lang } from '@/components/LanguageSelector'
 
@@ -16,6 +16,9 @@ const LABELS = {
     notSaid: 'Lo que no dice la oferta',
     analyzeAnother: 'Analizar otra oferta',
     backToAnalysis: 'Volver al análisis',
+    salaryTitle: 'Salario estimado de mercado',
+    salaryPeriod: 'bruto / año',
+    salaryDisclaimer: 'Estimación del modelo — no es dato oficial',
   },
   en: {
     loading: 'Loading results...',
@@ -26,6 +29,9 @@ const LABELS = {
     notSaid: 'What the offer doesn\'t say',
     analyzeAnother: 'Analyse another offer',
     backToAnalysis: 'Back to analysis',
+    salaryTitle: 'Estimated market salary',
+    salaryPeriod: 'gross / year',
+    salaryDisclaimer: 'AI estimate — not official data',
   },
 }
 
@@ -99,6 +105,41 @@ function ScoreCircle({ score }: { score: number }) {
         </span>
         <span className="font-sans text-gray-400 text-xs mt-0.5">/ 100</span>
       </div>
+    </div>
+  )
+}
+
+function formatSalary(n: number, moneda: string): string {
+  const symbol = moneda === 'USD' ? '$' : moneda === 'GBP' ? '£' : '€'
+  const formatted = n.toLocaleString('es-ES')
+  return moneda === 'USD' || moneda === 'GBP' ? `${symbol}${formatted}` : `${formatted} ${symbol}`
+}
+
+function SalaryCard({ salary, labels }: { salary: SalarioMercado; labels: typeof LABELS['es'] }) {
+  return (
+    <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.07)' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: '#f0fdf4' }}>
+          <svg className="w-4 h-4" fill="none" stroke="#16a34a" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="font-sans font-[700] text-sm uppercase tracking-widest" style={{ color: '#16a34a' }}>
+          {labels.salaryTitle}
+        </h2>
+      </div>
+
+      <p className="font-sans font-[900] text-2xl text-navy leading-none mb-1">
+        {formatSalary(salary.min, salary.moneda)}
+        <span className="font-[400] text-gray-300 mx-2">—</span>
+        {formatSalary(salary.max, salary.moneda)}
+      </p>
+      <p className="font-sans text-xs text-gray-400 mb-3">{labels.salaryPeriod}</p>
+
+      <p className="font-sans text-sm text-gray-500 leading-relaxed">{salary.nota}</p>
+
+      <p className="font-sans text-xs text-gray-300 mt-3">{labels.salaryDisclaimer}</p>
     </div>
   )
 }
@@ -213,6 +254,11 @@ export default function JobResultsPage() {
               </p>
             </div>
           </div>
+        )}
+
+        {/* Salary estimate */}
+        {result.salarioMercado && (
+          <SalaryCard salary={result.salarioMercado} labels={L} />
         )}
 
         {/* Signals — alerts first if they outnumber positives */}
