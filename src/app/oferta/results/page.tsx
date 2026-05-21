@@ -343,16 +343,6 @@ export default function JobResultsPage() {
           <SalaryCard salary={result.salarioMercado} labels={L} />
         )}
 
-        {/* Traducción real */}
-        {result.traduccionReal && result.traduccionReal.length > 0 && (
-          <TraduccionCard items={result.traduccionReal} labels={L} />
-        )}
-
-        {/* Proceso estimado */}
-        {result.procesoEstimado && (
-          <ProcesoCard proceso={result.procesoEstimado} labels={L} />
-        )}
-
         {/* Signals — alerts first if they outnumber positives */}
         {(() => {
           const alertsFirst = result.senalesAlerta.length > result.senalesPositivas.length
@@ -427,6 +417,16 @@ export default function JobResultsPage() {
               ))}
             </ul>
           </div>
+        )}
+
+        {/* Traducción real */}
+        {result.traduccionReal && result.traduccionReal.length > 0 && (
+          <TraduccionCard items={result.traduccionReal} labels={L} />
+        )}
+
+        {/* Proceso estimado */}
+        {result.procesoEstimado && (
+          <ProcesoCard proceso={result.procesoEstimado} labels={L} />
         )}
 
         {/* Actions */}
