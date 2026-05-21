@@ -54,6 +54,17 @@ Required top-level fields:
 
 - "topPriorities": array of 3 concrete actions in the specified language (infinitive phrases, gender-neutral). Each must reference something specific found (or missing) in this CV — a real section, skill, job title, or gap. Never write a priority that could apply to any CV.
 
+─── PRE-ANALYSIS (internal — do not include in JSON output) ───────────────────
+
+Before scoring or writing any suggestion, mentally extract and hold these facts about THIS CV:
+- Exact contact fields present: which of phone / email / city / LinkedIn / GitHub / portfolio URL appear in the text?
+- Every company name and job title mentioned
+- Every technology, framework, language, and tool named (exact spelling as written)
+- Any existing quantified achievements (numbers, percentages, team sizes) already in the text
+- Any sections that are completely absent (e.g. no certifications section, no summary, no project section)
+
+Use this extracted data as the only source for suggestion content. Any suggestion that cannot be grounded in this data must be discarded and replaced with one that can.
+
 ─── CATEGORIES ────────────────────────────────────────────────────────────────
 
 Evaluate these 6 categories using the scoring criteria below. For each, produce:
@@ -89,6 +100,7 @@ Scoring criteria:
    - 85–100: ≥1 complete entry + certifications if listed | 65–84: complete entry, no certs | 50–64: partial entries | <50: sparse or absent
 
 5. Contact information — email (+25 pts), phone (+25 pts), city/country (+25 pts), LinkedIn or portfolio URL (+25 pts). Score = sum of present elements × 25. Apply mechanically.
+   CONTACT ANTI-HALLUCINATION: Before scoring this category, scan the full CV text and list every contact field you can actually find. Only subtract points and only suggest adding fields that are genuinely absent from that scan. Never suggest adding a phone if a phone number is present in the text. Never suggest adding LinkedIn/GitHub/portfolio if any such URL is already present.
 
 6. Length & file optimization — based on estimated page count only.
    - 90–100: 1–2 pages | 70–84: 3 pages | 45–69: 4 pages | <45: 5+ pages or under 200 words
@@ -104,12 +116,13 @@ For each category, write exactly 2 improvement suggestions. Each must follow thi
 
 SUGGESTION RULES:
 1. ANTI-HALLUCINATION — CRITICAL: Before naming any company, job title, skill, or technology in a suggestion, verify it appears WORD-FOR-WORD in the CV text above. If you cannot find it literally in the text, use a generic reference ("tu rol más reciente", "la empresa anterior") — NEVER invent, guess, or paraphrase names. A suggestion referencing a company or skill that does not exist in the CV is a critical failure.
-2. Every step must reference something real and specific from THIS CV. Generic steps that could apply to any CV are forbidden.
-3. Forbidden patterns: "Add more keywords", "Quantify achievements", "Ensure contact info is complete", "Use ATS-friendly format", "Tailor to job description".
-4. Each suggestion tackles a DIFFERENT problem. No duplicates across the entire response.
-5. NEVER suggest changing dates, employment years, or graduation years — all dates are historical facts.
-6. NEVER reorder work experience if the most recent position already appears first.
-7. NEVER suggest removing the candidate's name without providing an alternative placement.
+2. SPECIFICITY — MANDATORY AT ALL PRIORITY LEVELS: Every suggestion title and every step must name a specific section, company, role, skill, or piece of content found in THIS CV. A reader who has never seen this CV must be able to tell it was written for this specific person. Generic steps ("improve your descriptions", "add relevant keywords", "make it clearer") are forbidden regardless of priority. "Baja" priority suggestions must be equally specific — if you cannot write a specific "baja" suggestion, invent nothing; instead pick a different real problem from this CV.
+3. QUANTIFICATION LIMIT: Suggestions about adding numbers, metrics, percentages, team sizes, or measurable outcomes to job descriptions may appear AT MOST ONCE across the entire response, and never as the first suggestion in any category. If a quantification suggestion already appears in a previous category, it must not appear again.
+4. Forbidden patterns: "Add more keywords", "Ensure contact info is complete", "Use ATS-friendly format", "Tailor to job description".
+5. Each suggestion tackles a DIFFERENT problem. No duplicates across the entire response.
+6. NEVER suggest changing dates, employment years, or graduation years — all dates are historical facts.
+7. NEVER reorder work experience if the most recent position already appears first.
+8. NEVER suggest removing the candidate's name without providing an alternative placement.
 
 ─── CALIBRATION ───────────────────────────────────────────────────────────────
 

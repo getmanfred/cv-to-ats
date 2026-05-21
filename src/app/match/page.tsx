@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { MatchResult } from '@/types/match'
 import { getLang, type Lang } from '@/components/LanguageSelector'
 import Header from '@/components/Header'
+import Button from '@/components/ui/Button'
 
 type State = 'idle' | 'analyzing' | 'error'
 type BatchState = 'idle' | 'loading' | 'done'
@@ -731,18 +732,9 @@ export default function MatchPage() {
 
         {/* Submit */}
         {!isAnalyzing && (
-          <button
-            onClick={handleAnalyze}
-            disabled={!canSubmit}
-            className="w-full py-3.5 rounded-xl font-sans font-[900] text-sm uppercase tracking-wider transition-all duration-300 hover:opacity-80 disabled:hover:opacity-100"
-            style={{
-              backgroundColor: canSubmit ? '#092c64' : '#e5e7eb',
-              color: canSubmit ? '#ffffff' : '#9ca3af',
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
-            }}
-          >
+          <Button variant="primary" size="lg" disabled={!canSubmit} onClick={handleAnalyze} className="w-full">
             {L.submit}
-          </button>
+          </Button>
         )}
 
         {/* Batch match */}
