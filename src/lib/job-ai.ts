@@ -37,12 +37,22 @@ Analyze these dimensions to form your score and findings:
 8. Suspicious urgency — does "immediate incorporation" suggest high rotation? is there unusual pressure?
 9. Salary-requirements coherence — if a salary is mentioned, does it match the seniority and number of requirements?
 10. Team and project context — is there any information about the team size, project stage, or company context?
+11. Obsolete or declining tech stack — if the PRIMARY tech stack is predominantly obsolete or has sharply declining market demand (e.g. Delphi, COBOL, legacy VB.NET, ColdFusion), flag this as a señalAlerta: it may limit the candidate's future marketability. Only flag if the stack is genuinely obsolete — do not penalise established technologies like Java, PHP, or older but active stacks.
+12. Role scope inflation ("rol trampa") — if the role combines responsibilities that typically belong to multiple distinct roles (e.g. developer + DevOps + data analyst + QA + support) while compensation appears to be for a single role, add a señalAlerta. This is about understated work scope, not about requiring many technologies.
+13. Benefits vs. salary coherence — if the offer advertises a meaningful list of benefits while the stated salary is below or significantly below market, flag this in a señalAlerta: "total compensation" framing can obscure weak base pay.
 
 MANDATORY SCORE ADJUSTMENTS — apply these on top of the base score before returning the final value:
-- Free fruit, free snacks, coffee machine, or similar trivial in-office perks mentioned as if they were a meaningful benefit: subtract 5 points AND add a señalAlerta about it.
-- Hybrid work (some days remote, some days in office): subtract 10 points from the score.
-- Fully on-site / presencial with no remote option whatsoever: subtract 25 points from the score.
-These adjustments are cumulative. Clamp the final score to the 0-100 range.
+
+PRESENCIALIDAD — context-aware rules (evaluate the role before applying any penalty):
+- HARDWARE / PHYSICAL ROLES: If the role involves hardware, electronics, embedded systems, IoT, robotics, mechatronics, lab work, manufacturing, or any work that physically requires being on-site with equipment or machinery — apply ZERO penalty for on-site requirements. Do NOT add a señalAlerta about remote being unavailable. It is expected and appropriate for the role. You may mention it neutrally in the resumen if relevant.
+- C-LEVEL AND COMMERCIAL ROLES: If the role is C-level (CEO, CTO, COO, CFO, VP, Director, Head of) or commercial/client-facing (Sales, Account Executive, BDR, SDR, Account Manager, Customer Success, Business Development) — apply only -5 for fully on-site. No penalty for hybrid. Physical presence is standard and expected for leadership and client-facing work.
+- ALL OTHER ROLES: Hybrid work (some days remote, some days in office): subtract 5 points. Fully on-site / presencial with no remote option whatsoever: subtract 15 points AND add a señalAlerta about it.
+
+SALARY BOOST: If the offer explicitly states a salary (range or fixed number) AND your independent market estimate (salarioMercado) indicates the offered salary is above the market median for this role — add +10 points. If the offer is 20% or more above your market estimate — add +15 points instead. Only apply this bonus when a concrete salary figure is stated in the offer and your estimate is confident.
+
+OTHER: Free fruit, free snacks, coffee machine, or similar trivial in-office perks mentioned as if they were a meaningful benefit: subtract 5 points AND add a señalAlerta about it.
+
+All adjustments are cumulative. Clamp the final score to the 0-100 range.
 
 Required JSON fields:
 
@@ -61,6 +71,18 @@ Required JSON fields:
 - "senalesAlerta": array of 2-7 red flags or concerns. Each item: { "titulo": short label (3-6 words), "descripcion": 2-3 sentences. Quote or reference specific text from the offer when possible. Explain why this matters, what it typically signals in practice, and what the candidate should ask about }. Include at least two even if the offer is excellent.
 
 - "loQueNoDice": array of 3-6 strings. Important information that is conspicuously absent from the offer. Be specific about what exactly is missing and why it matters. Frame as factual observations. Example: "No menciona el rango salarial, lo que dificulta evaluar si encaja con las expectativas", "No especifica cuántos días de teletrabajo son posibles", "No describe el proceso de selección ni el número de fases".
+
+- "traduccionReal": scan the FULL offer text for coded or toxic language — phrases whose implied meaning in practice differs from their literal reading. For each detected phrase:
+  - "frase": the exact phrase or close paraphrase as it appears in the offer
+  - "traduccion": what it really implies in practice (max 25 words, direct, slightly ironic)
+  Return an array of 0-4 items. Return null if none detected. Only include phrases that genuinely appear in the offer — do NOT invent them.
+  Patterns to look for (non-exhaustive): "somos una familia" / "we're like a family" (blurred work-life boundaries); "buen rollo" / "buen ambiente" (unverifiable vague promise); "rockstar" / "ninja" / "wizard" (unclear seniority, informal title); "entorno fast-paced" / "fast-paced environment" (high workload, possible rotation); "autonomía total" without context (no management support); "startup mindset" / "mentalidad startup" (long hours expected); "apasionado/a" / "passionate" as a requirement (subjective gatekeeping); "incorporación inmediata" alone without explanation (rotation indicator); "empresa líder" without evidence (empty phrase); "salario según valía" / "competitive salary" (no transparent range); "posibilidad de teletrabajo" vague and unspecified (may not materialise).
+
+- "procesoEstimado": your estimate of the hiring process for this role, based on: role seniority, inferred company type (startup, consultancy, product company, enterprise), tech stack, and any process information explicitly mentioned in the offer.
+  - "fases": estimated number of interview stages (integer, typically 2-5)
+  - "descripcion": 2-3 sentences describing what to typically expect at each stage (HR screening, technical test with estimated hours if relevant, technical interview, culture/values interview, etc.)
+  - "confianza": "alta" if the offer explicitly describes the process; "media" if reasonably inferable from context; "baja" if little context available
+  Return null only if the role is so vague that no meaningful estimate is possible.
 
 - "salarioMercado": your independent market salary estimate for this specific role. Base it on: job title, seniority inferred from the requirements, location (use Spain/EUR as default if not stated), and tech stack. Rules:
   1. This is your own estimate — do NOT copy the salary stated in the offer. Estimate independently from market knowledge.
@@ -94,7 +116,9 @@ JSON structure:
   "senalesPositivas": [{ "titulo": "<string>", "descripcion": "<string>" }],
   "senalesAlerta": [{ "titulo": "<string>", "descripcion": "<string>" }],
   "loQueNoDice": ["<string>", ...],
-  "salarioMercado": { "min": <number>, "max": <number>, "moneda": "<string>", "nota": "<string>" } | null
+  "salarioMercado": { "min": <number>, "max": <number>, "moneda": "<string>", "nota": "<string>" } | null,
+  "traduccionReal": [{ "frase": "<string>", "traduccion": "<string>" }] | null,
+  "procesoEstimado": { "fases": <number>, "descripcion": "<string>", "confianza": "<alta|media|baja>" } | null
 }
 
 JOB OFFER:
@@ -132,6 +156,8 @@ export async function analyzeJobWithAI(jdText: string, lang: 'es' | 'en' = 'es',
   parsed.senalesAlerta     = parsed.senalesAlerta ?? []
   parsed.loQueNoDice       = parsed.loQueNoDice ?? []
   parsed.salarioMercado    = parsed.salarioMercado ?? null
+  parsed.traduccionReal    = parsed.traduccionReal ?? null
+  parsed.procesoEstimado   = parsed.procesoEstimado ?? null
 
   return parsed
 }

@@ -10,6 +10,17 @@ export interface SalarioMercado {
   nota: string
 }
 
+export interface TraduccionFrase {
+  frase: string
+  traduccion: string
+}
+
+export interface ProcesoEstimado {
+  fases: number
+  descripcion: string
+  confianza: 'alta' | 'media' | 'baja'
+}
+
 export interface JobAnalysisResult {
   score: number
   puesto: string
@@ -20,6 +31,8 @@ export interface JobAnalysisResult {
   senalesAlerta: JobSignal[]
   loQueNoDice: string[]
   salarioMercado: SalarioMercado | null
+  traduccionReal: TraduccionFrase[] | null
+  procesoEstimado: ProcesoEstimado | null
   isManfredOffer?: boolean
   analyzedAt?: string
 }
