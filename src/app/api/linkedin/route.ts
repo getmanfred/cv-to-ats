@@ -1,30 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeLinkedIn } from '@/lib/linkedin-ai'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { extractCVText } from '@/lib/extractors'
 import { getSupabase } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
 export const maxDuration = 180
 
-const MIN_LENGTH = 200
-const MAX_LENGTH = 50_000
-
-function looksLikeCV(text: string): boolean {
-  const sample = text.slice(0, 3000).toLowerCase()
-  const cvSignals = [
-    'curriculum vitae', 'currículum vitae', 'hoja de vida',
-    'datos personales', 'formación académica', 'experiencia laboral',
-    'objective:', 'work history', 'references available',
-  ]
-  const linkedinSignals = [
-    'conexiones', 'seguidores', 'followers', 'connections',
-    'linkedin.com', 'publicaciones', 'actividad', 'recomienda',
-    'recomendación', 'recommendation', 'premio', 'award', 'volunteer',
-  ]
-  const cvHits = cvSignals.filter(s => sample.includes(s)).length
-  const liHits = linkedinSignals.filter(s => sample.includes(s)).length
-  return cvHits >= 2 && liHits === 0
-}
+const MAX_SIZE_BYTES = 5 * 1024 * 1024
+const MIN_TEXT_LENGTH = 200
+const MAX_TEXT_LENGTH = 50_000
 
 function sanitizeError(error: unknown): string {
   if (error instanceof Error) {
@@ -51,43 +36,40 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    let body: unknown
+    const formData = await request.formData()
+    const file = formData.get('pdf') as File | null
+    const lang = (formData.get('lang') as string | null) === 'en' ? 'en' : 'es'
+
+    if (!file) {
+      return NextResponse.json({ error: 'No se ha adjuntado ningún archivo.' }, { status: 400 })
+    }
+
+    if (file.type !== 'application/pdf') {
+      return NextResponse.json({ error: 'Solo se admiten archivos PDF.' }, { status: 415 })
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      return NextResponse.json({ error: 'El archivo supera el límite de 5 MB.' }, { status: 413 })
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    let profileText: string
     try {
-      body = await request.json()
-    } catch {
-      return NextResponse.json({ error: 'El cuerpo de la solicitud no es JSON válido.' }, { status: 400 })
+      profileText = await extractCVText(buffer, file.name)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'No se pudo extraer texto del PDF.'
+      return NextResponse.json({ error: msg }, { status: 422 })
     }
 
-    if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
-    }
-
-    const { profileText, lang: langRaw } = body as Record<string, unknown>
-    const lang = langRaw === 'en' ? 'en' : 'es'
-
-    if (!profileText || typeof profileText !== 'string') {
-      return NextResponse.json({ error: 'No se ha proporcionado el texto del perfil.' }, { status: 400 })
-    }
-
-    if (profileText.trim().length < MIN_LENGTH) {
+    if (profileText.trim().length < MIN_TEXT_LENGTH) {
       return NextResponse.json(
-        { error: 'El texto del perfil es demasiado corto. Asegúrate de copiar el perfil completo.' },
+        { error: 'No se pudo extraer suficiente texto del PDF. Asegúrate de subir el PDF oficial de LinkedIn (no una captura de pantalla).' },
         { status: 422 }
       )
     }
 
-    if (profileText.length > MAX_LENGTH) {
-      return NextResponse.json(
-        { error: 'El texto del perfil es demasiado largo. Por favor, pega solo el contenido principal.' },
-        { status: 422 }
-      )
-    }
-
-    if (looksLikeCV(profileText)) {
-      return NextResponse.json(
-        { error: 'El texto parece un CV, no un perfil de LinkedIn. Por favor, copia el contenido directamente desde tu perfil de LinkedIn.' },
-        { status: 422 }
-      )
+    if (profileText.length > MAX_TEXT_LENGTH) {
+      profileText = profileText.slice(0, MAX_TEXT_LENGTH)
     }
 
     const result = await analyzeLinkedIn(profileText.trim(), lang)
