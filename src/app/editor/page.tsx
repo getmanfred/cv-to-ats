@@ -197,6 +197,9 @@ export default function EditorPage() {
   const [cv, setCv] = useState<CVData>(DEMO_CV)
   const [showPreview, setShowPreview] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const previewRef = useRef<HTMLDivElement>(null)
+  const [a4Pages, setA4Pages] = useState(1)
+  const [a4HeightPx, setA4HeightPx] = useState(1123)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [lang, setLang] = useState<'es' | 'en'>('es')
   const [cvLang, setCvLang] = useState<CvLang>('en')
@@ -260,6 +263,19 @@ export default function EditorPage() {
     const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail)
     window.addEventListener('langchange', handler)
     return () => window.removeEventListener('langchange', handler)
+  }, [])
+
+  // Measure preview height to detect page overflow
+  useEffect(() => {
+    if (!previewRef.current) return
+    const ro = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect
+      const h = width * (297 / 210)
+      setA4HeightPx(h)
+      setA4Pages(Math.max(1, Math.ceil(height / h)))
+    })
+    ro.observe(previewRef.current)
+    return () => ro.disconnect()
   }, [])
 
   // Autosave draft on every change (debounced 800ms)
@@ -762,8 +778,8 @@ export default function EditorPage() {
             <span>
               <span className="font-[700]" style={{ color: '#1a2744' }}>{wordCount(cv).toLocaleString('es-ES')}</span> {LABELS[lang].palabras}
               {' · '}
-              <span className="font-[700]" style={{ color: '#1a2744' }}>~{Math.max(1, Math.ceil(wordCount(cv) / 350))}</span>{' '}
-              {Math.max(1, Math.ceil(wordCount(cv) / 350)) === 1 ? LABELS[lang].pagina : LABELS[lang].paginas}
+              <span className="font-[700]" style={{ color: a4Pages > 1 ? '#ea580c' : '#1a2744' }}>{a4Pages}</span>{' '}
+              {a4Pages === 1 ? LABELS[lang].pagina : LABELS[lang].paginas}
             </span>
             {savedAt && (
               <span className="flex items-center gap-1" style={{ color: '#10b981' }}>
@@ -1168,11 +1184,33 @@ export default function EditorPage() {
 
         {/* ─── RIGHT: Preview ─── */}
         <div className="hidden lg:block overflow-y-auto py-8" style={{ width: '210mm', flexShrink: 0 }}>
-          <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400 mb-3">
-            {LABELS[lang].preview}
-          </p>
-          <div style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden' }}>
-            <HarvardTemplate data={translatedCv[cvLang] ?? cv} lang={cvLang} />
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-sans font-[700] text-xs uppercase tracking-widest text-gray-400">
+              {LABELS[lang].preview}
+            </p>
+            {a4Pages > 1 && (
+              <span className="font-sans font-[700] text-xs px-2.5 py-1 rounded-full"
+                style={{ backgroundColor: '#fff7ed', color: '#ea580c' }}>
+                {a4Pages} {LABELS[lang].paginas}
+              </span>
+            )}
+          </div>
+          <div className="relative" ref={previewRef}>
+            <div style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)', borderRadius: 4, overflow: 'hidden' }}>
+              <HarvardTemplate data={translatedCv[cvLang] ?? cv} lang={cvLang} />
+            </div>
+            {Array.from({ length: a4Pages - 1 }, (_, i) => (
+              <div key={i} className="absolute left-0 right-0 z-10 pointer-events-none"
+                style={{ top: a4HeightPx * (i + 1) }}>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex-1 border-t-2 border-dashed" style={{ borderColor: '#ea580c' }} />
+                  <span className="font-sans font-[800] text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: '#ea580c', color: '#fff' }}>
+                    Pág. {i + 2}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
