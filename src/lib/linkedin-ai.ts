@@ -10,7 +10,7 @@ function buildLinkedInPrompt(profileText: string, lang: 'es' | 'en'): string {
 
 LANGUAGE: ${langInstruction} JSON keys and enum values must always stay as specified.
 
-The user has pasted the text content of their LinkedIn profile. Analyze it and return ONLY valid JSON — no markdown, no text outside the JSON object.
+The following text has been extracted from the user's LinkedIn profile PDF, downloaded directly from LinkedIn via the "Save to PDF" option. The structure is standardised and complete. Analyze it and return ONLY valid JSON — no markdown, no text outside the JSON object.
 
 Required fields:
 
