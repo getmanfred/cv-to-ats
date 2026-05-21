@@ -8,7 +8,9 @@ import { getLang, type Lang } from '@/components/LanguageSelector'
 
 const LABELS = {
   es: {
-    title: '¿Vale la pena esta oferta?',
+    heroLine1: '¿Vale la pena',
+    heroLine2: 'esta oferta?',
+    badge: 'Herramienta Gratuita de Manfred',
     subtitle: 'Pega el texto de la oferta y te decimos lo que dice, lo que no dice y si merece tu tiempo.',
     placeholder: 'Pega aquí el texto completo de la oferta de empleo o una URL (https://...)',
     analyze: 'Analizar oferta',
@@ -24,7 +26,9 @@ const LABELS = {
     errUnknown: 'Error inesperado. Por favor, inténtalo de nuevo.',
   },
   en: {
-    title: 'Is this job worth it?',
+    heroLine1: 'Is this job',
+    heroLine2: 'worth it?',
+    badge: 'Free Tool by Manfred',
     subtitle: 'Paste the job offer text and we\'ll tell you what it says, what it doesn\'t say, and whether it\'s worth your time.',
     placeholder: 'Paste the full job offer text here or a URL (https://...)',
     analyze: 'Analyse offer',
@@ -125,16 +129,24 @@ export default function OfertaPage() {
     <div className="min-h-screen bg-bg-light">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-
-        <div className="mb-8">
-          <h1 className="font-sans font-[900] text-2xl sm:text-3xl text-navy mb-3 leading-tight">
-            {L.title}
+      {/* Hero */}
+      <section className="bg-navy text-white py-8 sm:py-14 px-6">
+        <div className="max-w-container mx-auto text-center">
+          <p className="font-sans font-[900] uppercase tracking-widest text-xs mb-5" style={{ color: '#01FFC6' }}>
+            {L.badge}
+          </p>
+          <h1 className="font-heading font-[900] text-4xl md:text-5xl leading-tight mb-4">
+            {L.heroLine1}
+            <br />
+            <span className="italic" style={{ color: '#01FFC6' }}>{L.heroLine2}</span>
           </h1>
-          <p className="font-sans text-sm sm:text-base text-gray-500 leading-relaxed">
+          <p className="font-sans text-base max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.7)' }}>
             {L.subtitle}
           </p>
         </div>
+      </section>
+
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* Input card */}
         <div className="bg-white rounded-2xl p-6 mb-4" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
