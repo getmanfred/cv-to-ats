@@ -155,13 +155,13 @@ export default function LinkedInPage() {
             <li className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-sans font-[700] text-xs mt-0.5" style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4' }}>1</span>
               <p className="font-sans text-sm" style={{ color: '#1a2744' }}>
-                Abre tu perfil y haz clic en el botón <strong>"Más"</strong> (junto a "Conectar" o "Seguir")
+                Abre tu perfil y haz clic en el botón <strong>&ldquo;Más&rdquo;</strong> (junto a &ldquo;Conectar&rdquo; o &ldquo;Seguir&rdquo;)
               </p>
             </li>
             <li className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-sans font-[700] text-xs mt-0.5" style={{ backgroundColor: '#e6f7f7', color: '#0DA1A4' }}>2</span>
               <p className="font-sans text-sm" style={{ color: '#1a2744' }}>
-                Selecciona <strong>"Guardar en PDF"</strong> <span className="text-gray-400">(en inglés: "Save to PDF")</span>. El PDF se descargará automáticamente
+                Selecciona <strong>&ldquo;Guardar en PDF&rdquo;</strong> <span className="text-gray-400">(en inglés: &ldquo;Save to PDF&rdquo;)</span>. El PDF se descargará automáticamente
               </p>
             </li>
             <li className="flex items-start gap-3">
