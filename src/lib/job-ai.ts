@@ -55,7 +55,9 @@ SALARY TRANSPARENCY:
 
 OTHER: Free fruit, free snacks, coffee machine, or similar trivial in-office perks mentioned as if they were a meaningful benefit: subtract 5 points AND add a señalAlerta about it.
 
-All adjustments are cumulative. Clamp the final score to the 0-100 range.
+COURSE / TRAINING SCAM DETECTION: Before applying any other adjustment, evaluate whether this is a genuine job offer or a training program / course sale disguised as a job offer. Signs include: mandatory training (paid or free) before any employment; "bolsa de trabajo" / "job placement" / "inserción laboral" as the outcome rather than an actual job contract; conditional or vague employment promises after completing a course; no concrete day-to-day job description (only training content described); MLM or network marketing patterns; academies or training centers that describe "job opportunities" rather than actual positions; language like "puedes ganar hasta X" / "ingresos ilimitados" / "sé tu propio jefe". If ANY of these are detected: set alertaCurso.detectado to true and cap the final score at 20 regardless of all other factors.
+
+All other adjustments are cumulative. Clamp the final score to the 0-100 range.
 
 Required JSON fields:
 
@@ -74,6 +76,10 @@ Required JSON fields:
 - "senalesAlerta": array of 2-7 red flags or concerns. Each item: { "titulo": short label (3-6 words), "descripcion": 2-3 sentences. Quote or reference specific text from the offer when possible. Explain why this matters, what it typically signals in practice, and what the candidate should ask about }. Include at least two even if the offer is excellent.
 
 - "loQueNoDice": array of 3-6 strings. Important information that is conspicuously absent from the offer. Be specific about what exactly is missing and why it matters. Frame as factual observations. Example: "No menciona el rango salarial, lo que dificulta evaluar si encaja con las expectativas", "No especifica cuántos días de teletrabajo son posibles", "No describe el proceso de selección ni el número de fases".
+
+- "alertaCurso": evaluate whether this is a real job offer or a course/training program disguised as one (see COURSE / TRAINING SCAM DETECTION above).
+  - "detectado": true if any course-sale or MLM pattern is found; false otherwise
+  - "razon": if detectado is true, one or two sentences explaining exactly what in the offer triggered the flag (quote specific phrases). If detectado is false, empty string.
 
 - "traduccionReal": scan the FULL offer text for corporate jargon, buzzwords, or vague phrases whose practical meaning is not obvious from their literal reading. For each detected phrase:
   - "frase": the exact phrase or close paraphrase as it appears in the offer
@@ -128,7 +134,8 @@ JSON structure:
   "loQueNoDice": ["<string>", ...],
   "salarioMercado": { "min": <number>, "max": <number>, "moneda": "<string>", "nota": "<string>" } | null,
   "traduccionReal": [{ "frase": "<string>", "traduccion": "<string>" }] | null,
-  "procesoEstimado": { "fases": <number>, "descripcion": "<string>", "confianza": "<alta|media|baja>" } | null
+  "procesoEstimado": { "fases": <number>, "descripcion": "<string>", "confianza": "<alta|media|baja>" } | null,
+  "alertaCurso": { "detectado": <boolean>, "razon": "<string>" }
 }
 
 JOB OFFER:
@@ -168,6 +175,7 @@ export async function analyzeJobWithAI(jdText: string, lang: 'es' | 'en' = 'es',
   parsed.salarioMercado    = parsed.salarioMercado ?? null
   parsed.traduccionReal    = parsed.traduccionReal ?? null
   parsed.procesoEstimado   = parsed.procesoEstimado ?? null
+  parsed.alertaCurso       = parsed.alertaCurso ?? null
 
   return parsed
 }

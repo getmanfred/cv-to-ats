@@ -21,6 +21,11 @@ export interface ProcesoEstimado {
   confianza: 'alta' | 'media' | 'baja'
 }
 
+export interface AlertaCurso {
+  detectado: boolean
+  razon: string
+}
+
 export interface JobAnalysisResult {
   score: number
   puesto: string
@@ -33,6 +38,7 @@ export interface JobAnalysisResult {
   salarioMercado: SalarioMercado | null
   traduccionReal: TraduccionFrase[] | null
   procesoEstimado: ProcesoEstimado | null
+  alertaCurso: AlertaCurso | null
   isManfredOffer?: boolean
   analyzedAt?: string
 }
