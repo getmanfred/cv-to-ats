@@ -48,7 +48,10 @@ PRESENCIALIDAD — context-aware rules (evaluate the role before applying any pe
 - C-LEVEL AND COMMERCIAL ROLES: If the role is C-level (CEO, CTO, COO, CFO, VP, Director, Head of) or commercial/client-facing (Sales, Account Executive, BDR, SDR, Account Manager, Customer Success, Business Development) — apply only -5 for fully on-site. No penalty for hybrid. Physical presence is standard and expected for leadership and client-facing work.
 - ALL OTHER ROLES: Hybrid work (some days remote, some days in office): subtract 5 points. Fully on-site / presencial with no remote option whatsoever: subtract 15 points AND add a señalAlerta about it.
 
-SALARY BOOST: If the offer explicitly states a salary (range or fixed number) AND your independent market estimate (salarioMercado) indicates the offered salary is above the market median for this role — add +10 points. If the offer is 20% or more above your market estimate — add +15 points instead. Only apply this bonus when a concrete salary figure is stated in the offer and your estimate is confident.
+SALARY TRANSPARENCY:
+- No salary whatsoever (no figure, no range, no explicit mention of compensation): subtract 15 points AND add a señalAlerta titled "Sin información salarial" explaining that the absence of salary data forces candidates to negotiate blind and is a significant transparency failure.
+- Salary below market (offer states a salary but your estimate indicates it is below market median): no additional penalty — the salary is at least visible and the candidate can make an informed decision.
+- Salary above market: add +10 points. If 20% or more above your estimate: add +15 points instead. Only apply bonus when a concrete salary figure is stated and your estimate is confident.
 
 OTHER: Free fruit, free snacks, coffee machine, or similar trivial in-office perks mentioned as if they were a meaningful benefit: subtract 5 points AND add a señalAlerta about it.
 
