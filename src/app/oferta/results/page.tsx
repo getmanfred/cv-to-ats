@@ -190,7 +190,9 @@ export default function JobResultsPage() {
           </div>
 
           <div className="mt-5 pt-4 border-t border-gray-100">
-            <p className="font-sans text-xs text-gray-400 italic">{etiqueta}</p>
+            <p className="font-sans font-[700] text-sm" style={{ color: getScoreColor(result.score) }}>
+              {etiqueta}
+            </p>
           </div>
         </div>
 

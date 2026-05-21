@@ -16,6 +16,7 @@ const LABELS = {
     uploadFile: 'PDF o DOCX',
     urlDetected: 'URL detectada',
     remove: 'Quitar',
+    loadingHint: 'La IA está analizando la calidad de la oferta',
     errEmpty: 'Pega el texto de la oferta para continuar.',
     errShort: 'El texto es demasiado corto. Pega la oferta completa.',
     errService: 'El servicio no está disponible en este momento. Inténtalo de nuevo en unos segundos.',
@@ -31,6 +32,7 @@ const LABELS = {
     uploadFile: 'PDF or DOCX',
     urlDetected: 'URL detected',
     remove: 'Remove',
+    loadingHint: 'AI is analysing the quality of the offer',
     errEmpty: 'Paste the job offer text to continue.',
     errShort: 'The text is too short. Paste the full job offer.',
     errService: 'The service is not available right now. Try again in a few seconds.',
@@ -39,11 +41,13 @@ const LABELS = {
 }
 
 const LOADING_MESSAGES = [
-  'Leyendo entre líneas...',
-  'Contando tecnologías pedidas...',
-  'Buscando el salario (puede tardar)...',
-  'Evaluando beneficios reales vs decorativos...',
-  'Detectando señales...',
+  'Contando tecnologías del stack... van 47...',
+  'Buscando el salario... sigue sin aparecer...',
+  'Evaluando si el futbolín cuenta como beneficio...',
+  'Comprobando si los años de experiencia son físicamente posibles...',
+  'Leyendo entre líneas (y entre líneas de las líneas)...',
+  'Calculando el ratio requisitos/compensación...',
+  'Analizando si "incorporación inmediata" es una señal...',
 ]
 
 export default function OfertaPage() {
@@ -205,16 +209,38 @@ export default function OfertaPage() {
           </div>
         )}
 
-        <button
-          onClick={handleAnalyze}
-          disabled={analyzing || !hasInput}
-          className="w-full font-sans font-[700] text-sm uppercase tracking-wider py-3.5 rounded-xl transition-all duration-200"
-          style={analyzing || !hasInput
-            ? { backgroundColor: '#e5e7eb', color: '#9ca3af', cursor: 'not-allowed' }
-            : { backgroundColor: '#092c64', color: '#ffffff' }}
-        >
-          {analyzing ? loadingMsg || L.analyzing : L.analyze}
-        </button>
+        {analyzing ? (
+          <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-white border border-gray-100">
+            <div className="flex gap-2">
+              {[0, 1, 2].map(i => (
+                <span
+                  key={i}
+                  className="w-2.5 h-2.5 rounded-full bg-teal"
+                  style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                />
+              ))}
+            </div>
+            <p
+              key={loadingMsg}
+              className="font-sans font-[800] text-center text-base"
+              style={{ color: '#1a2744', animation: 'fadeIn 0.4s ease-in' }}
+            >
+              {loadingMsg || L.analyzing}
+            </p>
+            <p className="font-sans text-gray-400 text-xs">{L.loadingHint}</p>
+          </div>
+        ) : (
+          <button
+            onClick={handleAnalyze}
+            disabled={!hasInput}
+            className="w-full font-sans font-[700] text-sm uppercase tracking-wider py-3.5 rounded-xl transition-all duration-200"
+            style={!hasInput
+              ? { backgroundColor: '#e5e7eb', color: '#9ca3af', cursor: 'not-allowed' }
+              : { backgroundColor: '#092c64', color: '#ffffff' }}
+          >
+            {L.analyze}
+          </button>
+        )}
 
       </main>
     </div>

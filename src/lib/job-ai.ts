@@ -44,15 +44,15 @@ Required JSON fields:
 
 - "veredicto": one punchy headline, maximum 10 words. Newspaper-style. Captures the essence of the offer with a touch of irony if warranted. Should feel like a headline, not a description.
 
-- "senalesPositivas": array of 1-5 positive signals found in the offer. Each item: { "titulo": short label (3-6 words), "descripcion": 1-2 sentences explaining why this is a good sign for the candidate }. Include at least one even if the offer is poor.
+- "senalesPositivas": array of 2-6 positive signals found in the offer. Each item: { "titulo": short label (3-6 words), "descripcion": 2-3 sentences. Quote or reference specific text from the offer when possible. Explain concretely why this is a good sign and what it implies for the candidate's experience }. Include at least two even if the offer is poor.
 
-- "senalesAlerta": array of 1-6 red flags or concerns. Each item: { "titulo": short label (3-6 words), "descripcion": 1-2 sentences explaining why this matters and what it might signal }. Include at least one even if the offer is excellent.
+- "senalesAlerta": array of 2-7 red flags or concerns. Each item: { "titulo": short label (3-6 words), "descripcion": 2-3 sentences. Quote or reference specific text from the offer when possible. Explain why this matters, what it typically signals in practice, and what the candidate should ask about }. Include at least two even if the offer is excellent.
 
-- "loQueNoDice": array of 2-5 strings. Important information that is conspicuously absent from the offer. Frame as factual observations, not accusations. Example: "No menciona el salario", "No especifica los días de teletrabajo", "No describe el proceso de selección".
+- "loQueNoDice": array of 3-6 strings. Important information that is conspicuously absent from the offer. Be specific about what exactly is missing and why it matters. Frame as factual observations. Example: "No menciona el rango salarial, lo que dificulta evaluar si encaja con las expectativas", "No especifica cuántos días de teletrabajo son posibles", "No describe el proceso de selección ni el número de fases".
 
 RULES:
-- Be specific: reference actual phrases or content from the offer
-- "loQueNoDice" contains absences, not opinions or red flag interpretations
+- Be specific: quote or reference actual phrases or content from the offer in señales descriptions
+- "loQueNoDice" contains absences with a brief note on why each absence matters
 - Never be cruel, offensive, or attack the company — gentle irony only
 - If the offer is genuinely excellent, score it high and explain why honestly
 - All text values must be in the specified language
