@@ -27,6 +27,11 @@ const LABELS = {
     confianzaAlta: 'Proceso descrito en la oferta',
     confianzaMedia: 'Estimación basada en el contexto',
     confianzaBaja: 'Estimación con poca información',
+    badgeGood: 'Buena oferta',
+    badgeOk: 'Con matices',
+    badgeBad: 'Muchas dudas',
+    etiquetas: ['Aplica ya antes de que desaparezca', 'Merece una llamada', 'Léela dos veces', 'Aquí hay algo raro', 'Pide mucho, ofrece poco', 'Guardar como ejemplo de lo que no hacer'],
+    manfredDesc: 'Esta oferta está publicada en Manfred. Una persona humana leerá tu candidatura y te responderá personalmente.',
   },
   en: {
     loading: 'Loading results...',
@@ -48,6 +53,11 @@ const LABELS = {
     confianzaAlta: 'Process described in the offer',
     confianzaMedia: 'Estimate based on context',
     confianzaBaja: 'Estimate with limited information',
+    badgeGood: 'Good offer',
+    badgeOk: 'Mixed signals',
+    badgeBad: 'Many red flags',
+    etiquetas: ['Apply now before it disappears', 'Worth a call', 'Read it twice', 'Something feels off', 'Demands a lot, offers little', 'Save as a what-not-to-do example'],
+    manfredDesc: 'This offer is published on Manfred. A real person will read your application and reply to you personally.',
   },
 }
 
@@ -57,19 +67,19 @@ function getScoreColor(score: number): string {
   return '#ef4444'
 }
 
-function getScoreBadge(score: number): { label: string; bg: string; text: string } {
-  if (score >= 75) return { label: 'Buena oferta',  bg: '#e6f7f7', text: '#0DA1A4' }
-  if (score >= 50) return { label: 'Con matices',   bg: '#fffbeb', text: '#d97706' }
-  return              { label: 'Muchas dudas',   bg: '#fff1f2', text: '#e11d48' }
+function getScoreBadge(score: number, L: typeof LABELS['es']): { label: string; bg: string; text: string } {
+  if (score >= 75) return { label: L.badgeGood, bg: '#e6f7f7', text: '#0DA1A4' }
+  if (score >= 50) return { label: L.badgeOk,   bg: '#fffbeb', text: '#d97706' }
+  return              { label: L.badgeBad,  bg: '#fff1f2', text: '#e11d48' }
 }
 
-function getJobEtiqueta(score: number): string {
-  if (score >= 90) return 'Aplica ya antes de que desaparezca'
-  if (score >= 70) return 'Merece una llamada'
-  if (score >= 50) return 'Léela dos veces'
-  if (score >= 30) return 'Aquí hay algo raro'
-  if (score >= 10) return 'Pide mucho, ofrece poco'
-  return 'Guardar como ejemplo de lo que no hacer'
+function getJobEtiqueta(score: number, L: typeof LABELS['es']): string {
+  if (score >= 90) return L.etiquetas[0]
+  if (score >= 70) return L.etiquetas[1]
+  if (score >= 50) return L.etiquetas[2]
+  if (score >= 30) return L.etiquetas[3]
+  if (score >= 10) return L.etiquetas[4]
+  return L.etiquetas[5]
 }
 
 const RADIUS = 52
@@ -296,8 +306,8 @@ export default function JobResultsPage() {
     )
   }
 
-  const { label: badgeLabel, bg: badgeBg, text: badgeText } = getScoreBadge(result.score)
-  const etiqueta = getJobEtiqueta(result.score)
+  const { label: badgeLabel, bg: badgeBg, text: badgeText } = getScoreBadge(result.score, L)
+  const etiqueta = getJobEtiqueta(result.score, L)
 
   return (
     <div className="min-h-screen bg-bg-light">
@@ -369,7 +379,7 @@ export default function JobResultsPage() {
             <div>
               <p className="font-sans font-[800] text-base" style={{ color: '#15803d' }}>Manfredo Certified</p>
               <p className="font-sans text-sm leading-relaxed" style={{ color: '#166534' }}>
-                Esta oferta está publicada en Manfred. Una persona humana leerá tu candidatura y te responderá personalmente.
+                {L.manfredDesc}
               </p>
             </div>
           </div>

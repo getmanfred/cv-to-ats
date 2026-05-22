@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti'
 import type { ATSAnalysisResult, Suggestion } from '@/types/analysis'
 import Header from '@/components/Header'
 import { saveToHistory } from '@/lib/history'
+import { getLang, type Lang } from '@/components/LanguageSelector'
 import ScoreHeader from '@/components/results/ScoreHeader'
 import SuggestionCard from '@/components/results/SuggestionCard'
 import AlertaBanner from '@/components/results/AlertaBanner'
@@ -16,11 +17,45 @@ import ScrollToTop from '@/components/ScrollToTop'
 
 const PRIORITY_ORDER: Record<string, number> = { alta: 0, media: 1, baja: 2 }
 
+const LABELS = {
+  es: {
+    loading: 'Cargando resultados...',
+    printSubtitle: 'Tu análisis de CV optimizado para ATS',
+    methodologyLink: '¿Cómo se calcula esta puntuación? →',
+    gapsTitle: 'Huecos en el historial laboral',
+    gapsNote: 'Algunos ATS filtran gaps de más de 6 meses. Considera añadir una breve nota explicativa en tu CV.',
+    improvementsTitle: 'Mejoras recomendadas',
+    improvementsSubtitle: 'Cada análisis es independiente — al mejorar el CV pueden aparecer puntos nuevos. La puntuación puede subir o bajar entre iteraciones.',
+    compareBtn: '¿Has mejorado tu CV? Compara versiones',
+    ctaTagline: '¿Empezamos a mejorar tu CV?',
+    ctaTitle: 'Descarga tu informe completo',
+    editorLabel: 'Editor Harvard',
+    editorDesc: 'Crea tu CV en el formato más aceptado',
+    backBtn: '← Analizar otro CV',
+  },
+  en: {
+    loading: 'Loading results...',
+    printSubtitle: 'Your ATS-optimised CV analysis',
+    methodologyLink: 'How is this score calculated? →',
+    gapsTitle: 'Employment gaps detected',
+    gapsNote: 'Some ATS systems filter out gaps longer than 6 months. Consider adding a short explanatory note to your CV.',
+    improvementsTitle: 'Recommended improvements',
+    improvementsSubtitle: 'Each analysis is independent — improving the CV may reveal new points. The score can go up or down between iterations.',
+    compareBtn: 'Improved your CV? Compare versions',
+    ctaTagline: 'Ready to improve your CV?',
+    ctaTitle: 'Download your full report',
+    editorLabel: 'Harvard Editor',
+    editorDesc: 'Create your CV in the most widely accepted format',
+    backBtn: '← Analyse another CV',
+  },
+}
+
 export default function ResultsPage() {
   const router = useRouter()
   const [result, setResult] = useState<ATSAnalysisResult | null>(null)
   const [showMilestone, setShowMilestone] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [lang, setLang] = useState<Lang>('es')
 
   useEffect(() => {
     const raw = sessionStorage.getItem('atsResult')
@@ -51,11 +86,20 @@ export default function ResultsPage() {
     return () => clearTimeout(t)
   }, [showMilestone])
 
+  useEffect(() => {
+    setLang(getLang())
+    const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail)
+    window.addEventListener('langchange', handler)
+    return () => window.removeEventListener('langchange', handler)
+  }, [])
+
   const handleCopyEmail = () => {
     navigator.clipboard.writeText('borja.perez@getmanfred.com')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  const L = LABELS[lang]
 
   if (!result) {
     return (
@@ -65,7 +109,7 @@ export default function ResultsPage() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
           </svg>
-          <p className="font-sans text-gray-400 text-sm">Cargando resultados...</p>
+          <p className="font-sans text-gray-400 text-sm">{L.loading}</p>
         </div>
       </div>
     )
@@ -175,7 +219,7 @@ export default function ResultsPage() {
             </span>
           </div>
           <p style={{ fontFamily: 'sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.55)', margin: 0 }}>
-            Tu análisis de CV optimizado para ATS
+            {L.printSubtitle}
           </p>
         </div>
         <main className="max-w-3xl mx-auto px-6 py-8 space-y-4">
@@ -198,7 +242,7 @@ export default function ResultsPage() {
               className="font-sans text-xs transition-opacity hover:opacity-70"
               style={{ color: '#0DA1A4' }}
             >
-              ¿Cómo se calcula esta puntuación? →
+              {L.methodologyLink}
             </Link>
           </div>
 
@@ -220,7 +264,7 @@ export default function ResultsPage() {
                 </div>
                 <div>
                   <p className="font-sans font-[700] text-xs uppercase tracking-widest mb-2" style={{ color: '#d97706' }}>
-                    Huecos en el historial laboral
+                    {L.gapsTitle}
                   </p>
                   <ul className="space-y-1">
                     {result.gapsCarrera.map((gap, i) => (
@@ -228,7 +272,7 @@ export default function ResultsPage() {
                     ))}
                   </ul>
                   <p className="font-sans text-xs mt-2" style={{ color: '#b45309' }}>
-                    Algunos ATS filtran gaps de más de 6 meses. Considera añadir una breve nota explicativa en tu CV.
+                    {L.gapsNote}
                   </p>
                 </div>
               </div>
@@ -238,10 +282,10 @@ export default function ResultsPage() {
           {/* Section title */}
           <div className="pt-3 pb-1">
             <h2 className="font-sans font-[900] text-xl text-purple-dark">
-              Mejoras recomendadas
+              {L.improvementsTitle}
             </h2>
             <p className="font-sans text-xs text-gray-400 mt-1">
-              Cada análisis es independiente — al mejorar el CV pueden aparecer puntos nuevos. La puntuación puede subir o bajar entre iteraciones.
+              {L.improvementsSubtitle}
             </p>
           </div>
 
@@ -263,7 +307,7 @@ export default function ResultsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              ¿Has mejorado tu CV? Compara versiones
+              {L.compareBtn}
             </button>
           </div>
 
@@ -271,10 +315,10 @@ export default function ResultsPage() {
           <div className="no-print flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-2xl mt-2 bg-navy">
             <div>
               <p className="font-sans font-[900] uppercase tracking-widest text-xs mb-1 text-neon">
-                ¿Empezamos a mejorar tu CV?
+                {L.ctaTagline}
               </p>
               <p className="font-sans font-[800] text-base leading-snug text-white">
-                Descarga tu informe completo
+                {L.ctaTitle}
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -290,7 +334,7 @@ export default function ResultsPage() {
           {/* More tools discovery — hidden on print */}
           <div className="no-print grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { href: '/editor', icon: '✏️', label: 'Editor Harvard', desc: 'Crea tu CV en el formato más aceptado' },
+              { href: '/editor', icon: '✏️', label: L.editorLabel, desc: L.editorDesc },
             ].map(tool => (
               <button key={tool.href} onClick={() => router.push(tool.href)}
                 className="text-left p-4 rounded-xl bg-white border border-gray-100 hover:border-teal hover:shadow-md transition-all duration-200"
@@ -307,7 +351,7 @@ export default function ResultsPage() {
               onClick={() => router.push('/')}
               className="font-sans font-[800] text-sm text-gray-400 hover:text-teal hover:opacity-80 transition-all duration-200 uppercase tracking-wider"
             >
-              ← Analizar otro CV
+              {L.backBtn}
             </button>
           </div>
         </main>

@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti'
 import { renderWithTerminos } from '@/lib/renderBold'
 import ExportButton from '@/components/results/ExportButton'
 import type { Metricas } from '@/types/analysis'
+import { getLang, type Lang } from '@/components/LanguageSelector'
 
 interface ScoreHeaderProps {
   score:             number
@@ -14,16 +15,41 @@ interface ScoreHeaderProps {
   metricas?:         Metricas
 }
 
+const LABELS = {
+  es: {
+    atsCompatibility: 'Compatibilidad ATS',
+    good: 'Bueno',
+    improvable: 'Mejorable',
+    critical: 'Crítico',
+    words: 'palabras',
+    page: 'página',
+    pages: 'páginas',
+    keywordDensity: 'densidad keywords',
+    detectedSkills: 'Skills detectadas',
+  },
+  en: {
+    atsCompatibility: 'ATS Compatibility',
+    good: 'Good',
+    improvable: 'Improvable',
+    critical: 'Critical',
+    words: 'words',
+    page: 'page',
+    pages: 'pages',
+    keywordDensity: 'keyword density',
+    detectedSkills: 'Detected skills',
+  },
+}
+
 function getArcColor(score: number): string {
   if (score >= 75) return '#0DA1A4'
   if (score >= 50) return '#f59e0b'
   return '#ef4444'
 }
 
-function getScoreLabel(score: number): { label: string; bg: string; text: string } {
-  if (score >= 75) return { label: 'Bueno',     bg: '#e6f7f7', text: '#0DA1A4' }
-  if (score >= 50) return { label: 'Mejorable', bg: '#fffbeb', text: '#d97706' }
-  return              { label: 'Crítico',    bg: '#fff1f2', text: '#e11d48' }
+function getScoreLabel(score: number, L: typeof LABELS['es']): { label: string; bg: string; text: string } {
+  if (score >= 75) return { label: L.good,      bg: '#e6f7f7', text: '#0DA1A4' }
+  if (score >= 50) return { label: L.improvable, bg: '#fffbeb', text: '#d97706' }
+  return              { label: L.critical,   bg: '#fff1f2', text: '#e11d48' }
 }
 
 function densidadColor(d: number): string {
@@ -40,6 +66,14 @@ export default function ScoreHeader({
 }: ScoreHeaderProps) {
   const [animated, setAnimated]       = useState(false)
   const [displayScore, setDisplayScore] = useState(0)
+  const [lang, setLang] = useState<Lang>('es')
+
+  useEffect(() => {
+    setLang(getLang())
+    const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail)
+    window.addEventListener('langchange', handler)
+    return () => window.removeEventListener('langchange', handler)
+  }, [])
 
   // Arc animation
   useEffect(() => {
@@ -91,9 +125,10 @@ export default function ScoreHeader({
     return () => clearTimeout(t)
   }, [score])
 
+  const L = LABELS[lang]
   const dashOffset = animated ? CIRCUMFERENCE * (1 - score / 100) : CIRCUMFERENCE
   const arcColor = getArcColor(score)
-  const { label, bg, text } = getScoreLabel(score)
+  const { label, bg, text } = getScoreLabel(score, L)
 
   const hasSkills  = skillsDetectadas && skillsDetectadas.length > 0
   const hasMetrics = metricas != null
@@ -104,7 +139,7 @@ export default function ScoreHeader({
       {/* Top bar */}
       <div className="flex items-center justify-between mb-5">
         <span className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400">
-          Compatibilidad ATS
+          {L.atsCompatibility}
         </span>
         <div className="no-print">
           <ExportButton variant="solid" />
@@ -157,21 +192,21 @@ export default function ScoreHeader({
             <p className="font-sans font-[700] text-lg text-purple-dark">
               {metricas!.palabras.toLocaleString('es-ES')}
             </p>
-            <p className="font-sans text-xs text-gray-400 mt-0.5">palabras</p>
+            <p className="font-sans text-xs text-gray-400 mt-0.5">{L.words}</p>
           </div>
           <div className="text-center border-x border-gray-100">
             <p className="font-sans font-[700] text-lg text-purple-dark">
               ~{metricas!.paginasEstimadas}
             </p>
             <p className="font-sans text-xs text-gray-400 mt-0.5">
-              {metricas!.paginasEstimadas === 1 ? 'página' : 'páginas'}
+              {metricas!.paginasEstimadas === 1 ? L.page : L.pages}
             </p>
           </div>
           <div className="text-center">
             <p className="font-sans font-[700] text-lg" style={{ color: densidadColor(metricas!.densidadKeywords) }}>
               {metricas!.densidadKeywords}%
             </p>
-            <p className="font-sans text-xs text-gray-400 mt-0.5">densidad keywords</p>
+            <p className="font-sans text-xs text-gray-400 mt-0.5">{L.keywordDensity}</p>
           </div>
         </div>
       )}
@@ -180,7 +215,7 @@ export default function ScoreHeader({
       {hasSkills && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           <p className="font-sans font-[600] text-xs uppercase tracking-widest text-gray-400 mb-3">
-            Skills detectadas
+            {L.detectedSkills}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {skillsDetectadas!.map(skill => (

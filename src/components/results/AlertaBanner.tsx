@@ -1,9 +1,36 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { getLang, type Lang } from '@/components/LanguageSelector'
+
 interface AlertaBannerProps {
   alertas: string[]
 }
 
+const LABELS = {
+  es: {
+    title: 'Alertas críticas de parseo ATS',
+    desc: 'Estos problemas pueden hacer que los ATS descarten tu CV antes de que lo lea un humano.',
+  },
+  en: {
+    title: 'Critical ATS parsing alerts',
+    desc: 'These issues may cause ATS systems to reject your CV before a human reads it.',
+  },
+}
+
 export default function AlertaBanner({ alertas }: AlertaBannerProps) {
+  const [lang, setLang] = useState<Lang>('es')
+
+  useEffect(() => {
+    setLang(getLang())
+    const handler = (e: Event) => setLang((e as CustomEvent<Lang>).detail)
+    window.addEventListener('langchange', handler)
+    return () => window.removeEventListener('langchange', handler)
+  }, [])
+
   if (!alertas || alertas.length === 0) return null
+
+  const L = LABELS[lang]
 
   return (
     <div
@@ -11,7 +38,6 @@ export default function AlertaBanner({ alertas }: AlertaBannerProps) {
       style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}
     >
       <div className="flex items-start gap-3">
-        {/* Icon */}
         <div
           className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
           style={{ backgroundColor: '#ffedd5' }}
@@ -23,10 +49,10 @@ export default function AlertaBanner({ alertas }: AlertaBannerProps) {
 
         <div className="flex-1 min-w-0">
           <p className="font-sans font-[700] text-sm mb-2" style={{ color: '#9a3412' }}>
-            Alertas críticas de parseo ATS
+            {L.title}
           </p>
           <p className="font-sans text-xs mb-3" style={{ color: '#c2410c' }}>
-            Estos problemas pueden hacer que los ATS descarten tu CV antes de que lo lea un humano.
+            {L.desc}
           </p>
           <ul className="space-y-1.5">
             {alertas.map((alerta, i) => (
