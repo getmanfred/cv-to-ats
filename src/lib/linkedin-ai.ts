@@ -54,7 +54,7 @@ Required fields:
       - "texto": specific action referencing actual content from this profile
       - "terminos": array of 1-3 exact substrings from "texto" to bold
     - "prioridad": "alta" if score < 60, "media" if 60-74, "baja" if ≥ 75
-    - "sugerencia": max 40-word copy-paste text example showing the improved content (e.g. a rewritten headline, an improved About opening sentence, or a bullet with a quantified achievement). ONLY include for "alta" priority — set null for "media" and "baja".
+    - "sugerencia": max 40-word copy-paste text example showing the improved content (e.g. a rewritten headline, an improved About opening sentence, or a bullet with a quantified achievement). Always include for "alta" priority. If there are no "alta" priority suggestions across ALL categories, also include for the 2 most impactful "media" priority suggestions (choose based on which categories scored lowest). Set null for all others.
 
 - "topPriorities": array of 3 concrete actions in the specified language (infinitive, gender-neutral).
 
