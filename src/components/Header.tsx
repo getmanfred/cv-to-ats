@@ -77,10 +77,10 @@ export default function Header({ noPrint = false }: HeaderProps) {
       style={{ borderColor: '#e5e0d8' }}>
 
       {/* Top bar: logo | counter (centered) | language */}
-      <div className="max-w-container mx-auto px-4 sm:px-6 py-3 grid grid-cols-3 items-center">
+      <div className="max-w-container mx-auto px-4 sm:px-6 py-3 flex items-center sm:grid sm:grid-cols-3">
 
         {/* Left: logo */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1 sm:flex-none">
           <a href="https://getmanfred.com" target="_blank" rel="noopener noreferrer"
             className="hover:opacity-70 transition-opacity duration-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
