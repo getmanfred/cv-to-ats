@@ -45,15 +45,26 @@ const LABELS = {
   },
 }
 
-const LOADING_MESSAGES = [
-  'Contando tecnologías del stack... Van 47...',
-  'Buscando el salario... Sigue sin aparecer...',
-  'Evaluando si el futbolín cuenta como beneficio...',
-  'Comprobando si los años de experiencia son físicamente posibles...',
-  'Leyendo entre líneas (y entre líneas de las líneas)...',
-  'Calculando el ratio requisitos/compensación...',
-  'Analizando si "incorporación inmediata" es una señal...',
-]
+const LOADING_MESSAGES = {
+  es: [
+    'Contando tecnologías del stack... Van 47...',
+    'Buscando el salario... Sigue sin aparecer...',
+    'Evaluando si el futbolín cuenta como beneficio...',
+    'Comprobando si los años de experiencia son físicamente posibles...',
+    'Leyendo entre líneas (y entre líneas de las líneas)...',
+    'Calculando el ratio requisitos/compensación...',
+    'Analizando si "incorporación inmediata" es una señal...',
+  ],
+  en: [
+    'Counting stack technologies... Up to 47 now...',
+    'Looking for the salary... Still not showing up...',
+    'Evaluating if the ping-pong table counts as a benefit...',
+    'Checking if the years of experience are physically possible...',
+    'Reading between the lines (and between those lines)...',
+    'Calculating the requirements/compensation ratio...',
+    'Analysing whether "immediate start" is a red flag...',
+  ],
+}
 
 export default function OfertaPage() {
   const router = useRouter()
@@ -77,14 +88,14 @@ export default function OfertaPage() {
 
   useEffect(() => {
     if (!analyzing) return
-    setLoadingMsg(LOADING_MESSAGES[0])
+    setLoadingMsg(LOADING_MESSAGES[lang][0])
     let i = 1
     const interval = setInterval(() => {
-      setLoadingMsg(LOADING_MESSAGES[i % LOADING_MESSAGES.length])
+      setLoadingMsg(LOADING_MESSAGES[lang][i % LOADING_MESSAGES[lang].length])
       i++
     }, 3000)
     return () => clearInterval(interval)
-  }, [analyzing])
+  }, [analyzing, lang])
 
   const L = LABELS[lang]
   const hasInput = jdText.trim().length > 0 || !!jdFile
