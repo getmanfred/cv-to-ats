@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 
+export const dynamic = 'force-dynamic'
 
 const BARS = [
   { label: 'Keywords & skills',       pct: 85, color: '#0DA1A4' },
@@ -145,7 +146,7 @@ export async function GET() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
                 <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase' }}>Puntuación ATS</div>
-                <div style={{ color: '#ffffff', fontWeight: 900, fontSize: '30px', lineHeight: 1 }}>78<span style={{ fontSize: '16px', opacity: 0.7 }}>%</span></div>
+                <div style={{ color: '#ffffff', fontWeight: 900, fontSize: '30px', lineHeight: 1, display: 'flex', alignItems: 'baseline' }}>78<span style={{ fontSize: '16px', opacity: 0.7 }}>%</span></div>
               </div>
             </div>
 
