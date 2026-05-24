@@ -40,6 +40,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const BASE_URL = getBaseUrl()
   return {
     metadataBase: new URL(BASE_URL),
+    icons: {
+      icon: '/favicon.ico',
+    },
     title: 'ATSKiller — Manfred',
     description: 'Analiza tu CV y descubre si está optimizado para los sistemas ATS de selección de personal. Feedback concreto, puntuación por categorías y recomendaciones accionables.',
     openGraph: {
