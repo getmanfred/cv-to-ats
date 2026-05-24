@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +23,10 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const OFFSET = CIRCUMFERENCE * (1 - SCORE / 100)
 
 export async function GET() {
+  const fontData = await readFile(
+    join(process.cwd(), 'node_modules', 'next', 'dist', 'compiled', '@vercel', 'og', 'noto-sans-v27-latin-regular.ttf')
+  )
+
   const image = new ImageResponse(
     (
       <div
@@ -316,7 +322,11 @@ export async function GET() {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      width: 1200,
+      height: 630,
+      fonts: [{ name: 'sans-serif', data: fontData, weight: 400 }],
+    }
   )
   image.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=86400')
   return image
