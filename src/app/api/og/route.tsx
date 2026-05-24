@@ -1,6 +1,5 @@
 import { ImageResponse } from 'next/og'
 
-export const runtime = 'edge'
 
 const BARS = [
   { label: 'Keywords & skills',       pct: 85, color: '#0DA1A4' },
