@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Link, Image } from '@react-pdf/renderer'
 import type { CVData, SkillCategories } from '@/types/cv'
 import { CV_TEMPLATE_LABELS, type CvLang } from '@/lib/cv-labels'
 
@@ -36,7 +36,9 @@ const s = StyleSheet.create({
   },
 
   // ── Header ──────────────────────────────────────────────
-  headerCenter:    { alignItems: 'center', marginBottom: pt(2) },
+  headerRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: pt(8), marginBottom: pt(2) },
+  headerPhoto:     { width: pt(28), height: pt(28), borderRadius: pt(14), borderWidth: 0.5, borderColor: '#cccccc', flexShrink: 0 },
+  headerCenter:    { flex: 1, alignItems: 'center' },
   nameRow:         { flexDirection: 'row', justifyContent: 'center', marginBottom: 20 },
   firstName:       { fontSize: 28, fontFamily: 'Helvetica', color: C.gray },
   lastName:        { fontSize: 28, fontFamily: 'Helvetica-Bold', color: C.text },
@@ -120,32 +122,35 @@ export default function HarvardTemplatePdf({ data, lang = 'en' }: { data: CVData
       <Page size="A4" style={s.page}>
 
         {/* ── Header ── */}
-        <View style={s.headerCenter}>
-          <View style={s.nameRow}>
-            {p.nombre ? (
-              <>
-                {firstName ? <Text style={s.firstName}>{firstName} </Text> : null}
-                <Text style={s.lastName}>{lastNames}</Text>
-              </>
-            ) : (
-              <Text style={s.namePlaceholder}>Your Name</Text>
+        <View style={s.headerRow}>
+          {p.foto ? <Image src={p.foto} style={s.headerPhoto} /> : null}
+          <View style={s.headerCenter}>
+            <View style={s.nameRow}>
+              {p.nombre ? (
+                <>
+                  {firstName ? <Text style={s.firstName}>{firstName} </Text> : null}
+                  <Text style={s.lastName}>{lastNames}</Text>
+                </>
+              ) : (
+                <Text style={s.namePlaceholder}>Your Name</Text>
+              )}
+            </View>
+            {p.cargo ? <Text style={s.cargo}>{p.cargo}</Text> : null}
+            {contactParts.length > 0 && (
+              <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
+                {contactParts.flatMap((part, idx) => {
+                  const href = contactHref(part, p)
+                  const sep = idx < contactParts.length - 1
+                    ? [<Text key={`sep-${idx}`} style={s.contact}>{'  |  '}</Text>]
+                    : []
+                  const el = href
+                    ? <Link key={idx} href={href} style={s.contactLink} hitSlop={4}>{part}</Link>
+                    : <Text key={idx} style={s.contact}>{part}</Text>
+                  return [el, ...sep]
+                })}
+              </View>
             )}
           </View>
-          {p.cargo ? <Text style={s.cargo}>{p.cargo}</Text> : null}
-          {contactParts.length > 0 && (
-            <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
-              {contactParts.flatMap((part, idx) => {
-                const href = contactHref(part, p)
-                const sep = idx < contactParts.length - 1
-                  ? [<Text key={`sep-${idx}`} style={s.contact}>{'  |  '}</Text>]
-                  : []
-                const el = href
-                  ? <Link key={idx} href={href} style={s.contactLink} hitSlop={4}>{part}</Link>
-                  : <Text key={idx} style={s.contact}>{part}</Text>
-                return [el, ...sep]
-              })}
-            </View>
-          )}
         </View>
 
         {/* ── Skills — section header tied to content with wrap={false} ── */}
