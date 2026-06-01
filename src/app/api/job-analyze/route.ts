@@ -6,10 +6,20 @@ import { extractCVText } from '@/lib/extractors'
 export const runtime = 'nodejs'
 export const maxDuration = 180
 
-const ALLOWED_TYPES  = ['application/pdf']
-const MAX_SIZE_BYTES = 3 * 1024 * 1024
-const MAX_JD_CHARS   = 30_000
-const MIN_JD_CHARS   = 100
+const ALLOWED_TYPES      = ['application/pdf']
+const MAX_SIZE_BYTES     = 3 * 1024 * 1024
+const MAX_JD_CHARS       = 30_000
+const MIN_JD_CHARS       = 100
+const ANALYSIS_TIMEOUT_MS = 85_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('El análisis tardó demasiado. Por favor, inténtalo de nuevo.')), ms)
+    ),
+  ])
+}
 
 function sanitizeError(error: unknown): string {
   if (error instanceof Error) {
@@ -19,6 +29,9 @@ function sanitizeError(error: unknown): string {
     }
     if (msg.includes('JSON') || msg.includes('parse')) {
       return 'Error al procesar la respuesta. Por favor, inténtalo de nuevo.'
+    }
+    if (msg.includes('timed out') || msg.includes('timeout') || msg.includes('tardó demasiado')) {
+      return 'El análisis está tardando más de lo esperado. Por favor, inténtalo de nuevo en unos instantes.'
     }
     return msg
   }
@@ -138,7 +151,8 @@ export async function POST(request: NextRequest) {
         if (!jdFile) {
           return NextResponse.json({ error: 'Se necesita el texto de la oferta.' }, { status: 400 })
         }
-        if (!ALLOWED_TYPES.includes(jdFile.type)) {
+        const jdFileExt = (jdFile.name.split('.').pop() ?? '').toLowerCase()
+        if (!ALLOWED_TYPES.includes(jdFile.type) && jdFileExt !== 'pdf') {
           return NextResponse.json({ error: 'Solo se admiten archivos PDF.' }, { status: 415 })
         }
         if (jdFile.size > MAX_SIZE_BYTES) {
@@ -146,6 +160,7 @@ export async function POST(request: NextRequest) {
         }
         const buffer = Buffer.from(await jdFile.arrayBuffer())
         jdText = await extractCVText(buffer, jdFile.name)
+        if (jdText.length > MAX_JD_CHARS) jdText = jdText.slice(0, MAX_JD_CHARS)
       }
     }
 
@@ -157,7 +172,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isManfred = (formData.get('isManfred') as string | null) === 'true'
-    const result = await analyzeJobWithAI(jdText, lang, isManfred)
+    const result = await withTimeout(analyzeJobWithAI(jdText, lang, isManfred), ANALYSIS_TIMEOUT_MS)
     result.isManfredOffer = isManfred
     result.analyzedAt = new Date().toISOString()
 
