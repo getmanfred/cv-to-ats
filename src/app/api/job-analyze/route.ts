@@ -24,7 +24,8 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 function sanitizeError(error: unknown): string {
   if (error instanceof Error) {
     const msg = error.message
-    if (msg.includes('API key') || msg.includes('quota') || msg.includes('PERMISSION_DENIED')) {
+    if (msg.includes('API key') || msg.includes('quota') || msg.includes('PERMISSION_DENIED') ||
+        msg.includes('Resource exhausted') || msg.includes('429') || msg.includes('rate limit')) {
       return 'El servicio de análisis no está disponible en este momento. Por favor, inténtalo más tarde.'
     }
     if (msg.includes('JSON') || msg.includes('parse')) {
@@ -33,7 +34,6 @@ function sanitizeError(error: unknown): string {
     if (msg.includes('timed out') || msg.includes('timeout') || msg.includes('tardó demasiado')) {
       return 'El análisis está tardando más de lo esperado. Por favor, inténtalo de nuevo en unos instantes.'
     }
-    return msg
   }
   return 'El análisis ha fallado. Por favor, inténtalo de nuevo.'
 }

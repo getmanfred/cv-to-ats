@@ -58,10 +58,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Modo desconocido.' }, { status: 400 })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Error inesperado.'
+    const msg = err instanceof Error ? err.message : ''
     if (msg.includes('context') || msg.includes('token') || msg.includes('too long') || msg.includes('maximum') || msg.includes('length')) {
       return NextResponse.json({ error: 'El CV es demasiado extenso para procesarlo. Prueba con una versión más concisa.' }, { status: 422 })
     }
-    return NextResponse.json({ error: msg }, { status: 500 })
+    if (msg.includes('API key') || msg.includes('quota') || msg.includes('PERMISSION_DENIED') ||
+        msg.includes('Resource exhausted') || msg.includes('429') || msg.includes('rate limit')) {
+      return NextResponse.json({ error: 'El servicio de análisis no está disponible en este momento. Por favor, inténtalo más tarde.' }, { status: 500 })
+    }
+    return NextResponse.json({ error: 'Error inesperado al procesar el CV. Por favor, inténtalo de nuevo.' }, { status: 500 })
   }
 }

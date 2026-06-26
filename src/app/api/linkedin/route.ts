@@ -14,13 +14,13 @@ const MAX_TEXT_LENGTH = 50_000
 function sanitizeError(error: unknown): string {
   if (error instanceof Error) {
     const msg = error.message
-    if (msg.includes('API key') || msg.includes('quota') || msg.includes('PERMISSION_DENIED')) {
+    if (msg.includes('API key') || msg.includes('quota') || msg.includes('PERMISSION_DENIED') ||
+        msg.includes('Resource exhausted') || msg.includes('429') || msg.includes('rate limit')) {
       return 'El servicio de análisis no está disponible en este momento. Por favor, inténtalo más tarde.'
     }
     if (msg.includes('JSON') || msg.includes('parse')) {
       return 'Error al procesar la respuesta. Por favor, inténtalo de nuevo.'
     }
-    return msg
   }
   return 'El análisis ha fallado. Por favor, inténtalo de nuevo.'
 }
