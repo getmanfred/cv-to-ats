@@ -59,7 +59,8 @@ async function extractFromImagePDF(buffer: Buffer): Promise<string> {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '')
-      throw new Error(`NaN API error ${res.status}: ${body}`)
+      console.error(`[extractors] NaN API error ${res.status}:`, body)
+      throw new Error(`NaN API error ${res.status}`)
     }
 
     const data = await res.json() as { choices: Array<{ message: { content: string } }> }

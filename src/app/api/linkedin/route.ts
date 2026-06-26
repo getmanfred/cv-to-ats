@@ -56,9 +56,8 @@ export async function POST(request: NextRequest) {
     let profileText: string
     try {
       profileText = await extractCVText(buffer, file.name)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'No se pudo extraer texto del PDF.'
-      return NextResponse.json({ error: msg }, { status: 422 })
+    } catch {
+      return NextResponse.json({ error: 'No se pudo extraer texto del PDF. Asegúrate de que no está protegido o escaneado.' }, { status: 422 })
     }
 
     if (profileText.trim().length < MIN_TEXT_LENGTH) {

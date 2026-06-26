@@ -29,7 +29,8 @@ export async function nanComplete(prompt: string, timeoutMs = FETCH_TIMEOUT_MS):
 
     if (!res.ok) {
       const body = await res.text().catch(() => '')
-      throw new Error(`NaN API error ${res.status}: ${body}`)
+      console.error(`[nan-client] API error ${res.status}:`, body)
+      throw new Error(`NaN API error ${res.status}`)
     }
 
     const data = await res.json() as { choices: Array<{ message: { content: string } }> }

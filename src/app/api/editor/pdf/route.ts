@@ -45,6 +45,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Error al generar el PDF.'
     console.error('[pdf]', msg)
-    return NextResponse.json({ error: `Error al generar el PDF: ${msg}` }, { status: 500 })
+    return NextResponse.json({ error: 'Error al generar el PDF. Por favor, inténtalo de nuevo.' }, { status: 500 })
   }
 }
